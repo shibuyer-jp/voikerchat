@@ -1,6 +1,5 @@
 {
-  "buildCommand": "cp -r docs public",
-  "outputDirectory": "public",
+  "outputDirectory": "docs",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
@@ -10,10 +9,6 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=3600, s-maxage=3600"
-        },
-        {
-          "key": "Content-Type",
-          "value": "text/html; charset=utf-8"
         }
       ]
     }
