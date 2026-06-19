@@ -1,7 +1,6 @@
 {
-  "buildCommand": "mkdir -p public && cp -r docs/* public/",
-  "outputDirectory": "public",
-  "devCommand": "echo 'Development mode'",
+  "buildCommand": "echo 'Build complete' && ls -la docs/",
+  "outputDirectory": "docs",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
@@ -17,6 +16,16 @@
           "value": "text/html; charset=utf-8"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/:path((?!.*\\.).*)",
+      "destination": "/:path.html"
+    },
+    {
+      "source": "/:path(.*\\.html)",
+      "destination": "/:path"
     }
   ]
 }
