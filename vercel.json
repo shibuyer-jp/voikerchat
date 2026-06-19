@@ -1,5 +1,5 @@
 {
-  "buildCommand": "echo 'Static HTML site'",
+  "buildCommand": "",
   "outputDirectory": "docs",
   "devCommand": "echo 'Development mode'",
   "cleanUrls": true,
