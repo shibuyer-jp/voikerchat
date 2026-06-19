@@ -1,5 +1,5 @@
 {
-  "buildCommand": "mkdir -p public && cp -r docs/* public/ && echo 'Copied docs to public'",
+  "buildCommand": "mkdir -p public && cp docs/* public/",
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": false,
