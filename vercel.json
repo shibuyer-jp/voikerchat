@@ -1,6 +1,6 @@
 {
-  "buildCommand": "",
-  "outputDirectory": "docs",
+  "buildCommand": "mkdir -p public && cp -r docs/* public/",
+  "outputDirectory": "public",
   "devCommand": "echo 'Development mode'",
   "cleanUrls": true,
   "trailingSlash": false,
