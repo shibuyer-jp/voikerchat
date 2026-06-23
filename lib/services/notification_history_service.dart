@@ -85,13 +85,10 @@ class NotificationHistoryService {
       query = query.eq('is_read', isRead);
     }
 
-    // 順序付け（フィルタリング後）
-    query = query.order('received_at', ascending: false);
-
-    // ページング
-    query = query.range(offset, offset + limit - 1);
-
-    final response = await query;
+    // 順序付けとページング（チェーンで続ける）
+    final response = await query
+        .order('received_at', ascending: false)
+        .range(offset, offset + limit - 1);
 
     return (response as List)
         .map((json) => NotificationHistory.fromJson(json))
