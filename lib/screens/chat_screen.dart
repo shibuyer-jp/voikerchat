@@ -4,6 +4,7 @@ import '../models/message.dart';
 import '../models/rate_limit.dart';
 import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
+import '../widgets/rate_limit_widget.dart';
 
 /// Chat screen for Voikerchat
 /// 
@@ -336,50 +337,68 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                 ),
 
-                // Message input
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Colors.grey[300]!),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _inputController,
-                          decoration: InputDecoration(
-                            hintText: 'Type your response...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            enabled: !_isSending,
+                // Rate limit status + Message input
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Rate Limit Widget
+                    RateLimitWidget(
+                      rateLimit: _rateLimit,
+                      onUpgradePressed: () {
+                        // TODO: Navigate to Premium purchase flow
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Premium upgrade feature coming soon!'),
                           ),
-                          maxLines: null,
-                          textInputAction: TextInputAction.send,
-                          onSubmitted: (_) => _isSending ? null : _sendMessage(),
+                        );
+                      },
+                    ),
+                    // Message input
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: Colors.grey[300]!),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: _isSending
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _inputController,
+                              decoration: InputDecoration(
+                                hintText: 'Type your response...',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(24),
                                 ),
-                              )
-                            : const Icon(Icons.send),
-                        onPressed: _isSending ? null : _sendMessage,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                enabled: !_isSending,
+                              ),
+                              maxLines: null,
+                              textInputAction: TextInputAction.send,
+                              onSubmitted: (_) => _isSending ? null : _sendMessage(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: _isSending
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.send),
+                            onPressed: _isSending ? null : _sendMessage,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
