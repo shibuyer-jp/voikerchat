@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/message.dart';
 import '../models/rate_limit.dart';
 import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
 import '../services/revenuecat_service.dart';
+import '../services/streak_service.dart';
+import '../services/local_notification_service.dart';
 import '../widgets/rate_limit_widget.dart';
 import 'stats_screen.dart';
 
@@ -29,10 +32,12 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late MessageService _messageService;
   late RateLimitService _rateLimitService;
   late RevenueCatService _revenueCatService;
+  late StreakService _streakService;
+  late LocalNotificationService _notificationService;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -43,6 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
   RateLimit? _rateLimit;
   bool _isPremium = false;
   bool _showPremiumPromo = true;
+  int _currentStreak = 0;
 
   @override
   void initState() {
@@ -50,6 +56,11 @@ class _ChatScreenState extends State<ChatScreen> {
     _inputController = TextEditingController();
     _scrollController = ScrollController();
     _revenueCatService = RevenueCatService();
+    _streakService = StreakService();
+    _notificationService = LocalNotificationService();
+
+    // WidgetsBinding オブザーバー登録（通知タップ処理）
+    WidgetsBinding.instance.addObserver(this);
 
     _initializeChat();
   }
@@ -66,6 +77,13 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageService = MessageService.getInstance(Supabase.instance.client);
       _rateLimitService = RateLimitService(Supabase.instance.client);
 
+      // StreakService 初期化
+      final prefs = await SharedPreferences.getInstance();
+      await _streakService.initialize(
+        prefs: prefs,
+        supabase: Supabase.instance.client,
+      );
+
       // Get or create session
       await _messageService.getOrCreateSession(
         userId: _userId!,
@@ -79,6 +97,9 @@ class _ChatScreenState extends State<ChatScreen> {
       // Premium ステータス確認
       await _checkPremiumStatus();
 
+      // ストリーク読み込み
+      await _loadStreak();
+
       setState(() => _isLoading = false);
     } catch (e) {
       _showError('Failed to initialize chat: $e');
@@ -91,6 +112,17 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {});
     } catch (e) {
       print('Error checking premium status: $e');
+    }
+  }
+
+  Future<void> _loadStreak() async {
+    if (_userId == null) return;
+
+    try {
+      final streak = await _streakService.getCurrentStreak(_userId!, widget.sceneId);
+      setState(() => _currentStreak = streak);
+    } catch (e) {
+      print('Failed to load streak: $e');
     }
   }
 
@@ -163,6 +195,10 @@ class _ChatScreenState extends State<ChatScreen> {
       // Increment rate limit counter
       await _rateLimitService.checkAndIncrement(_userId!);
       await _loadRateLimit(); // Refresh display
+
+      // ストリークをインクリメント（メッセージ送信成功時）
+      final newStreak = await _streakService.incrementStreak(_userId!, widget.sceneId);
+      setState(() => _currentStreak = newStreak);
 
     } catch (e) {
       _showError('Failed to send message: $e');
@@ -253,6 +289,26 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// ライフサイクル状態変更時のコールバック（通知タップ処理）
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // アプリがフォアグラウンドに戻ったときに通知状態を確認
+      _handleNotificationInteraction();
+    }
+  }
+
+  /// 通知インタラクション処理
+  Future<void> _handleNotificationInteraction() async {
+    try {
+      // ローカルストレージから通知ペイロードを確認
+      // 実装例: NotificationService から最後の通知データを取得
+      // ここでシーン遷移やUI更新を実行
+    } catch (e) {
+      print('[ChatScreen] Error handling notification: $e');
+    }
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -277,6 +333,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _inputController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -335,6 +392,37 @@ class _ChatScreenState extends State<ChatScreen> {
                 );
               },
             ),
+          // ストリークバッジ
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '🔥',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$_currentStreak',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: _showSessionOptions,
