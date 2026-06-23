@@ -55,7 +55,7 @@ jobs:
         run: flutter build windows --release
       
       - name: Upload Windows build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: build/windows/runner/Release/
@@ -87,7 +87,7 @@ jobs:
         run: flutter build apk --release
       
       - name: Upload Android build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-build
           path: build/app/outputs/flutter-apk/
@@ -113,7 +113,7 @@ jobs:
         run: flutter build ios --release --no-codesign
       
       - name: Upload iOS build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-build
           path: build/ios/
