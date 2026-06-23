@@ -3,8 +3,19 @@ import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen.dart';
 import 'screens/onboarding/level_result_screen.dart';
+import 'services/revenuecat_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // RevenueCat 初期化
+  final revenueCatService = RevenueCatService();
+  try {
+    await revenueCatService.initialize();
+  } catch (e) {
+    print('RevenueCat initialization error: $e');
+  }
+  
   runApp(const VoikerchatApp());
 }
 

@@ -4,6 +4,7 @@ import '../models/message.dart';
 import '../models/rate_limit.dart';
 import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
+import '../services/revenuecat_service.dart';
 import '../widgets/rate_limit_widget.dart';
 
 /// Chat screen for Voikerchat
@@ -28,6 +29,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   late MessageService _messageService;
   late RateLimitService _rateLimitService;
+  late RevenueCatService _revenueCatService;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -36,12 +38,15 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isSending = false;
   String? _userId;
   RateLimit? _rateLimit;
+  bool _isPremium = false;
+  bool _showPremiumPromo = true;
 
   @override
   void initState() {
     super.initState();
     _inputController = TextEditingController();
     _scrollController = ScrollController();
+    _revenueCatService = RevenueCatService();
 
     _initializeChat();
   }
@@ -67,10 +72,22 @@ class _ChatScreenState extends State<ChatScreen> {
       // Load existing messages and rate limit status
       await _loadMessages();
       await _loadRateLimit();
+      
+      // Premium ステータス確認
+      await _checkPremiumStatus();
 
       setState(() => _isLoading = false);
     } catch (e) {
       _showError('Failed to initialize chat: $e');
+    }
+  }
+
+  Future<void> _checkPremiumStatus() async {
+    try {
+      _isPremium = await _revenueCatService.checkPremiumStatus();
+      setState(() {});
+    } catch (e) {
+      print('Error checking premium status: $e');
     }
   }
 
@@ -252,6 +269,33 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
+          if (!_isPremium)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Center(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _showPremiumDialog,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Pro',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: _showSessionOptions,
@@ -496,11 +540,128 @@ class _ChatScreenState extends State<ChatScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Navigate to premium purchase flow
+              _showPremiumDialog();
             },
             child: const Text('Upgrade'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showPremiumDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('🌟 Voikerchat Premium'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Unlock unlimited conversations',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            _PremiumFeature(
+              icon: '🚀',
+              title: 'Unlimited Calls',
+              description: 'No daily limits, talk as much as you want',
+            ),
+            const SizedBox(height: 12),
+            _PremiumFeature(
+              icon: '✨',
+              title: 'Anime Scenes',
+              description: '13 engaging scenes to master Japanese',
+            ),
+            const SizedBox(height: 12),
+            _PremiumFeature(
+              icon: '📊',
+              title: 'Stats Dashboard',
+              description: 'Track your learning progress',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.local_offer, color: Colors.amber, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    '\$12.99/month',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Maybe Later'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await _purchasePremium();
+            },
+            child: const Text('Subscribe Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _purchasePremium() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Processing purchase...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final success = await _revenueCatService.purchasePremium();
+      
+      Navigator.pop(context); // Close loading dialog
+      
+      if (success) {
+        setState(() => _isPremium = true);
+        _showSuccess('✨ Welcome to Premium! Enjoy unlimited conversations!');
+      } else {
+        _showError('Purchase was cancelled or failed. Please try again.');
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      _showError('Error during purchase: $e');
+    }
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -511,3 +672,49 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
+// Premium 機能表示用ウィジェット
+class _PremiumFeature extends StatelessWidget {
+  final String icon;
+  final String title;
+  final String description;
+
+  const _PremiumFeature({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(icon, style: const TextStyle(fontSize: 18)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
