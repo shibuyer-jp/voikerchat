@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 import '../models/message.dart';
 import '../services/message_service.dart';
 
@@ -32,7 +31,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isLoading = true;
   bool _isSending = false;
   String? _userId;
-  ConversationSession? _currentSession;
 
   @override
   void initState() {
@@ -55,7 +53,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageService = MessageService.getInstance(Supabase.instance.client);
 
       // Get or create session
-      _currentSession = await _messageService.getOrCreateSession(
+      await _messageService.getOrCreateSession(
         userId: _userId!,
         sceneId: widget.sceneId,
       );
@@ -166,7 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }) async {
     try {
       // Get Auth token for secure API call
-      final token = await Supabase.instance.client.auth.session?.accessToken;
+      final token = Supabase.instance.client.auth.currentSession?.accessToken;
       if (token == null) throw Exception('No auth token');
 
       // TODO: Replace with actual backend endpoint
