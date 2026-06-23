@@ -41,20 +41,31 @@ class NotificationDataModel {
 
   /// Firebase RemoteMessage ペイロードから変換
   factory NotificationDataModel.fromFirebaseMap(Map<String, dynamic> data) {
+    // 既知キーを除外したカスタムデータを作成
+    final Map<String, dynamic> customData = {};
+    const excludeKeys = {
+      'notification_id',
+      'notification_type',
+      'title',
+      'body',
+      'image_url',
+    };
+    
+    data.forEach((key, value) {
+      if (!excludeKeys.contains(key) && value != null) {
+        customData[key] = value;
+      }
+    });
+
     return NotificationDataModel(
       id: data['notification_id'] as String? ?? '',
       type: data['notification_type'] as String? ?? 'unknown',
       title: data['title'] as String? ?? '',
       body: data['body'] as String? ?? '',
       imageUrl: data['image_url'] as String?,
-      customData: {
-        ...data,
-        'notification_id': null,
-        'notification_type': null,
-        'title': null,
-        'body': null,
-        'image_url': null,
-      }..removeWhere((key, value) => value == null),
+      customData: customData.isEmpty ? null : Map<String, String>.from(
+        customData.map((k, v) => MapEntry(k, v.toString()))
+      ),
     );
   }
 
