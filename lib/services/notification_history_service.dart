@@ -78,13 +78,15 @@ class NotificationHistoryService {
     var query = _supabase
         .from(_tableName)
         .select()
-        .eq('user_id', userId)
-        .order('received_at', ascending: false);
+        .eq('user_id', userId);
 
     // フィルタリング
     if (isRead != null) {
       query = query.eq('is_read', isRead);
     }
+
+    // 順序付け（フィルタリング後）
+    query = query.order('received_at', ascending: false);
 
     // ページング
     query = query.range(offset, offset + limit - 1);
