@@ -99,6 +99,4 @@ flutter:
 # Platform-specific minimum version requirements
 platforms:
   ios:
-    min_sdk_version: "11.0"
   android:
-    min_sdk_version: "21"

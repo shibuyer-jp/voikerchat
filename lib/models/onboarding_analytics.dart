@@ -29,7 +29,7 @@ class OnboardingAnalytics {
 
   /// 記録作成日時
   @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   OnboardingAnalytics({
     required this.id,
