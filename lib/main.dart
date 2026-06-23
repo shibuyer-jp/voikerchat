@@ -13,7 +13,7 @@ void main() async {
   try {
     await revenueCatService.initialize();
   } catch (e) {
-    print('RevenueCat initialization error: $e');
+    // RevenueCat initialization error is non-critical
   }
   
   runApp(const VoikerchatApp());
