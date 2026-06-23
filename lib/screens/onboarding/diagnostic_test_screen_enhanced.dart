@@ -143,8 +143,7 @@ class _DiagnosticTestScreenEnhancedState
 
   void _showExplanation(int questionIndex, int selectedAnswer) {
     final question = questions[questionIndex];
-    final isCorrect =
-        _isCorrect(questionIndex, selectedAnswer);
+    final isCorrect = question.correctAnswerIndex == selectedAnswer;
     final explanation = question.explanation;
 
     showDialog(
@@ -263,7 +262,7 @@ class _DiagnosticTestScreenEnhancedState
                 children: List.generate(question.options.length, (index) {
                   final option = question.options[index];
                   final isSelected = userAnswers[currentQuestionIndex] == index;
-                  final isCorrectAnswer = _isCorrect(currentQuestionIndex, index);
+                  final isCorrectAnswer = question.correctAnswerIndex == index;
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),

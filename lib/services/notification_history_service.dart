@@ -83,7 +83,7 @@ class NotificationHistoryService {
 
     // フィルタリング
     if (isRead != null) {
-      query = query.filter('is_read', 'eq', isRead);
+      query = query.eq('is_read', isRead);
     }
 
     // ページング
