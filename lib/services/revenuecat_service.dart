@@ -138,39 +138,39 @@ class RevenueCatService {
             'message': 'Purchase completed but subscription not activated. Please try again.',
           };
         }
-      } on PurchasesException catch (e) {
-        // RevenueCat 固有エラー
-        final errorCode = e.error.code;
+      } catch (e) {
+        // エラーハンドリング（汎用）
+        final errorString = e.toString().toLowerCase();
         
-        if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        if (errorString.contains('cancel')) {
           return {
             'success': false,
             'error': 'cancelled',
             'message': 'Purchase cancelled.',
             'userInitiated': true,
           };
-        } else if (errorCode == PurchasesErrorCode.networkError) {
+        } else if (errorString.contains('network')) {
           return {
             'success': false,
             'error': 'network',
             'message': 'Network error. Please check your internet connection.',
             'retryable': true,
           };
-        } else if (errorCode == PurchasesErrorCode.paymentPendingError) {
+        } else if (errorString.contains('pending')) {
           return {
             'success': false,
             'error': 'payment_pending',
             'message': 'Payment is pending. Please check your payment method and try again.',
             'retryable': true,
           };
-        } else if (errorCode == PurchasesErrorCode.invalidCredentialsError) {
+        } else if (errorString.contains('credential') || errorString.contains('invalid')) {
           return {
             'success': false,
             'error': 'invalid_credentials',
             'message': 'Invalid payment method. Please update your payment info in App Store/Play Store.',
             'retryable': false,
           };
-        } else if (errorCode == PurchasesErrorCode.productNotAvailableForPurchaseError) {
+        } else if (errorString.contains('not available') || errorString.contains('region')) {
           return {
             'success': false,
             'error': 'not_available',
@@ -181,7 +181,7 @@ class RevenueCatService {
           return {
             'success': false,
             'error': 'unknown_error',
-            'message': 'Purchase failed: ${e.error.message}',
+            'message': 'Purchase failed: $e',
             'retryable': true,
           };
         }
