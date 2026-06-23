@@ -98,7 +98,7 @@ class RevenueCatService {
       final offering = offerings.current!;
       
       // Monthly package を探す
-      RevenueCatPackage? monthlyPackage;
+      Package? monthlyPackage;
       for (var pkg in offering.availablePackages) {
         if (pkg.identifier.contains('monthly')) {
           monthlyPackage = pkg;
@@ -138,37 +138,39 @@ class RevenueCatService {
             'message': 'Purchase completed but subscription not activated. Please try again.',
           };
         }
-      } on PurchasesErrorCode catch (e) {
+      } on PurchasesException catch (e) {
         // RevenueCat 固有エラー
-        if (e.error.code == PurchasesErrorCode.purchaseCancelledError) {
+        final errorCode = e.error.code;
+        
+        if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
           return {
             'success': false,
             'error': 'cancelled',
             'message': 'Purchase cancelled.',
             'userInitiated': true,
           };
-        } else if (e.error.code == PurchasesErrorCode.networkError) {
+        } else if (errorCode == PurchasesErrorCode.networkError) {
           return {
             'success': false,
             'error': 'network',
             'message': 'Network error. Please check your internet connection.',
             'retryable': true,
           };
-        } else if (e.error.code == PurchasesErrorCode.paymentPendingError) {
+        } else if (errorCode == PurchasesErrorCode.paymentPendingError) {
           return {
             'success': false,
             'error': 'payment_pending',
             'message': 'Payment is pending. Please check your payment method and try again.',
             'retryable': true,
           };
-        } else if (e.error.code == PurchasesErrorCode.invalidCredentialsError) {
+        } else if (errorCode == PurchasesErrorCode.invalidCredentialsError) {
           return {
             'success': false,
             'error': 'invalid_credentials',
             'message': 'Invalid payment method. Please update your payment info in App Store/Play Store.',
             'retryable': false,
           };
-        } else if (e.error.code == PurchasesErrorCode.productNotAvailableForPurchaseError) {
+        } else if (errorCode == PurchasesErrorCode.productNotAvailableForPurchaseError) {
           return {
             'success': false,
             'error': 'not_available',
@@ -227,7 +229,7 @@ class RevenueCatService {
   /// Premium 復元（別のデバイスから購入した場合）
   Future<bool> restorePurchases() async {
     try {
-      final customerInfo = await Purchases.restoreTransactions();
+      final customerInfo = await Purchases.getCustomerInfo();
       
       final entitlements = customerInfo.entitlements;
       _isPremium = entitlements.active.containsKey('Premium') ||
