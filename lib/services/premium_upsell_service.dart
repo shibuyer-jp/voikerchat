@@ -102,17 +102,17 @@ class PremiumUpsellService {
     // Stage 1: Day 1, 10回以上会話（Free制限に達した場合）
     if (continuousDays >= 1 &&
         conversationCount >= 5 &&
-        !_prefs.getBool(_keyStage1Shown) == true) {
+        !(_prefs.getBool(_keyStage1Shown) ?? false)) {
       return PremiumUpsellStage.stage1;
     }
 
     // Stage 2: Day 3, 連続使用
-    if (continuousDays >= 3 && !_prefs.getBool(_keyStage2Shown) == true) {
+    if (continuousDays >= 3 && !(_prefs.getBool(_keyStage2Shown) ?? false)) {
       return PremiumUpsellStage.stage2;
     }
 
     // Stage 3: Day 7, 連続使用
-    if (continuousDays >= 7 && !_prefs.getBool(_keyStage3Shown) == true) {
+    if (continuousDays >= 7 && !(_prefs.getBool(_keyStage3Shown) ?? false)) {
       return PremiumUpsellStage.stage3;
     }
 

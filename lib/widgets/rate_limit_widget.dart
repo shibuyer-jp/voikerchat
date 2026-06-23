@@ -26,7 +26,7 @@ class RateLimitWidget extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              Icons.lightning_bolt,
+              Icons.flash_on,
               size: 16,
               color: Colors.amber[600],
             ),
