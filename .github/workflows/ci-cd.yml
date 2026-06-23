@@ -10,7 +10,7 @@ on:
       - main
 
 env:
-  FLUTTER_VERSION: "3.24.0"
+  FLUTTER_VERSION: "3.44.3"
 
 jobs:
   # Job 1: Flutter Analysis & Testing
