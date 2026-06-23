@@ -38,11 +38,6 @@ class LocalNotificationService {
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
-      defaultPresentationOptions: {
-        DarwinNotificationPresentationOption.badge,
-        DarwinNotificationPresentationOption.sound,
-        DarwinNotificationPresentationOption.alert,
-      },
     );
 
     final InitializationSettings initSettings = InitializationSettings(
@@ -116,7 +111,7 @@ class LocalNotificationService {
       throw Exception('LocalNotificationService is not initialized');
     }
 
-    final TZDateTime tzTime = _convertToTZDateTime(scheduledTime);
+    final tz.TZDateTime tzTime = _convertToTZDateTime(scheduledTime);
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'voikerchat_channel',
@@ -143,7 +138,6 @@ class LocalNotificationService {
       body,
       tzTime,
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAndAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
     );
@@ -204,7 +198,6 @@ class LocalNotificationService {
       body,
       scheduledDate,
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAndAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
       payload: payload,
@@ -228,7 +221,7 @@ class LocalNotificationService {
   }
 
   /// DateTime を TZDateTime に変換
-  TZDateTime _convertToTZDateTime(DateTime dateTime) {
+  tz.TZDateTime _convertToTZDateTime(DateTime dateTime) {
     final tz.TZDateTime tzDateTime = tz.TZDateTime.from(dateTime, tz.local);
     return tzDateTime;
   }

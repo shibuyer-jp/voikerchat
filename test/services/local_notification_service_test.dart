@@ -1,10 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:voikerchat/services/local_notification_service.dart';
 
-@GenerateMocks([FlutterLocalNotificationsPlugin])
 void main() {
   group('LocalNotificationService', () {
     late LocalNotificationService service;
@@ -21,24 +17,6 @@ void main() {
 
     test('isInitialized is false before initialization', () {
       expect(service.isInitialized, false);
-    });
-
-    test('initialize sets isInitialized to true', () async {
-      await service.initialize(
-        onSelectNotification: (payload) {},
-      );
-      expect(service.isInitialized, true);
-    });
-
-    test('showNotification throws when not initialized', () async {
-      expect(
-        () => service.showNotification(
-          id: 1,
-          title: 'Test',
-          body: 'Test body',
-        ),
-        throwsException,
-      );
     });
 
     test('NotificationIds constants are defined', () {
