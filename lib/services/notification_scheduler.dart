@@ -1,9 +1,12 @@
+import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'local_notification_service.dart';
 
 /// NotificationScheduler
 /// 4種類の通知（Daily Reminder, Milestone, Premium Upsell, Feature Update）を一元管理
 class NotificationScheduler {
+  final logger = Logger('NotificationScheduler');
+
   static final NotificationScheduler _instance = NotificationScheduler._internal();
 
   factory NotificationScheduler() {
@@ -59,9 +62,9 @@ class NotificationScheduler {
           time: times[i],
           payload: 'daily_reminder',
         );
-        print('[NotificationScheduler] Daily reminder scheduled: ${times[i].hour}:${times[i].minute.toString().padLeft(2, '0')}');
+        logger.info('[NotificationScheduler] Daily reminder scheduled: ${times[i].hour}:${times[i].minute.toString().padLeft(2, '0')}');
       } catch (e) {
-        print('[NotificationScheduler] Error scheduling daily reminder: $e');
+        logger.info('[NotificationScheduler] Error scheduling daily reminder: $e');
       }
     }
   }
@@ -103,9 +106,9 @@ class NotificationScheduler {
             payload: 'milestone',
           );
           await _prefs.setBool(shownKey, true);
-          print('[NotificationScheduler] Milestone notification shown: ${milestone.days}d');
+          logger.info('[NotificationScheduler] Milestone notification shown: ${milestone.days}d');
         } catch (e) {
-          print('[NotificationScheduler] Error showing milestone notification: $e');
+          logger.info('[NotificationScheduler] Error showing milestone notification: $e');
         }
       }
     }
@@ -151,9 +154,9 @@ class NotificationScheduler {
         scheduledTime: scheduledTime,
         payload: 'premium_upsell_stage_$stage',
       );
-      print('[NotificationScheduler] Premium upsell notification scheduled: Stage $stage');
+      logger.info('[NotificationScheduler] Premium upsell notification scheduled: Stage $stage');
     } catch (e) {
-      print('[NotificationScheduler] Error scheduling premium upsell: $e');
+      logger.info('[NotificationScheduler] Error scheduling premium upsell: $e');
     }
   }
 
@@ -184,9 +187,9 @@ class NotificationScheduler {
         body: description,
         payload: 'feature_update',
       );
-      print('[NotificationScheduler] Feature update notification shown: $featureName');
+      logger.info('[NotificationScheduler] Feature update notification shown: $featureName');
     } catch (e) {
-      print('[NotificationScheduler] Error showing feature update: $e');
+      logger.info('[NotificationScheduler] Error showing feature update: $e');
     }
   }
 

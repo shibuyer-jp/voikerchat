@@ -1,3 +1,4 @@
+import 'package:logging/logging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,8 @@ import 'local_notification_service.dart';
 /// RemoteNotificationService
 /// Firebase Cloud Messaging (FCM) を使用したリモート通知管理
 class RemoteNotificationService {
+  final logger = Logger('RemoteNotificationService');
+
   static final RemoteNotificationService _instance = RemoteNotificationService._internal();
 
   factory RemoteNotificationService() {
@@ -46,7 +49,7 @@ class RemoteNotificationService {
       try {
         await Firebase.initializeApp();
       } catch (e) {
-        print('[RemoteNotificationService] Firebase already initialized: $e');
+        logger.info('[RemoteNotificationService] Firebase already initialized: $e');
       }
     }
 
@@ -70,7 +73,7 @@ class RemoteNotificationService {
     _setupMessageHandlers();
 
     _isInitialized = true;
-    print('[RemoteNotificationService] Initialized successfully');
+    logger.info('[RemoteNotificationService] Initialized successfully');
   }
 
   /// FCM トークンをリフレッシュ
@@ -80,11 +83,11 @@ class RemoteNotificationService {
       if (token != null) {
         _cachedToken = token;
         await _prefs.setString('fcm_token', token);
-        print('[RemoteNotificationService] FCM token refreshed: ${token.substring(0, 20)}...');
+        logger.info('[RemoteNotificationService] FCM token refreshed: ${token.substring(0, 20)}...');
       }
       return token;
     } catch (e) {
-      print('[RemoteNotificationService] Error getting FCM token: $e');
+      logger.info('[RemoteNotificationService] Error getting FCM token: $e');
       return null;
     }
   }
@@ -108,9 +111,9 @@ class RemoteNotificationService {
       await _fcm.deleteToken();
       _cachedToken = null;
       await _prefs.remove('fcm_token');
-      print('[RemoteNotificationService] FCM token deleted');
+      logger.info('[RemoteNotificationService] FCM token deleted');
     } catch (e) {
-      print('[RemoteNotificationService] Error deleting FCM token: $e');
+      logger.info('[RemoteNotificationService] Error deleting FCM token: $e');
     }
   }
 
@@ -118,20 +121,20 @@ class RemoteNotificationService {
   void _setupMessageHandlers() {
     // フォアグラウンド通知
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('[RemoteNotificationService] Message received in foreground');
+      logger.info('[RemoteNotificationService] Message received in foreground');
       _handleMessage(message, isForeground: true);
     });
 
     // バックグラウンド/終了状態での通知タップ
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('[RemoteNotificationService] App opened via notification');
+      logger.info('[RemoteNotificationService] App opened via notification');
       _handleMessage(message, isFromTerminated: true);
     });
 
     // 終了状態での初期メッセージ取得
     FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
       if (message != null) {
-        print('[RemoteNotificationService] App launched via notification');
+        logger.info('[RemoteNotificationService] App launched via notification');
         _handleMessage(message, isFromTerminated: true);
       }
     });
@@ -140,7 +143,7 @@ class RemoteNotificationService {
     _fcm.onTokenRefresh.listen((String newToken) {
       _cachedToken = newToken;
       _prefs.setString('fcm_token', newToken);
-      print('[RemoteNotificationService] FCM token refreshed: ${newToken.substring(0, 20)}...');
+      logger.info('[RemoteNotificationService] FCM token refreshed: ${newToken.substring(0, 20)}...');
     });
   }
 
@@ -175,7 +178,7 @@ class RemoteNotificationService {
       // 通知を既読マーク（任意）
       _markNotificationAsRead(notificationData.id);
     } catch (e) {
-      print('[RemoteNotificationService] Error handling message: $e');
+      logger.info('[RemoteNotificationService] Error handling message: $e');
     }
   }
 
@@ -203,9 +206,9 @@ class RemoteNotificationService {
   Future<void> subscribeToTopic(String topic) async {
     try {
       await _fcm.subscribeToTopic(topic);
-      print('[RemoteNotificationService] Subscribed to topic: $topic');
+      logger.info('[RemoteNotificationService] Subscribed to topic: $topic');
     } catch (e) {
-      print('[RemoteNotificationService] Error subscribing to topic: $e');
+      logger.info('[RemoteNotificationService] Error subscribing to topic: $e');
     }
   }
 
@@ -213,9 +216,9 @@ class RemoteNotificationService {
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await _fcm.unsubscribeFromTopic(topic);
-      print('[RemoteNotificationService] Unsubscribed from topic: $topic');
+      logger.info('[RemoteNotificationService] Unsubscribed from topic: $topic');
     } catch (e) {
-      print('[RemoteNotificationService] Error unsubscribing from topic: $e');
+      logger.info('[RemoteNotificationService] Error unsubscribing from topic: $e');
     }
   }
 
@@ -238,7 +241,7 @@ class RemoteNotificationService {
       final token = await _fcm.getAPNSToken();
       return token;
     } catch (e) {
-      print('[RemoteNotificationService] Error getting APNs token: $e');
+      logger.info('[RemoteNotificationService] Error getting APNs token: $e');
       return null;
     }
   }

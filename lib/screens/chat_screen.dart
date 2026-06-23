@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +17,8 @@ import 'stats_screen.dart';
 /// 
 /// Displays conversation with Claude Haiku and saves history to Supabase
 class ChatScreen extends StatefulWidget {
+  final logger = Logger('ChatScreen');
+
   final String sceneId;
   final String sceneName;
   final Map<String, dynamic> sceneData;
@@ -107,7 +110,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       _isPremium = await _revenueCatService.checkPremiumStatus();
       setState(() {});
     } catch (e) {
-      print('Error checking premium status: $e');
+      logger.info('Error checking premium status: $e');
     }
   }
 
@@ -118,7 +121,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final streak = await _streakService.getCurrentStreak(_userId!, widget.sceneId);
       setState(() => _currentStreak = streak);
     } catch (e) {
-      print('Failed to load streak: $e');
+      logger.info('Failed to load streak: $e');
     }
   }
 
@@ -128,7 +131,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final rateLimit = await _rateLimitService.getRateLimit(_userId!);
       setState(() => _rateLimit = rateLimit);
     } catch (e) {
-      print('Failed to load rate limit: $e');
+      logger.info('Failed to load rate limit: $e');
     }
   }
 
@@ -301,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       // 実装例: NotificationService から最後の通知データを取得
       // ここでシーン遷移やUI更新を実行
     } catch (e) {
-      print('[ChatScreen] Error handling notification: $e');
+      logger.info('[ChatScreen] Error handling notification: $e');
     }
   }
 
@@ -779,7 +782,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
         if (userInitiated) {
           // ユーザーがキャンセルした場合
-          print('Purchase cancelled by user');
+          logger.info('Purchase cancelled by user');
           return;
         }
 

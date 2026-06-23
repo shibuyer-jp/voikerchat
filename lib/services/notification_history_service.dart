@@ -1,3 +1,4 @@
+import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:voikerchat/models/notification_history_model.dart';
 
@@ -10,6 +11,8 @@ import 'package:voikerchat/models/notification_history_model.dart';
 /// - 通知の削除（DELETE）
 /// - RLS によるユーザー別アクセス制限
 class NotificationHistoryService {
+  final logger = Logger('NotificationHistoryService');
+
   static const String _tableName = 'notification_history';
 
   final SupabaseClient _supabase;
@@ -269,7 +272,7 @@ class NotificationHistoryService {
   /// 
   /// TODO: Supabase Realtime API v2 対応後に実装
   void listenToNotifications(Function(dynamic) onEvent) {
-    print('Realtime listener: Implementation pending for Supabase v2.x');
+    logger.info('Realtime listener: Implementation pending for Supabase v2.x');
     // v1.10 では複雑なため、一旦スキップ
     // v2.x では以下のように実装予定:
     // _supabase

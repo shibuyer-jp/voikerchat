@@ -1,3 +1,4 @@
+import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -5,6 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// ユーザーのストリーク（連続学習日数）を管理
 /// ローカル：SharedPreferences（高速）、リモート：Supabase（バックアップ）
 class StreakService {
+  final logger = Logger('StreakService');
+
   static final StreakService _instance = StreakService._internal();
 
   factory StreakService() {
@@ -40,7 +43,7 @@ class StreakService {
 
       return localStreak;
     } catch (e) {
-      print('[StreakService] Error getting current streak: $e');
+      logger.info('[StreakService] Error getting current streak: $e');
       return 0;
     }
   }
@@ -72,10 +75,10 @@ class StreakService {
       // Supabase へ更新（背景）
       _updateStreakInSupabase(userId, sceneId, newStreak).ignore();
 
-      print('[StreakService] Streak incremented: $newStreak days for $sceneId');
+      logger.info('[StreakService] Streak incremented: $newStreak days for $sceneId');
       return newStreak;
     } catch (e) {
-      print('[StreakService] Error incrementing streak: $e');
+      logger.info('[StreakService] Error incrementing streak: $e');
       return 0;
     }
   }
@@ -93,9 +96,9 @@ class StreakService {
       // Supabase へリセット（背景）
       _updateStreakInSupabase(userId, sceneId, 0).ignore();
 
-      print('[StreakService] Streak reset for $sceneId');
+      logger.info('[StreakService] Streak reset for $sceneId');
     } catch (e) {
-      print('[StreakService] Error resetting streak: $e');
+      logger.info('[StreakService] Error resetting streak: $e');
     }
   }
 
@@ -118,7 +121,7 @@ class StreakService {
 
       return streaks;
     } catch (e) {
-      print('[StreakService] Error getting all streaks: $e');
+      logger.info('[StreakService] Error getting all streaks: $e');
       return {};
     }
   }
@@ -141,7 +144,7 @@ class StreakService {
         await _prefs.setInt(key, streakDays);
       }
     } catch (e) {
-      print('[StreakService] Error syncing streak from Supabase: $e');
+      logger.info('[StreakService] Error syncing streak from Supabase: $e');
     }
   }
 
@@ -154,9 +157,9 @@ class StreakService {
         'streak_days': streakDays,
         'last_updated': DateTime.now().toIso8601String(),
       });
-      print('[StreakService] Streak synced to Supabase: $streakDays days');
+      logger.info('[StreakService] Streak synced to Supabase: $streakDays days');
     } catch (e) {
-      print('[StreakService] Error updating streak in Supabase: $e');
+      logger.info('[StreakService] Error updating streak in Supabase: $e');
     }
   }
 }

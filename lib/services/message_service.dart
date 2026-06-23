@@ -1,3 +1,4 @@
+import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/message.dart';
 import 'package:uuid/uuid.dart';
@@ -10,6 +11,8 @@ import 'package:uuid/uuid.dart';
 /// - Loading message history
 /// - Managing conversation sessions
 class MessageService {
+  final logger = Logger('MessageService');
+
   final SupabaseClient _supabase;
 
   MessageService(this._supabase);
@@ -177,7 +180,7 @@ class MessageService {
       }).eq('user_id', userId).eq('scene_id', sceneId).eq('status', 'active');
     } catch (e) {
       // Non-critical: log but don't crash
-      print('Warning: Failed to update session stats: $e');
+      logger.info('Warning: Failed to update session stats: $e');
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:voikerchat/models/notification_history_model.dart';
 import 'package:voikerchat/services/notification_history_service.dart';
 
@@ -11,6 +12,8 @@ import 'package:voikerchat/services/notification_history_service.dart';
 /// - スワイプで削除
 /// - 通知なし時の空状態表示
 class NotificationHistoryScreen extends StatefulWidget {
+  final logger = Logger('NotificationHistoryScreen');
+
   const NotificationHistoryScreen({Key? key}) : super(key: key);
 
   @override
@@ -63,7 +66,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     //     _loadNotifications();
     //   });
     // } catch (e) {
-    //   print('Realtime listener setup error: $e');
+    //   logger.info('Realtime listener setup error: $e');
     // }
   }
 

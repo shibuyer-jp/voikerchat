@@ -1,3 +1,4 @@
+import 'package:logging/logging.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
@@ -7,6 +8,8 @@ import 'dart:io' show Platform;
 /// iOS/Android の App Store / Google Play との連携
 /// Premium サブスクリプション管理
 class RevenueCatService {
+  final logger = Logger('RevenueCatService');
+
   static final RevenueCatService _instance = RevenueCatService._internal();
   
   late SharedPreferences _prefs;
@@ -46,9 +49,9 @@ class RevenueCatService {
       _isPremium = _prefs.getBool('isPremium') ?? false;
       
       _initialized = true;
-      print('[RevenueCat] Initialized successfully');
+      logger.info('[RevenueCat] Initialized successfully');
     } catch (e) {
-      print('[RevenueCat] Initialization error: $e');
+      logger.info('[RevenueCat] Initialization error: $e');
       rethrow;
     }
   }
@@ -69,10 +72,10 @@ class RevenueCatService {
       // ローカル保存
       await _prefs.setBool('isPremium', _isPremium);
       
-      print('[RevenueCat] Premium status checked: $_isPremium');
+      logger.info('[RevenueCat] Premium status checked: $_isPremium');
       return _isPremium;
     } catch (e) {
-      print('[RevenueCat] Error checking premium status: $e');
+      logger.info('[RevenueCat] Error checking premium status: $e');
       return _isPremium;
     }
   }
@@ -121,7 +124,7 @@ class RevenueCatService {
         
         if (_isPremium) {
           await _prefs.setBool('isPremium', true);
-          print('[RevenueCat] Premium purchased successfully');
+          logger.info('[RevenueCat] Premium purchased successfully');
           return {
             'success': true,
             'message': 'Welcome to Voikerchat Premium!',
@@ -217,7 +220,7 @@ class RevenueCatService {
       
       return null;
     } catch (e) {
-      print('[RevenueCat] Error getting premium info: $e');
+      logger.info('[RevenueCat] Error getting premium info: $e');
       return null;
     }
   }
@@ -233,10 +236,10 @@ class RevenueCatService {
       
       await _prefs.setBool('isPremium', _isPremium);
       
-      print('[RevenueCat] Purchases restored: $_isPremium');
+      logger.info('[RevenueCat] Purchases restored: $_isPremium');
       return _isPremium;
     } catch (e) {
-      print('[RevenueCat] Restore error: $e');
+      logger.info('[RevenueCat] Restore error: $e');
       return false;
     }
   }
@@ -245,6 +248,6 @@ class RevenueCatService {
   Future<void> resetPremiumStatus() async {
     _isPremium = false;
     await _prefs.setBool('isPremium', false);
-    print('[RevenueCat] Premium status reset');
+    logger.info('[RevenueCat] Premium status reset');
   }
 }

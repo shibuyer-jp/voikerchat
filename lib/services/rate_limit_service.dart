@@ -1,7 +1,10 @@
+import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/rate_limit.dart';
 
 class RateLimitService {
+  final logger = Logger('RateLimitService');
+
   final SupabaseClient _supabase;
 
   RateLimitService(this._supabase);
@@ -51,7 +54,7 @@ class RateLimitService {
 
       return true;
     } catch (e) {
-      print('RateLimitService error: $e');
+      logger.info('RateLimitService error: $e');
       // On error, allow call (fail-open approach)
       return true;
     }
@@ -65,7 +68,7 @@ class RateLimitService {
         'last_reset_utc': DateTime.now().toUtc().toIso8601String(),
       }).eq('user_id', userId);
     } catch (e) {
-      print('RateLimitService reset error: $e');
+      logger.info('RateLimitService reset error: $e');
     }
   }
 

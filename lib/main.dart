@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen.dart';
@@ -13,13 +14,15 @@ void main() async {
   try {
     await revenueCatService.initialize();
   } catch (e) {
-    print('RevenueCat initialization error: $e');
+    logger.info('RevenueCat initialization error: $e');
   }
   
   runApp(const VoikerchatApp());
 }
 
 class VoikerchatApp extends StatelessWidget {
+  final logger = Logger('VoikerchatApp');
+
   const VoikerchatApp({super.key});
 
   @override
