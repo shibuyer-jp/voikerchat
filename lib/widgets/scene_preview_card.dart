@@ -142,7 +142,7 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: levelColor.withOpacity(0.2),
+                  color: levelColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(

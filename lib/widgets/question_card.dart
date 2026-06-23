@@ -42,7 +42,7 @@ class QuestionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getDifficultyColor().withOpacity(0.2),
+                    color: _getDifficultyColor().withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -62,10 +62,10 @@ class QuestionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.08),
+                color: Colors.blue.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.blue.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
               ),
@@ -127,9 +127,9 @@ class QuestionCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
             border: Border.all(
-              color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.3),
+              color: isSelected ? Colors.blue : Colors.grey.withValues(alpha: 0.3),
               width: isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(8),
@@ -143,7 +143,7 @@ class QuestionCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.5),
+                    color: isSelected ? Colors.blue : Colors.grey.withValues(alpha: 0.5),
                     width: isSelected ? 2 : 1.5,
                   ),
                   color: isSelected ? Colors.blue : Colors.transparent,

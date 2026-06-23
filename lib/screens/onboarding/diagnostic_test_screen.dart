@@ -100,9 +100,9 @@ class _DiagnosticTestScreenState extends State<DiagnosticTestScreen> {
         title: LinearProgressIndicator(
           value: (currentQuestionIndex + 1) / questions.length,
           minHeight: 8,
-          backgroundColor: Colors.grey.withOpacity(0.2),
+          backgroundColor: Colors.grey.withValues(alpha: 0.2),
           valueColor: AlwaysStoppedAnimation<Color>(
-            Colors.blue.withOpacity(0.7),
+            Colors.blue.withValues(alpha: 0.7),
           ),
         ),
       ),

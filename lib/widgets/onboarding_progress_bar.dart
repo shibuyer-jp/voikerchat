@@ -162,7 +162,7 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
         boxShadow: isCurrent
             ? [
                 BoxShadow(
-                  color: dotColor.withOpacity(0.3),
+                  color: dotColor.withValues(alpha: 0.3),
                   blurRadius: 8,
                   spreadRadius: 2,
                 )

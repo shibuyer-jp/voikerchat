@@ -217,7 +217,7 @@ class _DiagnosticTestScreenEnhancedState
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0099FF).withOpacity(0.1),
+                      color: const Color(0xFF0099FF).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -237,7 +237,7 @@ class _DiagnosticTestScreenEnhancedState
               padding: const EdgeInsets.only(bottom: 12.0),
               child: Chip(
                 label: Text(question.difficulty),
-                backgroundColor: const Color(0xFFFF9900).withOpacity(0.2),
+                backgroundColor: const Color(0xFFFF9900).withValues(alpha: 0.2),
                 labelStyle: const TextStyle(color: Color(0xFFFF9900)),
               ),
             ),

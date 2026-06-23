@@ -49,13 +49,13 @@ class LevelResultScreen extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      levelColor.withOpacity(0.15),
-                      levelColor.withOpacity(0.05),
+                      levelColor.withValues(alpha: 0.15),
+                      levelColor.withValues(alpha: 0.05),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: levelColor.withOpacity(0.3),
+                    color: levelColor.withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -87,7 +87,7 @@ class LevelResultScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.05),
+                  color: Colors.grey.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
