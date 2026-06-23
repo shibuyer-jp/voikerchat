@@ -666,20 +666,85 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     try {
-      final success = await _revenueCatService.purchasePremium();
+      final result = await _revenueCatService.purchasePremium();
       
       Navigator.pop(context); // Close loading dialog
       
-      if (success) {
+      if (result['success'] == true) {
         setState(() => _isPremium = true);
         _showSuccess('✨ Welcome to Premium! Enjoy unlimited conversations!');
       } else {
-        _showError('Purchase was cancelled or failed. Please try again.');
+        // エラーハンドリング
+        final errorCode = result['error'] as String?;
+        final message = result['message'] as String? ?? 'Purchase failed';
+        final retryable = result['retryable'] as bool? ?? false;
+        final userInitiated = result['userInitiated'] as bool? ?? false;
+
+        if (userInitiated) {
+          // ユーザーがキャンセルした場合
+          print('Purchase cancelled by user');
+          return;
+        }
+
+        if (retryable) {
+          _showRetryDialog(message, () => _purchasePremium());
+        } else {
+          _showErrorWithAction(
+            message,
+            actionLabel: 'Close',
+            onAction: () => Navigator.pop(context),
+          );
+        }
       }
     } catch (e) {
       Navigator.pop(context);
-      _showError('Error during purchase: $e');
+      _showError('Unexpected error: $e. Please try again later.');
     }
+  }
+
+  /// リトライ可能なエラーダイアログ
+  void _showRetryDialog(String message, VoidCallback onRetry) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('⚠️ Purchase Failed'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onRetry();
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// アクション付きエラーダイアログ
+  void _showErrorWithAction(
+    String message, {
+    String actionLabel = 'OK',
+    VoidCallback? onAction,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('❌ Error'),
+        content: Text(message),
+        actions: [
+          ElevatedButton(
+            onPressed: onAction ?? () => Navigator.pop(context),
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSuccess(String message) {

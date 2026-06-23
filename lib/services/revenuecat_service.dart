@@ -81,14 +81,18 @@ class RevenueCatService {
     }
   }
 
-  /// Premium 購入フロー開始
-  Future<bool> purchasePremium() async {
+  /// Premium 購入フロー
+  /// エラー分類: cancelled, network, payment, unknown
+  Future<Map<String, dynamic>> purchasePremium() async {
     try {
-      // 利用可能なプロダクト取得
       final offerings = await Purchases.getOfferings();
       
       if (offerings.current == null) {
-        throw Exception('No offerings available');
+        return {
+          'success': false,
+          'error': 'offering_not_found',
+          'message': 'Offerings not available. Please check your internet connection.',
+        };
       }
 
       final offering = offerings.current!;
@@ -103,7 +107,11 @@ class RevenueCatService {
       }
 
       if (monthlyPackage == null) {
-        throw Exception('Monthly package not found');
+        return {
+          'success': false,
+          'error': 'package_not_found',
+          'message': 'Monthly subscription package not found.',
+        };
       }
 
       // 購入処理
@@ -118,21 +126,72 @@ class RevenueCatService {
         if (_isPremium) {
           await _prefs.setBool('isPremium', true);
           print('[RevenueCat] Premium purchased successfully');
-          return true;
+          return {
+            'success': true,
+            'message': 'Welcome to Voikerchat Premium!',
+          };
+        } else {
+          // 購入完了したが、エンタイトルメント未反映
+          return {
+            'success': false,
+            'error': 'entitlement_not_granted',
+            'message': 'Purchase completed but subscription not activated. Please try again.',
+          };
         }
       } on PurchasesErrorCode catch (e) {
+        // RevenueCat 固有エラー
         if (e.error.code == PurchasesErrorCode.purchaseCancelledError) {
-          print('[RevenueCat] Purchase cancelled by user');
+          return {
+            'success': false,
+            'error': 'cancelled',
+            'message': 'Purchase cancelled.',
+            'userInitiated': true,
+          };
+        } else if (e.error.code == PurchasesErrorCode.networkError) {
+          return {
+            'success': false,
+            'error': 'network',
+            'message': 'Network error. Please check your internet connection.',
+            'retryable': true,
+          };
+        } else if (e.error.code == PurchasesErrorCode.paymentPendingError) {
+          return {
+            'success': false,
+            'error': 'payment_pending',
+            'message': 'Payment is pending. Please check your payment method and try again.',
+            'retryable': true,
+          };
+        } else if (e.error.code == PurchasesErrorCode.invalidCredentialsError) {
+          return {
+            'success': false,
+            'error': 'invalid_credentials',
+            'message': 'Invalid payment method. Please update your payment info in App Store/Play Store.',
+            'retryable': false,
+          };
+        } else if (e.error.code == PurchasesErrorCode.productNotAvailableForPurchaseError) {
+          return {
+            'success': false,
+            'error': 'not_available',
+            'message': 'Product not available for purchase in your region.',
+            'retryable': false,
+          };
         } else {
-          print('[RevenueCat] Purchase error: ${e.error.message}');
+          return {
+            'success': false,
+            'error': 'unknown_error',
+            'message': 'Purchase failed: ${e.error.message}',
+            'retryable': true,
+          };
         }
-        return false;
       }
-      
-      return false;
     } catch (e) {
-      print('[RevenueCat] Purchase error: $e');
-      rethrow;
+      // 予期しないエラー
+      return {
+        'success': false,
+        'error': 'unexpected_error',
+        'message': 'Unexpected error: $e',
+        'retryable': true,
+      };
     }
   }
 
