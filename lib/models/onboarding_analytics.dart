@@ -56,7 +56,7 @@ class OnboardingAnalytics {
         'skip_count': skipCount,
         'hint_usage': hintUsage,
         'completed_at': completedAt?.toIso8601String(),
-        'created_at': createdAt.toIso8601String(),
+        'created_at': createdAt?.toIso8601String(),
       };
 }
 
