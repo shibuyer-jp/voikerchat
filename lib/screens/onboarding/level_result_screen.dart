@@ -145,24 +145,24 @@ class LevelResultScreen extends StatelessWidget {
     );
   }
 
-  Color _getLevelColor(DiagnosticLevel level) {
+  Color _getLevelColor(UserDiagnosticLevel level) {
     switch (level) {
-      case DiagnosticLevel.beginner:
+      case UserDiagnosticLevel.beginner:
         return Colors.blue;
-      case DiagnosticLevel.intermediate:
+      case UserDiagnosticLevel.intermediate:
         return Colors.orange;
-      case DiagnosticLevel.advanced:
+      case UserDiagnosticLevel.advanced:
         return Colors.red;
     }
   }
 
-  String _getLevelDescription(DiagnosticLevel level) {
+  String _getLevelDescription(UserDiagnosticLevel level) {
     switch (level) {
-      case DiagnosticLevel.beginner:
+      case UserDiagnosticLevel.beginner:
         return '初心者向けシーン（友達とのカジュアルな会話など）から始めるのがおすすめです。基礎的な日本語表現を学べます。';
-      case DiagnosticLevel.intermediate:
+      case UserDiagnosticLevel.intermediate:
         return '中級者向けシーン（レストランでの注文、買い物など）がおすすめです。敬語や実用的な日本語表現を習得できます。';
-      case DiagnosticLevel.advanced:
+      case UserDiagnosticLevel.advanced:
         return '上級者向けシーン（自己紹介、複雑な会話など）がおすすめです。ビジネス敬語や高度な表現に挑戦できます。';
     }
   }

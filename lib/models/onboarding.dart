@@ -59,13 +59,13 @@ class OnboardingState {
   }
 
   /// 診断結果からレベルに変換
-  static UserLevel _levelFromDiagnostic(DiagnosticLevel diagnosticLevel) {
+  static UserLevel _levelFromDiagnostic(UserDiagnosticLevel diagnosticLevel) {
     switch (diagnosticLevel) {
-      case DiagnosticLevel.beginner:
+      case UserDiagnosticLevel.beginner:
         return UserLevel.beginner;
-      case DiagnosticLevel.intermediate:
+      case UserDiagnosticLevel.intermediate:
         return UserLevel.intermediate;
-      case DiagnosticLevel.advanced:
+      case UserDiagnosticLevel.advanced:
         return UserLevel.advanced;
     }
   }

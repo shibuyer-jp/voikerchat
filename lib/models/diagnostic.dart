@@ -1,7 +1,7 @@
 import 'package:uuid/uuid.dart';
 
 /// 診断テスト結果のレベル定義
-enum DiagnosticLevel { beginner, intermediate, advanced }
+enum UserDiagnosticLevel { beginner, intermediate, advanced }
 
 /// 診断テストの問題定義
 class DiagnosticQuestion {
@@ -23,7 +23,7 @@ class DiagnosticQuestion {
 /// 診断テスト結果
 class DiagnosticResult {
   final int totalScore; // 0-3点
-  final DiagnosticLevel level;
+  final UserDiagnosticLevel level;
   final List<int?> userAnswers; // ユーザーの選択肢（null = スキップ）
   final DateTime completedAt;
 
@@ -35,20 +35,20 @@ class DiagnosticResult {
   }) : completedAt = completedAt ?? DateTime.now();
 
   /// スコアからレベルを判定
-  static DiagnosticLevel getLevelFromScore(int score) {
-    if (score >= 3) return DiagnosticLevel.advanced;
-    if (score >= 1) return DiagnosticLevel.intermediate;
-    return DiagnosticLevel.beginner;
+  static UserDiagnosticLevel getLevelFromScore(int score) {
+    if (score >= 3) return UserDiagnosticLevel.advanced;
+    if (score >= 1) return UserDiagnosticLevel.intermediate;
+    return UserDiagnosticLevel.beginner;
   }
 
   /// レベルの日本語表示
-  static String getLevelLabel(DiagnosticLevel level) {
+  static String getLevelLabel(UserDiagnosticLevel level) {
     switch (level) {
-      case DiagnosticLevel.beginner:
+      case UserDiagnosticLevel.beginner:
         return '初心者';
-      case DiagnosticLevel.intermediate:
+      case UserDiagnosticLevel.intermediate:
         return '中級者';
-      case DiagnosticLevel.advanced:
+      case UserDiagnosticLevel.advanced:
         return '上級者';
     }
   }
