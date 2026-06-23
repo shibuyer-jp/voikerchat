@@ -17,8 +17,6 @@ import 'stats_screen.dart';
 /// 
 /// Displays conversation with Claude Haiku and saves history to Supabase
 class ChatScreen extends StatefulWidget {
-  final logger = Logger('ChatScreen');
-
   final String sceneId;
   final String sceneName;
   final Map<String, dynamic> sceneData;
@@ -35,6 +33,8 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
+  final logger = Logger('ChatScreen');
+  
   late MessageService _messageService;
   late RateLimitService _rateLimitService;
   late RevenueCatService _revenueCatService;

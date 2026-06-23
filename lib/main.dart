@@ -14,15 +14,13 @@ void main() async {
   try {
     await revenueCatService.initialize();
   } catch (e) {
-    logger.info('RevenueCat initialization error: $e');
+    print('RevenueCat initialization error: $e');
   }
   
   runApp(const VoikerchatApp());
 }
 
 class VoikerchatApp extends StatelessWidget {
-  final logger = Logger('VoikerchatApp');
-
   const VoikerchatApp({super.key});
 
   @override
