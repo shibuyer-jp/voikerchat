@@ -6,9 +6,9 @@ class DiagnosticTestScreen extends StatefulWidget {
   final Function(DiagnosticResult) onTestComplete;
 
   const DiagnosticTestScreen({
-    Key? key,
+    super.key,
     required this.onTestComplete,
-  }) : super(key: key);
+  });
 
   @override
   State<DiagnosticTestScreen> createState() => _DiagnosticTestScreenState();

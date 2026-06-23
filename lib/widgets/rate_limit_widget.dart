@@ -8,10 +8,10 @@ class RateLimitWidget extends StatelessWidget {
   final VoidCallback? onUpgradePressed;
 
   const RateLimitWidget({
-    Key? key,
+    super.key,
     this.rateLimit,
     this.onUpgradePressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

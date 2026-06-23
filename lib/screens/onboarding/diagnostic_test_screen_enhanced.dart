@@ -14,10 +14,10 @@ class DiagnosticTestScreenEnhanced extends StatefulWidget {
   final OnboardingService? analyticsService;
 
   const DiagnosticTestScreenEnhanced({
-    Key? key,
+    super.key,
     required this.onTestComplete,
     this.analyticsService,
-  }) : super(key: key);
+  });
 
   @override
   State<DiagnosticTestScreenEnhanced> createState() =>

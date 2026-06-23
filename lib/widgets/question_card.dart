@@ -10,14 +10,14 @@ class QuestionCard extends StatelessWidget {
   final int totalQuestions;
 
   const QuestionCard({
-    Key? key,
+    super.key,
     required this.question,
     required this.selectedIndex,
     required this.onSkip,
     required this.onSelectAnswer,
     required this.questionNumber,
     required this.totalQuestions,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,10 +6,10 @@ class LevelResultScreen extends StatelessWidget {
   final VoidCallback onContinue;
 
   const LevelResultScreen({
-    Key? key,
+    super.key,
     required this.result,
     required this.onContinue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

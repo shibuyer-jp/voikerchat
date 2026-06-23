@@ -21,13 +21,13 @@ class OnboardingProgressBar extends StatefulWidget {
   final Color inactiveColor;
 
   const OnboardingProgressBar({
-    Key? key,
+    super.key,
     required this.currentStep,
     this.completedSteps = const [false, false, false, false, false],
     this.height = 8.0,
     this.activeColor = const Color(0xFF0099FF),
     this.inactiveColor = const Color(0xFFE0E0E0),
-  }) : super(key: key);
+  });
 
   @override
   State<OnboardingProgressBar> createState() => _OnboardingProgressBarState();

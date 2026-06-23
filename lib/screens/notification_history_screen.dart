@@ -14,7 +14,7 @@ import 'package:voikerchat/services/notification_history_service.dart';
 class NotificationHistoryScreen extends StatefulWidget {
   final logger = Logger('NotificationHistoryScreen');
 
-  const NotificationHistoryScreen({Key? key}) : super(key: key);
+  const NotificationHistoryScreen({Key? key});
 
   @override
   State<NotificationHistoryScreen> createState() =>

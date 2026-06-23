@@ -19,7 +19,7 @@ class ScenePreviewCard extends StatefulWidget {
   final ValueChanged<bool>? onFavoriteToggle;
 
   const ScenePreviewCard({
-    Key? key,
+    super.key,
     required this.sceneId,
     required this.sceneName,
     required this.characterName,
@@ -28,7 +28,7 @@ class ScenePreviewCard extends StatefulWidget {
     this.isFavorite = false,
     this.onTap,
     this.onFavoriteToggle,
-  }) : super(key: key);
+  });
 
   @override
   State<ScenePreviewCard> createState() => _ScenePreviewCardState();

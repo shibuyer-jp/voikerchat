@@ -7,10 +7,10 @@ class PremiumUpsellToast extends StatelessWidget {
   final VoidCallback? onDismiss;
 
   const PremiumUpsellToast({
-    Key? key,
+    super.key,
     this.onDetailsTap,
     this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,10 +55,10 @@ class PremiumUpsellDialog extends StatelessWidget {
   final VoidCallback? onDismiss;
 
   const PremiumUpsellDialog({
-    Key? key,
+    super.key,
     this.onSubscribeTap,
     this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -108,10 +108,10 @@ class PremiumUpsellBanner extends StatelessWidget {
   final VoidCallback? onDismiss;
 
   const PremiumUpsellBanner({
-    Key? key,
+    super.key,
     this.onSubscribeTap,
     this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

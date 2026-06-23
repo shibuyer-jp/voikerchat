@@ -24,11 +24,11 @@ class ChatScreen extends StatefulWidget {
   final Map<String, dynamic> sceneData;
 
   const ChatScreen({
-    Key? key,
+    super.key,
     required this.sceneId,
     required this.sceneName,
     required this.sceneData,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
