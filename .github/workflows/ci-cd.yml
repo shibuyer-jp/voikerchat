@@ -34,11 +34,13 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
-  # Job 2: Deploy to Vercel (web)
+  # Job 2: Deploy to Vercel (web) — DISABLED
+  # Vercel auto-deploys via GitHub integration when code is pushed to main
+  # No need for manual amondnet/vercel-action step
   deploy-web:
     runs-on: ubuntu-latest
     needs: flutter-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: false  # Disabled: Vercel auto-deployment is active
     
     steps:
       - uses: actions/checkout@v4
