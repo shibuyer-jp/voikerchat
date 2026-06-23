@@ -20,6 +20,7 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.12.2
+  flutter: ^3.44.3
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -94,3 +95,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Platform-specific minimum version requirements
+platforms:
+  ios:
+    min_sdk_version: "11.0"
+  android:
+    min_sdk_version: "21"
