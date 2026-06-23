@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/message.dart';
+import '../models/rate_limit.dart';
 import '../services/message_service.dart';
+import '../services/rate_limit_service.dart';
 
 /// Chat screen for Voikerchat
 /// 
@@ -24,6 +26,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   late MessageService _messageService;
+  late RateLimitService _rateLimitService;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -31,6 +34,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isLoading = true;
   bool _isSending = false;
   String? _userId;
+  RateLimit? _rateLimit;
 
   @override
   void initState() {
@@ -51,6 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _userId = user.id;
       _messageService = MessageService.getInstance(Supabase.instance.client);
+      _rateLimitService = RateLimitService(Supabase.instance.client);
 
       // Get or create session
       await _messageService.getOrCreateSession(
@@ -58,12 +63,23 @@ class _ChatScreenState extends State<ChatScreen> {
         sceneId: widget.sceneId,
       );
 
-      // Load existing messages
+      // Load existing messages and rate limit status
       await _loadMessages();
+      await _loadRateLimit();
 
       setState(() => _isLoading = false);
     } catch (e) {
       _showError('Failed to initialize chat: $e');
+    }
+  }
+
+  Future<void> _loadRateLimit() async {
+    if (_userId == null) return;
+    try {
+      final rateLimit = await _rateLimitService.getRateLimit(_userId!);
+      setState(() => _rateLimit = rateLimit);
+    } catch (e) {
+      print('Failed to load rate limit: $e');
     }
   }
 
@@ -86,6 +102,12 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendMessage() async {
     final text = _inputController.text.trim();
     if (text.isEmpty || _isSending) return;
+
+    // Check rate limit before sending
+    if (_rateLimit != null && !_rateLimit!.canMakeCall) {
+      _showRateLimitDialog();
+      return;
+    }
 
     setState(() => _isSending = true);
     _inputController.clear();
@@ -116,6 +138,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
       setState(() => _messages.add(assistantMessage));
       _scrollToBottom();
+
+      // Increment rate limit counter
+      await _rateLimitService.checkAndIncrement(_userId!);
+      await _loadRateLimit(); // Refresh display
+
     } catch (e) {
       _showError('Failed to send message: $e');
       // Re-insert user input on error
@@ -409,6 +436,59 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showRateLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Daily Limit Reached'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'You have used all your free daily calls.',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            if (_rateLimit != null)
+              Text(
+                'Limit: ${_rateLimit!.dailyLimit} calls/day',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            const SizedBox(height: 16),
+            const Text(
+              '✨ Go Premium to unlock unlimited calls!',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Later'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Navigate to premium purchase flow
+            },
+            child: const Text('Upgrade'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }
