@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
 import '../models/message.dart';
 import '../models/rate_limit.dart';
 import '../services/message_service.dart';
@@ -201,8 +202,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  /// Call Claude Haiku API endpoint
-  /// Implementation depends on backend (Firebase Functions, Vercel, or direct)
+  /// Call Claude Haiku API endpoint (via Vercel /api/chat)
+  /// Server-side rate limiting enforced
   Future<Map<String, dynamic>> _callClaudeHaikuAPI({
     required List<Map<String, dynamic>> messages,
     required Map<String, dynamic> sceneData,
@@ -212,16 +213,41 @@ class _ChatScreenState extends State<ChatScreen> {
       final token = Supabase.instance.client.auth.currentSession?.accessToken;
       if (token == null) throw Exception('No auth token');
 
-      // TODO: Replace with actual backend endpoint
-      // For now, return mock response (implement in T-12b proper backend)
-      final response = {
-        'content': 'これはテスト応答です。実装はバックエンド統合時に更新します。',
-        'tokens_used': 150,
-      };
+      // Call server-side API endpoint with server-side rate limiting
+      const baseUrl = 'https://voikerchat.com';
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/chat'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'token': token,
+          'messages': messages,
+          'sceneId': widget.sceneId,
+          'maxTokens': 500,
+        }),
+      );
 
-      return response;
+      if (response.statusCode == 429) {
+        // Rate limit reached - trigger upgrade dialog
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showPremiumDialog();
+        });
+        throw Exception('Daily limit reached. Upgrade to Premium!');
+      }
+
+      if (response.statusCode != 200) {
+        final error = jsonDecode(response.body);
+        throw Exception(error['error'] ?? 'API error: ${response.statusCode}');
+      }
+
+      final result = jsonDecode(response.body);
+      return {
+        'content': result['content'] ?? '',
+        'tokens_used': result['tokensUsed'] ?? 150,
+      };
     } catch (e) {
-      throw Exception('Failed to call Claude Haiku API: $e');
+      throw Exception('Assistant API error: $e');
     }
   }
 

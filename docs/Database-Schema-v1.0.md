@@ -118,17 +118,18 @@ CREATE POLICY "Users can create sessions"
 ```
 
 ### 6. rate_limits
-Daily API call tracking (implements T-15).
+Daily API call tracking + Premium status (T-17 & T-18).
 
 ```sql
 CREATE TABLE public.rate_limits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.user_profiles ON DELETE CASCADE,
-  date DATE NOT NULL,
-  api_calls_used INT DEFAULT 0,
+  user_id UUID NOT NULL UNIQUE REFERENCES public.user_profiles ON DELETE CASCADE,
+  is_premium BOOLEAN DEFAULT false,
+  used_today INT DEFAULT 0,
   daily_limit INT DEFAULT 5,
-  reset_at TIMESTAMPTZ,
-  UNIQUE (user_id, date)
+  last_reset_utc TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- RLS Policy: Users can only view their own limits
@@ -136,10 +137,17 @@ CREATE POLICY "Users can view own rate limits"
   ON public.rate_limits 
   FOR SELECT USING (auth.uid() = user_id);
 
+-- Server-side only updates (API endpoint)
 CREATE POLICY "System can update rate limits" 
   ON public.rate_limits 
   FOR UPDATE USING (auth.uid() = user_id);
 ```
+
+**Premium Status Flow:**
+- `is_premium = false` → Rate limited (5 calls/day free, +5 with ad-watch)
+- `is_premium = true` → Unlimited calls
+- Updated via RevenueCat webhook when subscription succeeds
+
 
 ### 7. usage_logs
 Audit trail for all API usage (analytics).
