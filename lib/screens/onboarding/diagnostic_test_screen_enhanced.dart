@@ -258,7 +258,6 @@ class _DiagnosticTestScreenEnhancedState
                 children: List.generate(question.options.length, (index) {
                   final option = question.options[index];
                   final isSelected = userAnswers[currentQuestionIndex] == index;
-                  final isCorrectAnswer = question.correctAnswerIndex == index;
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),

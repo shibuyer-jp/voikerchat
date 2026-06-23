@@ -528,7 +528,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         border: Border(
-                          top: BorderSide(color: Colors.grey.shade300!),
+                          top: BorderSide(color: Colors.grey.shade300),
                         ),
                       ),
                       child: Row(
@@ -768,6 +768,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     try {
       final result = await _revenueCatService.purchasePremium();
       
+      if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
       
       if (result['success'] == true) {
@@ -775,7 +776,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         _showSuccess('✨ Welcome to Premium! Enjoy unlimited conversations!');
       } else {
         // エラーハンドリング
-        final errorCode = result['error'] as String?;
         final message = result['message'] as String? ?? 'Purchase failed';
         final retryable = result['retryable'] as bool? ?? false;
         final userInitiated = result['userInitiated'] as bool? ?? false;
@@ -797,7 +797,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         }
       }
     } catch (e) {
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
       _showError('Unexpected error: $e. Please try again later.');
     }
   }

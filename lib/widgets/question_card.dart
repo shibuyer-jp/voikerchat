@@ -117,7 +117,6 @@ class QuestionCard extends StatelessWidget {
 
   Widget _buildAnswerOption(BuildContext context, int index) {
     final isSelected = selectedIndex == index;
-    final isCorrect = index == question.correctAnswerIndex;
     final isWakarimasen = index == 4;
 
     return Padding(

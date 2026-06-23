@@ -33,7 +33,7 @@ class RevenueCatService {
       _prefs = await SharedPreferences.getInstance();
       
       // RevenueCat SDK 初期化
-      await Purchases.setDebugLogsEnabled(true);
+      await Purchases.setLogLevel(LogLevel.debug);
       
       if (Platform.isIOS) {
         await Purchases.configure(

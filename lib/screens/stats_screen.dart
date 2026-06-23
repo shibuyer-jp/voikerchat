@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 /// 
 /// Displays learning progress, token usage, scene progress, etc.
 class StatsScreen extends StatefulWidget {
-  const StatsScreen({Key? key});
+  const StatsScreen({super.key});
 
   @override
   State<StatsScreen> createState() => _StatsScreenState();
@@ -270,7 +270,7 @@ class _StatsScreenState extends State<StatsScreen> {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:logging/logging.dart';
 import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen.dart';

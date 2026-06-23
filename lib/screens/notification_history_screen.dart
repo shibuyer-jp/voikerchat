@@ -12,7 +12,7 @@ import 'package:voikerchat/services/notification_history_service.dart';
 /// - スワイプで削除
 /// - 通知なし時の空状態表示
 class NotificationHistoryScreen extends StatefulWidget {
-  const NotificationHistoryScreen({Key? key}) : super(key: key);
+  const NotificationHistoryScreen({super.key});
 
   @override
   State<NotificationHistoryScreen> createState() =>
