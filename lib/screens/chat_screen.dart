@@ -8,6 +8,7 @@ import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
 import '../services/revenuecat_service.dart';
 import '../widgets/rate_limit_widget.dart';
+import 'stats_screen.dart';
 
 /// Chat screen for Voikerchat
 /// 
@@ -322,6 +323,17 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
               ),
+            ),
+          if (_isPremium)
+            IconButton(
+              icon: const Icon(Icons.bar_chart),
+              tooltip: 'Learning Stats',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StatsScreen()),
+                );
+              },
             ),
           IconButton(
             icon: const Icon(Icons.more_vert),

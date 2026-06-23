@@ -95,7 +95,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })),
     });
 
-    // 6. 成功レスポンス
+    // 6. Usage logs に記録（成功）
+    await logUsage({
+      userId,
+      sceneId,
+      endpoint: '/api/chat',
+      tokensConsumed: response.usage.output_tokens,
+      status: 'success',
+    });
+
+    // 7. 成功レスポンス
     const content = response.content[0];
     const assistantMessage =
       content.type === 'text' ? content.text : 'Unable to generate response';
@@ -107,6 +116,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       inputTokens: response.usage.input_tokens,
     });
   } catch (error: any) {
+    // Error logging
+    const errorMessage = error.message || 'Unknown error';
+    
+    try {
+      const userId = error.userId || 'unknown';
+      await logUsage({
+        userId,
+        sceneId: error.sceneId || '',
+        endpoint: '/api/chat',
+        tokensConsumed: 0,
+        status: 'error',
+        errorMessage,
+      });
+    } catch (logErr) {
+      console.error('Failed to log error:', logErr);
+    }
+
     console.error('Chat API error:', error);
     return res.status(500).json({
       error: 'Internal server error',
@@ -213,4 +239,31 @@ function buildSystemPrompt(sceneId: string): string {
     scenePrompts[sceneId] ||
     'You are a helpful Japanese language conversation partner. Respond naturally in Japanese.'
   );
+}
+
+/**
+ * Log API usage to usage_logs table
+ */
+async function logUsage(params: {
+  userId: string;
+  sceneId?: string;
+  endpoint: string;
+  tokensConsumed: number;
+  status: 'success' | 'error';
+  errorMessage?: string;
+}): Promise<void> {
+  try {
+    await supabase.from('usage_logs').insert({
+      user_id: params.userId,
+      scene_id: params.sceneId || null,
+      api_endpoint: params.endpoint,
+      tokens_consumed: params.tokensConsumed,
+      status: params.status,
+      error_message: params.errorMessage || null,
+      created_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('Failed to log usage:', err);
+    // Fail silently - don't block API response
+  }
 }
