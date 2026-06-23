@@ -1,5 +1,4 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
 /// PremiumUpsellStage: Premium勧導ステージ
 enum PremiumUpsellStage {

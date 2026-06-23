@@ -15,10 +15,6 @@ class RevenueCatService {
 
   // RevenueCat API キー（テスト）
   static const String _apiKey = 'test_bvqgeBBNoUiKVbBHI0aPMOnwg7Cw';
-  
-  // Product IDs
-  static const String _iosProductId = 'voikerchat.premium.monthly';
-  static const String _androidProductId = 'voikerchat_premium_monthly';
 
   RevenueCatService._internal();
 

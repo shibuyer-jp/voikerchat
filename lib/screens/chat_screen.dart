@@ -9,7 +9,6 @@ import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
 import '../services/revenuecat_service.dart';
 import '../services/streak_service.dart';
-import '../services/local_notification_service.dart';
 import '../widgets/rate_limit_widget.dart';
 import 'stats_screen.dart';
 
@@ -37,7 +36,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late RateLimitService _rateLimitService;
   late RevenueCatService _revenueCatService;
   late StreakService _streakService;
-  late LocalNotificationService _notificationService;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -47,7 +45,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   String? _userId;
   RateLimit? _rateLimit;
   bool _isPremium = false;
-  bool _showPremiumPromo = true;
   int _currentStreak = 0;
 
   @override
@@ -57,7 +54,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _scrollController = ScrollController();
     _revenueCatService = RevenueCatService();
     _streakService = StreakService();
-    _notificationService = LocalNotificationService();
 
     // WidgetsBinding オブザーバー登録（通知タップ処理）
     WidgetsBinding.instance.addObserver(this);

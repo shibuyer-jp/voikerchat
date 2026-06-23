@@ -64,10 +64,6 @@ class _DiagnosticTestScreenEnhancedState
     return score;
   }
 
-  /// 選択肢が正解かチェック
-  bool _isCorreect(int questionIndex, int answerIndex) {
-    return questions[questionIndex].correctAnswerIndex == answerIndex;
-  }
 
   void _handleAnswerSelected(int answerIndex) {
     setState(() {
