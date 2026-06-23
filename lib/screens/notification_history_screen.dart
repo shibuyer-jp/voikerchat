@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'notification_history_model.dart';
-import 'notification_history_service.dart';
+import 'package:voikerchat/models/notification_history_model.dart';
+import 'package:voikerchat/services/notification_history_service.dart';
 
 /// 通知履歴画面
 /// 
@@ -55,16 +55,16 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     });
   }
 
-  /// リアルタイム更新リスナーをセットアップ
+  /// リアルタイム更新リスナーをセットアップ（v1.10 では後回し）
   void _setupRealtimeListener() {
-    try {
-      _subscription = _service.listenToNotifications((event) {
-        // 新しい通知を受信したら一覧をリロード
-        _loadNotifications();
-      });
-    } catch (e) {
-      print('Realtime listener setup error: $e');
-    }
+    // TODO: Supabase v2.x で Realtime API が改善されたら実装
+    // try {
+    //   _subscription = _service.listenToNotifications((event) {
+    //     _loadNotifications();
+    //   });
+    // } catch (e) {
+    //   print('Realtime listener setup error: $e');
+    // }
   }
 
   /// 通知を既読マーク
