@@ -75,7 +75,7 @@ class LevelResultScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
+                        color: Colors.grey.shade600,
                       ),
                     ),
                   ],

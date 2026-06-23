@@ -28,14 +28,14 @@ class RateLimitWidget extends StatelessWidget {
             Icon(
               Icons.flash_on,
               size: 16,
-              color: Colors.amber[600],
+              color: Colors.amber.shade600,
             ),
             const SizedBox(width: 6),
             Text(
               'Premium - Unlimited',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.amber[600],
+                color: Colors.amber.shade600,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -62,7 +62,7 @@ class RateLimitWidget extends StatelessWidget {
                 '$remaining / ${rateLimit!.dailyLimit} calls remaining today',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isNearLimit ? Colors.red[700] : Colors.grey[600],
+                  color: isNearLimit ? Colors.red[700] : Colors.grey.shade600,
                   fontWeight: isNearLimit ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
@@ -88,7 +88,7 @@ class RateLimitWidget extends StatelessWidget {
             child: LinearProgressIndicator(
               value: usagePercent / 100,
               minHeight: 4,
-              backgroundColor: Colors.grey[300],
+              backgroundColor: Colors.grey.shade300,
               valueColor: AlwaysStoppedAnimation<Color>(
                 isNearLimit ? Colors.red[600]! : Colors.blue[500]!,
               ),

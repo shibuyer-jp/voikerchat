@@ -188,7 +188,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   /// フィルタータブを構築
   Widget _buildFilterTabs() {
     return Container(
-      color: Colors.grey[100],
+      color: Colors.grey.shade100,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -250,7 +250,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[700],
+                  color: Colors.grey.shade700,
                 ),
               ),
               const SizedBox(height: 4),
@@ -258,7 +258,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                 notification.relativeTime,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.grey[500],
+                  color: Colors.grey.shade500,
                 ),
               ),
             ],
@@ -281,12 +281,12 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: Colors.grey.shade300,
           shape: BoxShape.circle,
         ),
         child: Icon(
           Icons.check_circle,
-          color: Colors.grey[600],
+          color: Colors.grey.shade600,
           size: 24,
         ),
       );
@@ -339,14 +339,14 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
           Icon(
             Icons.notifications_none,
             size: 64,
-            color: Colors.grey[400],
+            color: Colors.grey.shade400,
           ),
           const SizedBox(height: 16),
           Text(
             '通知はありません',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
+              color: Colors.grey.shade600,
             ),
           ),
           const SizedBox(height: 24),

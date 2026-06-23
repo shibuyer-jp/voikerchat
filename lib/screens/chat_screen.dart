@@ -475,7 +475,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 decoration: BoxDecoration(
                                   color: isUser
                                       ? Theme.of(context).primaryColor
-                                      : Colors.grey[300],
+                                      : Colors.grey.shade300,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Column(
@@ -496,7 +496,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         fontSize: 12,
                                         color: isUser
                                             ? Colors.white70
-                                            : Colors.grey[600],
+                                            : Colors.grey.shade600,
                                       ),
                                     ),
                                   ],
@@ -528,7 +528,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         border: Border(
-                          top: BorderSide(color: Colors.grey[300]!),
+                          top: BorderSide(color: Colors.grey.shade300!),
                         ),
                       ),
                       child: Row(
