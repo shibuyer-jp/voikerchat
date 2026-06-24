@@ -13,7 +13,12 @@ void main() async {
   
   // LocalNotificationService 初期化
   final localNotificationService = LocalNotificationService();
-  await localNotificationService.initialize();
+  await localNotificationService.initialize(
+    onSelectNotification: (String? payload) {
+      // ローカル通知タップ時の処理
+      // payload は conversationId を含む場合がある
+    },
+  );
   
   // RemoteNotificationService 初期化
   final remoteNotificationService = RemoteNotificationService();
