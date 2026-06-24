@@ -20,12 +20,14 @@ class ChatScreen extends StatefulWidget {
   final String sceneId;
   final String sceneName;
   final Map<String, dynamic> sceneData;
+  final String? conversationId; // From notification (pattern B)
 
   const ChatScreen({
     super.key,
     required this.sceneId,
     required this.sceneName,
     required this.sceneData,
+    this.conversationId,
   });
 
   @override
