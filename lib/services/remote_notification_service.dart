@@ -127,32 +127,38 @@ class RemoteNotificationService {
 
   /// メッセージハンドラー設定
   void _setupMessageHandlers() {
-    // フォアグラウンド通知
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      logger.info('[RemoteNotificationService] Message received in foreground');
-      _handleMessage(message, isForeground: true);
-    });
+    // Web では notification 機能がないため、スキップ
+    try {
+      // フォアグラウンド通知
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        logger.info('[RemoteNotificationService] Message received in foreground');
+        _handleMessage(message, isForeground: true);
+      });
 
-    // バックグラウンド/終了状態での通知タップ
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      logger.info('[RemoteNotificationService] App opened via notification');
-      _handleMessage(message, isFromTerminated: true);
-    });
-
-    // 終了状態での初期メッセージ取得
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-      if (message != null) {
-        logger.info('[RemoteNotificationService] App launched via notification');
+      // バックグラウンド/終了状態での通知タップ
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        logger.info('[RemoteNotificationService] App opened via notification');
         _handleMessage(message, isFromTerminated: true);
-      }
-    });
+      });
 
-    // トークンリフレッシュリスナー
-    _fcm.onTokenRefresh.listen((String newToken) {
-      _cachedToken = newToken;
-      _prefs.setString('fcm_token', newToken);
-      logger.info('[RemoteNotificationService] FCM token refreshed: ${newToken.substring(0, 20)}...');
-    });
+      // 終了状態での初期メッセージ取得
+      FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+        if (message != null) {
+          logger.info('[RemoteNotificationService] App launched via notification');
+          _handleMessage(message, isFromTerminated: true);
+        }
+      });
+
+      // トークンリフレッシュリスナー
+      _fcm.onTokenRefresh.listen((String newToken) {
+        _cachedToken = newToken;
+        _prefs.setString('fcm_token', newToken);
+        logger.info('[RemoteNotificationService] FCM token refreshed: ${newToken.substring(0, 20)}...');
+      });
+    } catch (e) {
+      // Web では使用できない API → 無視
+      logger.info('[RemoteNotificationService] Message handlers setup skipped (Web environment): $e');
+    }
   }
 
   /// メッセージハンドリング

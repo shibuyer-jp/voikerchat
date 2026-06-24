@@ -1,4 +1,5 @@
 // Stub implementation for Firebase Messaging (Web compatibility)
+import 'dart:async';
 
 enum AuthorizationStatus {
   authorized,
@@ -12,13 +13,19 @@ class NotificationSettings {
   NotificationSettings({required this.authorizationStatus});
 }
 
+class RemoteMessage {
+  final String? notification;
+  final Map<String, dynamic> data;
+  RemoteMessage({this.notification, this.data = const {}});
+}
+
 class FirebaseMessaging {
   static final FirebaseMessaging instance = FirebaseMessaging._();
   FirebaseMessaging._();
   
-  Stream get onMessage => Stream.empty();
-  Stream get onMessageOpenedApp => Stream.empty();
-  Stream get onTokenRefresh => Stream.empty();
+  static Stream<RemoteMessage> get onMessage => Stream.empty();
+  static Stream<RemoteMessage> get onMessageOpenedApp => Stream.empty();
+  static Stream<String> get onTokenRefresh => Stream.empty();
   
   Future<String?> getToken() async => null;
   Future<String?> getInitialMessage() async => null;
@@ -40,10 +47,4 @@ class FirebaseMessaging {
   }
   Future<void> subscribeToTopic(String topic) async {}
   Future<void> unsubscribeFromTopic(String topic) async {}
-}
-
-class RemoteMessage {
-  final String? notification;
-  final Map<String, dynamic> data;
-  RemoteMessage({this.notification, this.data = const {}});
 }
