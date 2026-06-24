@@ -1,6 +1,8 @@
 import 'package:logging/logging.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_core/firebase_core.dart'
+  if (dart.library.html) 'package:voikerchat/stubs/firebase_core_stub.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'
+  if (dart.library.html) 'package:voikerchat/stubs/firebase_messaging_stub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voikerchat/models/notification_data_model.dart';
 import 'local_notification_service.dart';
