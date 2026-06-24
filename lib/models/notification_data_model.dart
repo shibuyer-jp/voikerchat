@@ -6,6 +6,7 @@ class NotificationDataModel {
   final String title;
   final String body;
   final String? imageUrl;
+  final String? conversationId; // パターンB: 会話ID（通知タップ時に使用）
   final Map<String, String>? customData;
   final DateTime createdAt;
   final bool isRead;
@@ -16,6 +17,7 @@ class NotificationDataModel {
     required this.title,
     required this.body,
     this.imageUrl,
+    this.conversationId,
     this.customData,
     DateTime? createdAt,
     this.isRead = false,
@@ -29,6 +31,7 @@ class NotificationDataModel {
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       imageUrl: json['imageUrl'] as String?,
+      conversationId: json['conversationId'] as String?,
       customData: json['customData'] != null
           ? Map<String, String>.from(json['customData'] as Map)
           : null,
@@ -49,6 +52,7 @@ class NotificationDataModel {
       'title',
       'body',
       'image_url',
+      'conversation_id', // conversationId は専用フィールドに格納
     };
     
     data.forEach((key, value) {
@@ -63,6 +67,7 @@ class NotificationDataModel {
       title: data['title'] as String? ?? '',
       body: data['body'] as String? ?? '',
       imageUrl: data['image_url'] as String?,
+      conversationId: data['conversation_id'] as String?,
       customData: customData.isEmpty ? null : Map<String, String>.from(
         customData.map((k, v) => MapEntry(k, v.toString()))
       ),
@@ -77,6 +82,7 @@ class NotificationDataModel {
       'title': title,
       'body': body,
       'imageUrl': imageUrl,
+      'conversationId': conversationId,
       'customData': customData,
       'createdAt': createdAt.toIso8601String(),
       'isRead': isRead,
@@ -90,6 +96,7 @@ class NotificationDataModel {
     String? title,
     String? body,
     String? imageUrl,
+    String? conversationId,
     Map<String, String>? customData,
     DateTime? createdAt,
     bool? isRead,
@@ -100,6 +107,7 @@ class NotificationDataModel {
       title: title ?? this.title,
       body: body ?? this.body,
       imageUrl: imageUrl ?? this.imageUrl,
+      conversationId: conversationId ?? this.conversationId,
       customData: customData ?? this.customData,
       createdAt: createdAt ?? this.createdAt,
       isRead: isRead ?? this.isRead,
