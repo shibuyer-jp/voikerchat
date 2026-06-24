@@ -4,9 +4,39 @@ import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen.dart';
 import 'screens/onboarding/level_result_screen.dart';
 import 'services/revenuecat_service.dart';
+import 'services/local_notification_service.dart';
+import 'services/remote_notification_service.dart';
+import 'models/notification_data_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // LocalNotificationService 初期化
+  final localNotificationService = LocalNotificationService();
+  await localNotificationService.initialize();
+  
+  // RemoteNotificationService 初期化
+  final remoteNotificationService = RemoteNotificationService();
+  await remoteNotificationService.initialize(
+    localNotificationService: localNotificationService,
+  );
+  
+  // 通知ハンドラー設定（パターンB: conversationId で会話ナビゲーション）
+  remoteNotificationService.setMessageHandler(
+    (NotificationDataModel notification) {
+      // フォアグラウンド通知受信時の処理
+      // conversationId がある場合は、ユーザーが通知をタップしたときに
+      // ChatScreen がそのシーンを自動ロードする
+    },
+    onTerminated: (NotificationDataModel notification) {
+      // アプリ終了状態から通知タップで起動した場合
+      // conversationId を使って目的の会話を開く
+      if (notification.conversationId != null) {
+        // NavigationService などを使って、
+        // 該当 sceneId の ChatScreen に遷移
+      }
+    },
+  );
   
   // RevenueCat 初期化
   final revenueCatService = RevenueCatService();
