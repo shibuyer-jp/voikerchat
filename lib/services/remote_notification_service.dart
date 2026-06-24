@@ -46,36 +46,42 @@ class RemoteNotificationService {
     _localNotificationService = localNotificationService;
     _prefs = await SharedPreferences.getInstance();
 
-    // Firebase 初期化
-    if (!firebaseInitialized) {
-      try {
-        await Firebase.initializeApp();
-      } catch (e) {
-        logger.info('[RemoteNotificationService] Firebase already initialized: $e');
+    // Firebase 初期化（Web では失敗を許容）
+    try {
+      if (!firebaseInitialized) {
+        try {
+          await Firebase.initializeApp();
+        } catch (e) {
+          logger.info('[RemoteNotificationService] Firebase already initialized: $e');
+        }
       }
+
+      _fcm = FirebaseMessaging.instance;
+
+      // 通知権限リクエスト（iOS）
+      await _fcm.requestPermission(
+        alert: true,
+        announcement: true,
+        badge: true,
+        carPlay: false,
+        criticalAlert: true,
+        provisional: false,
+        sound: true,
+      );
+
+      // FCM トークン取得
+      await _refreshFCMToken();
+
+      // メッセージハンドラー設定
+      _setupMessageHandlers();
+
+      _isInitialized = true;
+      logger.info('[RemoteNotificationService] Initialized successfully');
+    } catch (e) {
+      logger.warning('[RemoteNotificationService] Firebase initialization skipped (Web/non-mobile): $e');
+      // Web では通知機能なしで継続
+      _isInitialized = true;
     }
-
-    _fcm = FirebaseMessaging.instance;
-
-    // 通知権限リクエスト（iOS）
-    await _fcm.requestPermission(
-      alert: true,
-      announcement: true,
-      badge: true,
-      carPlay: false,
-      criticalAlert: true,
-      provisional: false,
-      sound: true,
-    );
-
-    // FCM トークン取得
-    await _refreshFCMToken();
-
-    // メッセージハンドラー設定
-    _setupMessageHandlers();
-
-    _isInitialized = true;
-    logger.info('[RemoteNotificationService] Initialized successfully');
   }
 
   /// FCM トークンをリフレッシュ
