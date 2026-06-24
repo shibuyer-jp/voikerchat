@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "446972546346",
+    "project_id": "voikerchat",
+    "storage_bucket": "voikerchat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446972546346:android:4f8d1c65ede89700586253",
+        "android_client_info": {
+          "package_name": "jp.shibuyer.voikerchat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhEg_lXK-rN3OCRjEIQFKIWjrgwYMqETg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
