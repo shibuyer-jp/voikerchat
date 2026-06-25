@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'
+  if (dart.library.html) 'package:voikerchat/stubs/firebase_messaging_stub.dart';
 import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen.dart';
@@ -8,8 +11,35 @@ import 'services/local_notification_service.dart';
 import 'services/remote_notification_service.dart';
 import 'models/notification_data_model.dart';
 
+final logger = Logger('main');
+
+/// バックグラウンド/終了状態でのメッセージハンドラー
+/// iOS/Android でアプリがメモリから削除されている場合でも実行される
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    logger.info('[BackgroundHandler] Message received: ${message.data}');
+    
+    // Firebase と同じ初期化が必要（バックグラウンドコンテキストでは別プロセス）
+    // ここではログのみ記録。UI 更新は必要ない
+    
+    final notificationData = NotificationDataModel.fromFirebaseMap(message.data);
+    logger.info('[BackgroundHandler] Processed notification: ${notificationData.id}');
+  } catch (e) {
+    logger.warning('[BackgroundHandler] Error: $e');
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Firebase Cloud Messaging のバックグラウンドメッセージハンドラー登録
+  try {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    logger.info('[main] Background message handler registered');
+  } catch (e) {
+    logger.info('[main] Background handler registration skipped (Web/non-mobile): $e');
+  }
   
   // LocalNotificationService 初期化（Web では失敗を許容）
   try {

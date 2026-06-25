@@ -13,8 +13,14 @@ class NotificationSettings {
   NotificationSettings({required this.authorizationStatus});
 }
 
+class Notification {
+  final String? title;
+  final String? body;
+  Notification({this.title, this.body});
+}
+
 class RemoteMessage {
-  final String? notification;
+  final Notification? notification;
   final Map<String, dynamic> data;
   RemoteMessage({this.notification, this.data = const {}});
 }
@@ -26,6 +32,12 @@ class FirebaseMessaging {
   static Stream<RemoteMessage> get onMessage => Stream.empty();
   static Stream<RemoteMessage> get onMessageOpenedApp => Stream.empty();
   static Stream<String> get onTokenRefresh => Stream.empty();
+  
+  static Future<void> onBackgroundMessage(
+    Future<void> Function(RemoteMessage) handler,
+  ) async {
+    // Web では使用できない
+  }
   
   Future<String?> getToken() async => null;
   Future<String?> getInitialMessage() async => null;
