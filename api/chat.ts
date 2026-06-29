@@ -98,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 5. Claude Haiku 呼び出し
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: Math.min(maxTokens, 500),
       system: buildSystemPrompt(sceneId),
       messages: messages.map((msg: any) => ({
