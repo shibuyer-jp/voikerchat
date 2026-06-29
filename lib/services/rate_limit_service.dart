@@ -18,7 +18,7 @@ class RateLimitService {
           .eq('user_id', userId)
           .single();
 
-      return RateLimit.fromJson(response as Map<String, dynamic>);
+      return RateLimit.fromJson(response);
     } catch (e) {
       // If no record exists, return default (free tier: 5 calls/day)
       return RateLimit(
