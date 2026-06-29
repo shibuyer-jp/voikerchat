@@ -1,0 +1,39 @@
+name: Flutter CI
+
+# 全ブランチへの push と PR で実行。
+# analyze/test は Supabase 等の秘匿情報を必要としない
+# （Supabase 初期化は --dart-define 未設定時にスキップされる）ため、
+# シークレットなしで動作する。
+on:
+  push:
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Flutter バージョンをここで固定 → 開発マシン間の差異に依存しない。
+      # pubspec の environment 制約（flutter: ^3.44.3）を満たすバージョン。
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+        continue-on-error: true
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
