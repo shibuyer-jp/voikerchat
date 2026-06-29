@@ -6,6 +6,7 @@ import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen.dart';
 import 'screens/onboarding/level_result_screen.dart';
+import 'screens/scene_selection_screen.dart';
 import 'services/revenuecat_service.dart';
 import 'services/local_notification_service.dart';
 import 'services/remote_notification_service.dart';
@@ -131,10 +132,13 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
   }
 
   void _handleLevelResultContinue() {
-    // シーン選択画面へ遷移（次のステップ）
-    // TODO: Scene selection screen implementation
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('シーン選択画面は次のフェーズで実装します')),
+    final result = currentState.diagnosticResult;
+    if (result == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SceneSelectionScreen(userLevel: result.level),
+      ),
     );
   }
 

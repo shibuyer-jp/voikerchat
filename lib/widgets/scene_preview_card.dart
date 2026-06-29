@@ -15,6 +15,8 @@ class ScenePreviewCard extends StatefulWidget {
   final String description;
   final UserDiagnosticLevel recommendedLevel;
   final bool isFavorite;
+  final bool isPremium;
+  final bool isLocked;
   final VoidCallback? onTap;
   final ValueChanged<bool>? onFavoriteToggle;
 
@@ -26,6 +28,8 @@ class ScenePreviewCard extends StatefulWidget {
     required this.description,
     required this.recommendedLevel,
     this.isFavorite = false,
+    this.isPremium = false,
+    this.isLocked = false,
     this.onTap,
     this.onFavoriteToggle,
   });
@@ -94,12 +98,51 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.sceneName,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.sceneName,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            if (widget.isPremium) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFD700)
+                                      .withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      size: 12,
+                                      color: Color(0xFFB8860B),
+                                    ),
+                                    SizedBox(width: 2),
+                                    Text(
+                                      'PREMIUM',
+                                      style: TextStyle(
+                                        color: Color(0xFFB8860B),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -109,17 +152,25 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                       ],
                     ),
                   ),
-                  ScaleTransition(
-                    scale: Tween<double>(begin: 1, end: 1.2)
-                        .animate(_animationController),
-                    child: IconButton(
-                      onPressed: _toggleFavorite,
-                      icon: Icon(
-                        widget.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: Colors.red,
+                  if (widget.isLocked)
+                    const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.lock, color: Colors.grey),
+                    )
+                  else
+                    ScaleTransition(
+                      scale: Tween<double>(begin: 1, end: 1.2)
+                          .animate(_animationController),
+                      child: IconButton(
+                        onPressed: _toggleFavorite,
+                        icon: Icon(
+                          widget.isFavorite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
 
