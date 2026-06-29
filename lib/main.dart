@@ -6,7 +6,8 @@ import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen.dart';
 import 'screens/onboarding/level_result_screen.dart';
-import 'screens/scene_selection_screen.dart';
+import 'screens/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/revenuecat_service.dart';
 import 'services/local_notification_service.dart';
 import 'services/remote_notification_service.dart';
@@ -104,7 +105,57 @@ class VoikerchatApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const OnboardingFlowScreen(),
+      home: const RootScreen(),
+    );
+  }
+}
+
+/// SharedPreferences キー（オンボーディング完了判定・診断レベル永続化）
+const String _kFirstLaunchKey = 'is_first_launch';
+const String _kUserLevelKey = 'user_diagnostic_level';
+
+UserDiagnosticLevel _parseLevel(String name) {
+  return UserDiagnosticLevel.values.firstWhere(
+    (e) => e.name == name,
+    orElse: () => UserDiagnosticLevel.beginner,
+  );
+}
+
+/// RootScreen: 起動時に初回判定し、初回はオンボーディング、
+/// 2回目以降は保存済みレベルで HomeScreen を直接表示する。
+class RootScreen extends StatefulWidget {
+  const RootScreen({super.key});
+
+  @override
+  State<RootScreen> createState() => _RootScreenState();
+}
+
+class _RootScreenState extends State<RootScreen> {
+  late final Future<Widget> _initialScreen = _resolveInitialScreen();
+
+  Future<Widget> _resolveInitialScreen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final firstLaunch = prefs.getBool(_kFirstLaunchKey) ?? true;
+    final levelName = prefs.getString(_kUserLevelKey);
+
+    if (!firstLaunch && levelName != null) {
+      return HomeScreen(userLevel: _parseLevel(levelName));
+    }
+    return const OnboardingFlowScreen();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Widget>(
+      future: _initialScreen,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return snapshot.data ?? const OnboardingFlowScreen();
+      },
     );
   }
 }
@@ -131,13 +182,19 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
     });
   }
 
-  void _handleLevelResultContinue() {
+  Future<void> _handleLevelResultContinue() async {
     final result = currentState.diagnosticResult;
     if (result == null) return;
-    Navigator.push(
-      context,
+
+    // オンボーディング完了・診断レベルを永続化（次回起動はHomeScreen直行）
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kUserLevelKey, result.level.name);
+    await prefs.setBool(_kFirstLaunchKey, false);
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => SceneSelectionScreen(userLevel: result.level),
+        builder: (_) => HomeScreen(userLevel: result.level),
       ),
     );
   }

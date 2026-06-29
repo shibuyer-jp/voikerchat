@@ -1,0 +1,74 @@
+import 'package:flutter/material.dart';
+import '../models/diagnostic.dart';
+import 'scene_selection_screen.dart';
+import 'stats_screen.dart';
+import 'notification_history_screen.dart';
+
+/// HomeScreen: オンボーディング完了後のメインハブ
+///
+/// 下部ナビゲーションで3タブを切り替える:
+/// - シーン   : SceneSelectionScreen（会話練習の入口）
+/// - 統計     : StatsScreen（学習統計）
+/// - 通知     : NotificationHistoryScreen（通知履歴）
+///
+/// 各タブは自己完結した Scaffold を持つため IndexedStack で保持し、
+/// タブ切替時も状態（スクロール位置など）を維持する。
+class HomeScreen extends StatefulWidget {
+  final UserDiagnosticLevel userLevel;
+  final bool isPremiumUser;
+
+  const HomeScreen({
+    super.key,
+    required this.userLevel,
+    this.isPremiumUser = false,
+  });
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  late final List<Widget> _tabs = [
+    SceneSelectionScreen(
+      userLevel: widget.userLevel,
+      isPremiumUser: widget.isPremiumUser,
+    ),
+    const StatsScreen(),
+    const NotificationHistoryScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _tabs,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'シーン',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
+            label: '統計',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: '通知',
+          ),
+        ],
+      ),
+    );
+  }
+}
