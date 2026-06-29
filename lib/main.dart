@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'
   if (dart.library.html) 'package:voikerchat/stubs/firebase_messaging_stub.dart';
 import 'models/diagnostic.dart';
@@ -87,6 +88,25 @@ void main() async {
     // RevenueCat initialization error is non-critical
   }
   
+  // Supabase 初期化（URL/anonKey は --dart-define で注入。
+  // 例: flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...）
+  // 未設定の場合は初期化をスキップし、認証/DBなしでも起動可能にする。
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
+    try {
+      await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+      logger.info('[main] Supabase initialized');
+    } catch (e) {
+      logger.warning('[main] Supabase initialization failed: $e');
+    }
+  } else {
+    logger.warning(
+      '[main] Supabase URL/anonKey not provided via --dart-define; '
+      'auth/DB features disabled',
+    );
+  }
+
   runApp(const VoikerchatApp());
 }
 
