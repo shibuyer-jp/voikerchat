@@ -65,6 +65,18 @@ jobs:
       - name: Build debug APK
         run: flutter build apk --debug 2>&1 | tee build.log
 
+      # ビルド成功時、APK をダウンロード可能な成果物として保存。
+      # ローカルビルド不要：Actions の該当 run から DL しエミュレータに入れる。
+      # 注意: この APK は --dart-define 未指定のため Supabase 機能は無効
+      #（オンボーディング→Home→シーン選択の UI 動線確認用）。
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
       # 失敗時、ログ末尾を annotation(::error::) として出力。
       # annotation は api.github.com 経由で取得できるため、ログ本体が
       # blob ストレージで読めない環境からでも失敗原因を確認できる。
