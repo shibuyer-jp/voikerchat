@@ -104,6 +104,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _isLoading = false);
     } catch (e) {
       _showError('Failed to initialize chat: $e');
+      // 初期化に失敗してもローディングを解除し、画面が無限に
+      // ぐるぐるし続けないようにする（チャットUI自体は表示する）。
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

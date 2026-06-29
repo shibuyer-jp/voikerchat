@@ -1,0 +1,96 @@
+name: Flutter CI
+
+# 全ブランチへの push と PR で実行。
+# analyze/test は Supabase 等の秘匿情報を必要としない
+# （Supabase 初期化は --dart-define 未設定時にスキップされる）ため、
+# シークレットなしで動作する。
+on:
+  push:
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Flutter バージョンをここで固定 → 開発マシン間の差異に依存しない。
+      # pubspec の environment 制約（flutter: ^3.44.3）を満たすバージョン。
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+        continue-on-error: true
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+  build-android:
+    name: Build Android (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Supabase 接続を有効化した debug APK を生成する。
+      # SUPABASE_PUBLISHABLE_KEY はクライアント配布前提の公開キー
+      # （アクセス制御は Supabase 側の RLS で担保）。APK に同梱されるため
+      # ワークフローに直接記述している。秘匿運用へ移行する場合は
+      # GitHub Secrets に置き換え ${{ secrets.XXX }} で参照する。
+      - name: Build debug APK (Supabase enabled)
+        run: |
+          flutter build apk --debug \
+            --dart-define=SUPABASE_URL=https://rfwbwwhqclabhnbsrygw.supabase.co \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_jirMoWsnc0AtQc4c2tUJ6Q_3uc43qHT \
+            2>&1 | tee build.log
+
+      # ビルド成功時、APK をダウンロード可能な成果物として保存。
+      # ローカルビルド不要：Actions の該当 run から DL しエミュレータに入れる。
+      # この APK は Supabase 接続有効（匿名サインインまで動作確認可能）。
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+      # 失敗時、ログ末尾を annotation(::error::) として出力。
+      # annotation は api.github.com 経由で取得できるため、ログ本体が
+      # blob ストレージで読めない環境からでも失敗原因を確認できる。
+      - name: Surface build errors
+        if: failure()
+        run: |
+          echo "::group::build.log tail"
+          tail -n 100 build.log || true
+          echo "::endgroup::"
+          tail -n 60 build.log | sed 's/^/::error::/' || true

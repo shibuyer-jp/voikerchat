@@ -7,10 +7,14 @@ plugins {
 
 android {
     namespace = "com.example.voikerchat"
-    compileSdk = flutter.compileSdkVersion
+    // firebase_core/firebase_messaging と androidx 群が compileSdk>=34 を要求するため
+    // 明示的に 36 を指定（flutter.compileSdkVersion が 33 に解決され不足するため）
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // flutter_local_notifications が要求する core library desugaring を有効化
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -43,4 +47,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // core library desugaring 用ライブラリ（flutter_local_notifications 要件）
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

@@ -9,6 +9,7 @@ class Scene {
   final String description;
   final UserDiagnosticLevel recommendedLevel;
   final String color;
+  final bool isPremium;
 
   Scene({
     required this.id,
@@ -17,7 +18,21 @@ class Scene {
     required this.description,
     required this.recommendedLevel,
     required this.color,
+    this.isPremium = false,
   });
+
+  /// ChatScreen に渡す sceneData マップへ変換
+  Map<String, dynamic> toSceneData() {
+    return {
+      'id': id,
+      'name': name,
+      'character': characterName,
+      'description': description,
+      'level': DiagnosticResult.getLevelLabel(recommendedLevel),
+      'color': color,
+      'isPremium': isPremium,
+    };
+  }
 }
 
 /// SceneService: シーン管理・フィルタリング
@@ -97,6 +112,7 @@ class SceneService {
       description: '意志表明・強い決意表現',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#FF3333',
+      isPremium: true,
     ),
     Scene(
       id: 10,
@@ -105,6 +121,7 @@ class SceneService {
       description: '励ましの表現・チームワーク',
       recommendedLevel: UserDiagnosticLevel.beginner,
       color: '#FF99FF',
+      isPremium: true,
     ),
     Scene(
       id: 11,
@@ -113,6 +130,7 @@ class SceneService {
       description: '感情表現・感謝',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#CC99FF',
+      isPremium: true,
     ),
     Scene(
       id: 12,
@@ -121,6 +139,7 @@ class SceneService {
       description: '学校語彙・同年代会話',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#00CCFF',
+      isPremium: true,
     ),
     Scene(
       id: 13,
@@ -129,6 +148,7 @@ class SceneService {
       description: 'ユーモア理解・自然な反応',
       recommendedLevel: UserDiagnosticLevel.beginner,
       color: '#FFFF00',
+      isPremium: true,
     ),
   ];
 
@@ -184,4 +204,12 @@ class SceneService {
 
   /// 全シーンを取得（推奨順）
   static List<Scene> getAllScenes() => List.from(allScenes);
+
+  /// 無料シーン（isPremium == false）
+  static List<Scene> getFreeScenes() =>
+      allScenes.where((scene) => !scene.isPremium).toList();
+
+  /// プレミアムシーン（isPremium == true）
+  static List<Scene> getPremiumScenes() =>
+      allScenes.where((scene) => scene.isPremium).toList();
 }

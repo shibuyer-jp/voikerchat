@@ -20,6 +20,18 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
+    // 古い Firebase/プラグインの android モジュールが compileSdk 33 で固定され、
+    // 新しい androidx 依存（>=34要件）と衝突するため、全サブプロジェクトに 36 を強制。
+    // afterEvaluate は evaluationDependsOn より前の独立ブロックで登録する
+    //（同ブロック内で後置すると "Cannot run afterEvaluate when already evaluated"）。
+    afterEvaluate {
+        val androidExtension = extensions.findByName("android")
+        if (androidExtension is com.android.build.gradle.BaseExtension) {
+            androidExtension.compileSdkVersion(36)
+        }
+    }
+}
+subprojects {
     project.evaluationDependsOn(":app")
 }
 

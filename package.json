@@ -1,0 +1,19 @@
+{
+  "name": "voikerchat-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Serverless API functions for Voikerchat (deployed on Vercel)",
+  "engines": {
+    "node": ">=18.x"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.107.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@vercel/node": "^5.8.22",
+    "typescript": "^5.9.0"
+  }
+}
