@@ -61,14 +61,21 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # Supabase は --dart-define 未設定時スキップ設計なので、ビルドに鍵は不要。
-      - name: Build debug APK
-        run: flutter build apk --debug 2>&1 | tee build.log
+      # Supabase 接続を有効化した debug APK を生成する。
+      # SUPABASE_PUBLISHABLE_KEY はクライアント配布前提の公開キー
+      # （アクセス制御は Supabase 側の RLS で担保）。APK に同梱されるため
+      # ワークフローに直接記述している。秘匿運用へ移行する場合は
+      # GitHub Secrets に置き換え ${{ secrets.XXX }} で参照する。
+      - name: Build debug APK (Supabase enabled)
+        run: |
+          flutter build apk --debug \
+            --dart-define=SUPABASE_URL=https://rfwbwwhqclabhnbsrygw.supabase.co \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_jirMoWsnc0AtQc4c2tUJ6Q_3uc43qHT \
+            2>&1 | tee build.log
 
       # ビルド成功時、APK をダウンロード可能な成果物として保存。
       # ローカルビルド不要：Actions の該当 run から DL しエミュレータに入れる。
-      # 注意: この APK は --dart-define 未指定のため Supabase 機能は無効
-      #（オンボーディング→Home→シーン選択の UI 動線確認用）。
+      # この APK は Supabase 接続有効（匿名サインインまで動作確認可能）。
       - name: Upload debug APK
         if: success()
         uses: actions/upload-artifact@v4
