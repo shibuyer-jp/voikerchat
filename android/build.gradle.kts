@@ -21,6 +21,14 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    // 古い Firebase/プラグインの android モジュールが compileSdk 33 で固定され、
+    // 新しい androidx 依存（>=34要件）と衝突するため、全サブプロジェクトに 36 を強制。
+    afterEvaluate {
+        val androidExtension = extensions.findByName("android")
+        if (androidExtension is com.android.build.gradle.BaseExtension) {
+            androidExtension.compileSdkVersion(36)
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
