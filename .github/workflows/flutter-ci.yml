@@ -63,4 +63,15 @@ jobs:
 
       # Supabase は --dart-define 未設定時スキップ設計なので、ビルドに鍵は不要。
       - name: Build debug APK
-        run: flutter build apk --debug
+        run: flutter build apk --debug 2>&1 | tee build.log
+
+      # 失敗時、ログ末尾を annotation(::error::) として出力。
+      # annotation は api.github.com 経由で取得できるため、ログ本体が
+      # blob ストレージで読めない環境からでも失敗原因を確認できる。
+      - name: Surface build errors
+        if: failure()
+        run: |
+          echo "::group::build.log tail"
+          tail -n 100 build.log || true
+          echo "::endgroup::"
+          tail -n 60 build.log | sed 's/^/::error::/' || true
