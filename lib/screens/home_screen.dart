@@ -41,11 +41,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 選択中のタブのみを生成する（遅延マウント）。
+    // IndexedStack は全タブを同時生成するため、Supabase をコンストラクタ/
+    // initState で参照する統計・通知画面が Home 表示時に即時実行され、
+    // 未初期化時にクラッシュし得る。デフォルトのシーンタブは Supabase 非依存。
+    // 代償: タブ切替時に各画面が再生成され状態（スクロール位置等）は保持されない。
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _tabs,
-      ),
+      body: _tabs[_selectedIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
