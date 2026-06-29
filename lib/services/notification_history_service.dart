@@ -212,11 +212,11 @@ class NotificationHistoryService {
 
     final response = await _supabase
         .from(_tableName)
-        .select('id', const FetchOptions(count: CountOption.exact))
+        .select('id')
         .eq('user_id', userId)
         .eq('is_read', false);
 
-    return response.length;
+    return (response as List).length;
   }
 
   /// 日付範囲で通知を検索

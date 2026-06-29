@@ -97,8 +97,18 @@ void main() async {
     try {
       await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
       logger.info('[main] Supabase initialized');
+
+      // 匿名サインイン（検証段階）。
+      // セッションが無ければ匿名ユーザーを作成し、auth.uid を確保する。
+      // これにより user 単位のレート制限・RLS・accessToken 付きAPIが機能する。
+      // 後日メール/SNS認証へ「同じUIDのまま」昇格でき、データは引き継がれる。
+      final auth = Supabase.instance.client.auth;
+      if (auth.currentSession == null) {
+        await auth.signInAnonymously();
+        logger.info('[main] Signed in anonymously');
+      }
     } catch (e) {
-      logger.warning('[main] Supabase initialization failed: $e');
+      logger.warning('[main] Supabase init / anonymous sign-in failed: $e');
     }
   } else {
     logger.warning(
