@@ -88,14 +88,19 @@ void main() async {
     // RevenueCat initialization error is non-critical
   }
   
-  // Supabase 初期化（URL/anonKey は --dart-define で注入。
-  // 例: flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...）
+  // Supabase 初期化（URL/publishableKey は --dart-define で注入。
+  // 例: flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...）
+  // publishableKey はクライアント公開可（sb_publishable_...）。Secret keyは絶対に使わない。
   // 未設定の場合は初期化をスキップし、認証/DBなしでも起動可能にする。
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-  if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
+  const supabasePublishableKey =
+      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  if (supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty) {
     try {
-      await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+      await Supabase.initialize(
+        url: supabaseUrl,
+        publishableKey: supabasePublishableKey,
+      );
       logger.info('[main] Supabase initialized');
 
       // 匿名サインイン（検証段階）。
@@ -112,7 +117,7 @@ void main() async {
     }
   } else {
     logger.warning(
-      '[main] Supabase URL/anonKey not provided via --dart-define; '
+      '[main] Supabase URL/publishableKey not provided via --dart-define; '
       'auth/DB features disabled',
     );
   }
