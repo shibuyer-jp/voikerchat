@@ -26,17 +26,35 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          set -o pipefail
+          flutter pub get 2>&1 | tee pubget.log
 
       - name: Generate localizations
-        run: flutter gen-l10n
+        run: |
+          set -o pipefail
+          flutter gen-l10n 2>&1 | tee genl10n.log
 
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
         continue-on-error: true
 
       - name: Analyze
-        run: flutter analyze
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee analyze.log
+
+      - name: Surface errors
+        if: failure()
+        run: |
+          for f in pubget.log genl10n.log analyze.log; do
+            if [ -f "$f" ]; then
+              echo "::group::$f"
+              tail -n 80 "$f"
+              echo "::endgroup::"
+              tail -n 40 "$f" | sed 's/^/::error::/'
+            fi
+          done
 
       - name: Run tests
         run: flutter test
