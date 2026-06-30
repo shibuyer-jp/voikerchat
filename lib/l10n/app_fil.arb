@@ -1,0 +1,10 @@
+{
+  "@@locale": "fil",
+  "appTitle": "Voikerchat",
+  "premiumUnlimited": "Premium - Walang Limitasyon",
+  "callsRemainingToday": "{remaining} / {total} na mensahe ang natitira ngayong araw",
+  "goPremium": "Mag-Premium",
+  "watchAdForBonus": "Manood ng ad para sa +5",
+  "adBonusGranted": "+5 na mensahe ang naidagdag!",
+  "adLoadFailed": "Hindi ma-load ang ad. Pakisubukan muli mamaya."
+}
