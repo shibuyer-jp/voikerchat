@@ -1,48 +1,57 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
-import * as jwt from 'jsonwebtoken';
-
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_KEY || '';
-const jwtSecret = process.env.SUPABASE_JWT_SECRET || '';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-interface AuthPayload {
-  sub: string;
-  iat: number;
-  exp: number;
-}
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * GET /api/analytics
- * 
- * Get user learning analytics (Premium only)
- * Query params: ?token=jwt_token
+ * 環境変数（chat.ts と同方式に統一）
+ * - SUPABASE_SERVICE_KEY を優先、無ければ SUPABASE_KEY
+ * - JWT 検証は supabase.auth.getUser(token) で行うため
+ *   SUPABASE_JWT_SECRET / jsonwebtoken は不要。
+ */
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || '';
+
+/**
+ * GET /api/analytics?token=<supabase access token>
+ *
+ * ユーザーの学習統計を返す（Premium 限定）。
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only GET allowed
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // 0. 設定チェック（不足は原因不明クラッシュにせず、明示エラーで返す）
+  const missing: string[] = [];
+  if (!supabaseUrl) missing.push('SUPABASE_URL');
+  if (!supabaseKey) missing.push('SUPABASE_SERVICE_KEY (or SUPABASE_KEY)');
+  if (missing.length > 0) {
+    return res.status(500).json({
+      error: 'Server misconfiguration',
+      message: `Missing environment variable(s): ${missing.join(', ')}`,
+    });
+  }
+
+  // クライアントは関数内で生成（モジュール読込時クラッシュを防ぐ）
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
   try {
     const { token } = req.query;
 
-    // JWT 検証
+    // 1. トークン検証（getUser はHS256/非対称鍵いずれの署名でも検証可能）
     if (!token || typeof token !== 'string') {
       return res.status(401).json({ error: 'Missing authentication token' });
     }
 
-    let userId: string;
-    try {
-      const payload = jwt.verify(token, jwtSecret) as AuthPayload;
-      userId = payload.sub;
-    } catch (err) {
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
+    const userId = userData.user.id;
 
-    // Premium ステータス確認
+    // 2. Premium ステータス確認
     const { data: rateLimit, error: rateLimitError } = await supabase
       .from('rate_limits')
       .select('is_premium')
@@ -56,8 +65,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // 統計データ取得
-    const stats = await getAnalyticsStats(userId);
+    // 3. 統計データ取得
+    const stats = await getAnalyticsStats(supabase, userId);
 
     return res.status(200).json({
       userId,
@@ -68,15 +77,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Analytics API error:', error);
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message || 'Unknown error',
+      message: error?.message || 'Unknown error',
     });
   }
 }
 
 /**
- * Get comprehensive analytics for user
+ * ユーザーの総合分析を取得
  */
-async function getAnalyticsStats(userId: string): Promise<any> {
+async function getAnalyticsStats(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<any> {
   try {
     // 1. 総トークン使用数
     const { data: tokensData } = await supabase
@@ -85,7 +97,10 @@ async function getAnalyticsStats(userId: string): Promise<any> {
       .eq('user_id', userId)
       .eq('status', 'success');
 
-    const totalTokens = (tokensData || []).reduce((sum, log) => sum + (log.tokens_consumed || 0), 0);
+    const totalTokens = (tokensData || []).reduce(
+      (sum, log) => sum + (log.tokens_consumed || 0),
+      0
+    );
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tokensToday = (tokensData || [])
@@ -112,7 +127,8 @@ async function getAnalyticsStats(userId: string): Promise<any> {
         acc[sceneId].tokens += session.total_tokens_used || 0;
         if (
           session.last_message_at &&
-          (!acc[sceneId].lastActive || new Date(session.last_message_at) > new Date(acc[sceneId].lastActive))
+          (!acc[sceneId].lastActive ||
+            new Date(session.last_message_at) > new Date(acc[sceneId].lastActive))
         ) {
           acc[sceneId].lastActive = session.last_message_at;
         }
@@ -151,15 +167,16 @@ async function getAnalyticsStats(userId: string): Promise<any> {
         dates.add(date);
       });
 
-      // Convert to sorted array
       const sortedDates = Array.from(dates).sort().reverse();
-      const today = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
 
-      if (sortedDates[0] === today || sortedDates[0] === getYesterdayDate()) {
+      if (sortedDates[0] === todayStr || sortedDates[0] === getYesterdayDate()) {
         let current = new Date(sortedDates[0]);
         for (const dateStr of sortedDates) {
           const date = new Date(dateStr);
-          const diff = Math.floor((current.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+          const diff = Math.floor(
+            (current.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+          );
           if (diff === 0 || diff === 1) {
             consecutiveDays++;
             current = date;
@@ -180,8 +197,10 @@ async function getAnalyticsStats(userId: string): Promise<any> {
       },
       engagement: {
         consecutiveLearningDays: consecutiveDays,
-        favoriteScene: Object.entries(sceneProgress)
-          .sort((a: any, b: any) => b[1].messages - a[1].messages)[0]?.[0] || null,
+        favoriteScene:
+          Object.entries(sceneProgress).sort(
+            (a: any, b: any) => b[1].messages - a[1].messages
+          )[0]?.[0] || null,
       },
       sceneProgress,
       timestamps: {
@@ -195,7 +214,7 @@ async function getAnalyticsStats(userId: string): Promise<any> {
 }
 
 /**
- * Helper function to get yesterday's date string
+ * 前日の日付文字列を返すヘルパー
  */
 function getYesterdayDate(): string {
   const yesterday = new Date();

@@ -172,9 +172,28 @@ class MessageService {
     try {
       final now = DateTime.now().toUtc();
 
+      // 現在値を読み取り → 整数で加算 → 書き戻し。
+      // Supabase の update() は値をそのまま保存するため、
+      // 'total_messages + 1' のような SQL 式は使えない（文字列がそのまま入る）。
+      final current = await _supabase
+          .from('conversation_sessions')
+          .select('total_messages, total_tokens_used')
+          .eq('user_id', userId)
+          .eq('scene_id', sceneId)
+          .eq('status', 'active')
+          .maybeSingle();
+
+      // アクティブなセッションが無ければ何もしない（統計は非致命）
+      if (current == null) {
+        return;
+      }
+
+      final int currentMessages = (current['total_messages'] as int?) ?? 0;
+      final int currentTokens = (current['total_tokens_used'] as int?) ?? 0;
+
       await _supabase.from('conversation_sessions').update({
-        'total_messages': 'total_messages + 1',
-        'total_tokens_used': 'total_tokens_used + $tokensUsed',
+        'total_messages': currentMessages + 1,
+        'total_tokens_used': currentTokens + tokensUsed,
         'last_message_at': now.toIso8601String(),
         'updated_at': now.toIso8601String(),
       }).eq('user_id', userId).eq('scene_id', sceneId).eq('status', 'active');

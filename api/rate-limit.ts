@@ -1,48 +1,57 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import * as jwt from 'jsonwebtoken';
-
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_KEY || '';
-const jwtSecret = process.env.SUPABASE_JWT_SECRET || '';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-interface AuthPayload {
-  sub: string;
-  iat: number;
-  exp: number;
-}
 
 /**
- * GET /api/rate-limit
- * 
- * Get current rate limit status
- * Query params: ?token=jwt_token
+ * 環境変数（chat.ts と同方式に統一）
+ * - SUPABASE_SERVICE_KEY を優先、無ければ SUPABASE_KEY
+ * - JWT 検証は supabase.auth.getUser(token) で行うため
+ *   SUPABASE_JWT_SECRET / jsonwebtoken は不要。
+ */
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || '';
+
+/**
+ * GET /api/rate-limit?token=<supabase access token>
+ *
+ * 現在のレート制限ステータスを返す。
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only GET allowed
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // 0. 設定チェック（不足は原因不明クラッシュにせず、明示エラーで返す）
+  const missing: string[] = [];
+  if (!supabaseUrl) missing.push('SUPABASE_URL');
+  if (!supabaseKey) missing.push('SUPABASE_SERVICE_KEY (or SUPABASE_KEY)');
+  if (missing.length > 0) {
+    return res.status(500).json({
+      error: 'Server misconfiguration',
+      message: `Missing environment variable(s): ${missing.join(', ')}`,
+    });
+  }
+
+  // クライアントは関数内で生成（モジュール読込時クラッシュを防ぐ）
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
   try {
     const { token } = req.query;
 
-    // JWT 検証
+    // 1. トークン検証（getUser はHS256/非対称鍵いずれの署名でも検証可能）
     if (!token || typeof token !== 'string') {
       return res.status(401).json({ error: 'Missing authentication token' });
     }
 
-    let userId: string;
-    try {
-      const payload = jwt.verify(token, jwtSecret) as AuthPayload;
-      userId = payload.sub;
-    } catch (err) {
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
+    const userId = userData.user.id;
 
-    // Supabase から rate limit 情報取得
+    // 2. Supabase から rate limit 情報取得
     const { data, error } = await supabase
       .from('rate_limits')
       .select('*')
@@ -50,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) {
-      // No record: return default
+      // レコードなし → デフォルトを返す
       return res.status(200).json({
         userId,
         isPremium: false,
@@ -62,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Check if day has passed (auto-reset)
+    // 3. 日付が変わっていれば自動リセット
     const lastReset = new Date(data.last_reset_utc);
     const today = new Date();
     const daysPassed = Math.floor(
@@ -71,7 +80,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let usedToday = data.used_today;
     if (daysPassed >= 1) {
-      // Reset counter
       await supabase
         .from('rate_limits')
         .update({
@@ -82,10 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       usedToday = 0;
     }
 
-    const remainingCalls = Math.max(
-      0,
-      data.daily_limit - usedToday
-    );
+    const remainingCalls = Math.max(0, data.daily_limit - usedToday);
     const usagePercentage = (usedToday / data.daily_limit) * 100;
 
     return res.status(200).json({
@@ -101,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Rate limit API error:', error);
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message || 'Unknown error',
+      message: error?.message || 'Unknown error',
     });
   }
 }
