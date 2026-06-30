@@ -7,10 +7,22 @@ class RateLimitWidget extends StatelessWidget {
   final RateLimit? rateLimit;
   final VoidCallback? onUpgradePressed;
 
+  /// 「広告を見て +5回」ボタンを表示するか（無料・上限間近・本日上限<10 のとき）。
+  final bool showWatchAdButton;
+
+  /// 広告のロード/表示中はボタンを無効化＆スピナー表示する。
+  final bool isAdLoading;
+
+  /// 広告ボタンが押されたときのコールバック。
+  final VoidCallback? onWatchAd;
+
   const RateLimitWidget({
     super.key,
     this.rateLimit,
     this.onUpgradePressed,
+    this.showWatchAdButton = false,
+    this.isAdLoading = false,
+    this.onWatchAd,
   });
 
   @override
@@ -94,6 +106,32 @@ class RateLimitWidget extends StatelessWidget {
               ),
             ),
           ),
+          // 「広告を見て +5回」ボタン（上限間近のときのみ）
+          if (showWatchAdButton && onWatchAd != null) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: isAdLoading ? null : onWatchAd,
+                icon: isAdLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.play_circle_outline, size: 18),
+                label: const Text(
+                  '広告を見て +5回',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

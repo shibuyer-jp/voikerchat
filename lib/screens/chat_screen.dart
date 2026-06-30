@@ -11,6 +11,7 @@ import '../services/rate_limit_service.dart';
 import '../services/revenuecat_service.dart';
 import '../services/streak_service.dart';
 import '../services/premium_upsell_service.dart';
+import '../services/rewarded_ad_service.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import 'stats_screen.dart';
@@ -44,6 +45,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late RevenueCatService _revenueCatService;
   late StreakService _streakService;
   late PremiumUpsellService _premiumUpsellService;
+  final RewardedAdService _rewardedAdService = RewardedAdService();
+  bool _isAdLoading = false;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -65,6 +68,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _revenueCatService = RevenueCatService();
     _streakService = StreakService();
     _premiumUpsellService = PremiumUpsellService();
+
+    // リワード広告を事前ロード（Web では no-op）。
+    _rewardedAdService.loadAd();
 
     // WidgetsBinding オブザーバー登録（通知タップ処理）
     WidgetsBinding.instance.addObserver(this);
@@ -197,6 +203,43 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _rateLimit = rateLimit);
     } catch (e) {
       logger.info('Failed to load rate limit: $e');
+    }
+  }
+
+  /// 「広告を見て +5回」: 広告を表示し、視聴完了したら当日上限を +5 する。
+  Future<void> _watchAdForBonus() async {
+    if (_userId == null || _isAdLoading) return;
+    setState(() => _isAdLoading = true);
+    try {
+      // 未ロードなら表示前にロードを試みる。
+      if (!_rewardedAdService.isReady) {
+        await _rewardedAdService.loadAd();
+      }
+      if (!_rewardedAdService.isReady) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('広告を読み込めませんでした。時間をおいて再度お試しください。'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final earned = await _rewardedAdService.showAd();
+      if (earned) {
+        await _rateLimitService.grantAdBonus(_userId!);
+        await _loadRateLimit(); // 残数表示を更新
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('+5回 追加されました！')),
+          );
+        }
+      }
+    } catch (e) {
+      logger.info('Watch-ad bonus failed: $e');
+    } finally {
+      if (mounted) setState(() => _isAdLoading = false);
     }
   }
 
@@ -404,6 +447,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _inputController.dispose();
     _scrollController.dispose();
+    _rewardedAdService.dispose();
     super.dispose();
   }
 
@@ -598,6 +642,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     RateLimitWidget(
                       rateLimit: _rateLimit,
                       onUpgradePressed: _showPremiumDialog,
+                      showWatchAdButton: _rewardedAdService.isSupported &&
+                          _rateLimit != null &&
+                          !_rateLimit!.isPremium &&
+                          _rateLimit!.dailyLimit < 10 &&
+                          _rateLimit!.remainingCalls <= 1,
+                      isAdLoading: _isAdLoading,
+                      onWatchAd: _watchAdForBonus,
                     ),
                     // Message input
                     Container(
