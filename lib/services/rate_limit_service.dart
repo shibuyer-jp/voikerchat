@@ -83,4 +83,24 @@ class RateLimitService {
     final rateLimit = await getRateLimit(userId);
     return rateLimit.usagePercentage;
   }
+
+  /// 広告視聴の報酬として当日の利用上限を +5（最大 10）引き上げる。
+  /// プレミアム/上限到達済みの場合は何もしない。
+  Future<void> grantAdBonus(String userId) async {
+    try {
+      final rateLimit = await getRateLimit(userId);
+      if (rateLimit.isPremium) return;
+
+      final newLimit = (rateLimit.dailyLimit + 5).clamp(0, 10);
+      if (newLimit == rateLimit.dailyLimit) return;
+
+      await _supabase.from('rate_limits').update({
+        'daily_limit': newLimit,
+      }).eq('user_id', userId);
+
+      logger.info('[RateLimitService] Ad bonus granted: daily_limit=$newLimit');
+    } catch (e) {
+      logger.info('[RateLimitService] grantAdBonus error: $e');
+    }
+  }
 }

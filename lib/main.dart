@@ -3,6 +3,8 @@ import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'
   if (dart.library.html) 'package:voikerchat/stubs/firebase_messaging_stub.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart'
+  if (dart.library.html) 'package:voikerchat/stubs/mobile_ads_stub.dart';
 import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
 import 'screens/onboarding/diagnostic_test_screen_enhanced.dart';
@@ -35,7 +37,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // AdMob 初期化（できるだけ早期に呼ぶ）。Web は stub で no-op。
+  try {
+    MobileAds.instance.initialize();
+  } catch (e) {
+    logger.info('[main] AdMob init skipped: $e');
+  }
+
   // Firebase Cloud Messaging のバックグラウンドメッセージハンドラー登録
   try {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
