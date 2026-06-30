@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../models/diagnostic.dart';
 import 'scene_selection_screen.dart';
+import 'badges_screen.dart';
 import 'stats_screen.dart';
 import 'notification_history_screen.dart';
 
 /// HomeScreen: オンボーディング完了後のメインハブ
 ///
-/// 下部ナビゲーションで3タブを切り替える:
+/// 下部ナビゲーションで4タブを切り替える:
 /// - シーン   : SceneSelectionScreen（会話練習の入口）
+/// - バッジ   : BadgesScreen（獲得バッジ・進捗）
 /// - 統計     : StatsScreen（学習統計）
 /// - 通知     : NotificationHistoryScreen（通知履歴）
 ///
@@ -35,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
       userLevel: widget.userLevel,
       isPremiumUser: widget.isPremiumUser,
     ),
+    const BadgesScreen(),
     const StatsScreen(),
     const NotificationHistoryScreen(),
   ];
@@ -58,6 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.chat_bubble_outline),
             selectedIcon: Icon(Icons.chat_bubble),
             label: 'シーン',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.emoji_events_outlined),
+            selectedIcon: Icon(Icons.emoji_events),
+            label: 'バッジ',
           ),
           NavigationDestination(
             icon: Icon(Icons.bar_chart_outlined),
