@@ -261,6 +261,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _sendMessage() async {
+    final l = AppLocalizations.of(context);
     final text = _inputController.text.trim();
     if (text.isEmpty || _isSending) return;
 
@@ -313,7 +314,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       await _maybeShowUpsell();
 
     } catch (e) {
-      _showError('Failed to send message: $e');
+      _showError(l.failedToSendMessage(e.toString()));
       // Re-insert user input on error
       _inputController.text = text;
     } finally {
@@ -454,6 +455,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -461,7 +463,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           children: [
             Text(widget.sceneName),
             Text(
-              'Level ${widget.sceneData['level'] ?? 'N/A'}',
+              l.levelLabel('${widget.sceneData['level'] ?? 'N/A'}'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -497,7 +499,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           if (_isPremium)
             IconButton(
               icon: const Icon(Icons.bar_chart),
-              tooltip: 'Learning Stats',
+              tooltip: l.learningStats,
               onPressed: () {
                 Navigator.push(
                   context,
@@ -560,7 +562,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No messages yet\nStart the conversation!',
+                                l.chatEmptyState,
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
@@ -665,7 +667,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             child: TextField(
                               controller: _inputController,
                               decoration: InputDecoration(
-                                hintText: 'Type your response...',
+                                hintText: l.chatInputHint,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(24),
                                 ),
@@ -712,23 +714,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('Clear conversation'),
+              title: Text(AppLocalizations.of(context).clearConversation),
               onTap: () async {
                 Navigator.pop(context);
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Clear conversation?'),
-                    content: const Text(
-                        'This will delete all messages in this session.'),
+                    title: Text(AppLocalizations.of(context).clearConversationConfirmTitle),
+                    content: Text(
+                        AppLocalizations.of(context).clearConversationConfirmBody),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child: Text(AppLocalizations.of(context).cancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Clear'),
+                        child: Text(AppLocalizations.of(context).clear),
                       ),
                     ],
                   ),
@@ -744,7 +746,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               },
             ),
             ListTile(
-              title: const Text('Exit conversation'),
+              title: Text(AppLocalizations.of(context).exitConversation),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pop(context);
@@ -760,25 +762,25 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Daily Limit Reached'),
+        title: Text(AppLocalizations.of(context).dailyLimitReachedTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'You have used all your free daily calls.',
-              style: TextStyle(fontSize: 14),
+            Text(
+              AppLocalizations.of(context).dailyLimitReachedBody,
+              style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 12),
             if (_rateLimit != null)
               Text(
-                'Limit: ${_rateLimit!.dailyLimit} calls/day',
+                AppLocalizations.of(context).dailyLimitDetail(_rateLimit!.dailyLimit),
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             const SizedBox(height: 16),
-            const Text(
-              '✨ Go Premium to unlock unlimited calls!',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context).goPremiumUnlockCta,
+              style: const TextStyle(
                 fontSize: 13,
                 color: Colors.blue,
                 fontWeight: FontWeight.w600,
@@ -789,14 +791,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Later'),
+            child: Text(AppLocalizations.of(context).later),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _showPremiumDialog();
             },
-            child: const Text('Upgrade'),
+            child: Text(AppLocalizations.of(context).upgrade),
           ),
         ],
       ),
@@ -807,32 +809,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('🌟 Voikerchat Premium'),
+        title: Text(AppLocalizations.of(context).premiumSheetTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Unlock unlimited conversations',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            Text(
+              AppLocalizations.of(context).premiumSheetSubtitle,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
             _PremiumFeature(
               icon: '🚀',
-              title: 'Unlimited Calls',
-              description: 'No daily limits, talk as much as you want',
+              title: AppLocalizations.of(context).featureUnlimitedTitle,
+              description: AppLocalizations.of(context).featureUnlimitedDesc,
             ),
             const SizedBox(height: 12),
             _PremiumFeature(
               icon: '✨',
-              title: 'Anime Scenes',
-              description: '13 engaging scenes to master Japanese',
+              title: AppLocalizations.of(context).featureAnimeTitle,
+              description: AppLocalizations.of(context).featureAnimeDesc,
             ),
             const SizedBox(height: 12),
             _PremiumFeature(
               icon: '📊',
-              title: 'Stats Dashboard',
-              description: 'Track your learning progress',
+              title: AppLocalizations.of(context).featureStatsTitle,
+              description: AppLocalizations.of(context).featureStatsDesc,
             ),
             const SizedBox(height: 16),
             Container(
@@ -841,13 +843,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 color: Colors.amber.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.local_offer, color: Colors.amber, size: 16),
-                  SizedBox(width: 8),
+                  const Icon(Icons.local_offer, color: Colors.amber, size: 16),
+                  const SizedBox(width: 8),
                   Text(
-                    '\$12.99/month',
-                    style: TextStyle(
+                    AppLocalizations.of(context).pricePerMonth,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -860,7 +862,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Maybe Later'),
+            child: Text(AppLocalizations.of(context).maybeLater),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -870,7 +872,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               Navigator.pop(context);
               await _purchasePremium();
             },
-            child: const Text('Subscribe Now'),
+            child: Text(AppLocalizations.of(context).subscribeNow),
           ),
         ],
       ),
@@ -878,16 +880,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _purchasePremium() async {
+    final l = AppLocalizations.of(context);
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Processing purchase...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context).processingPurchase),
           ],
         ),
       ),
@@ -901,10 +904,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       
       if (result['success'] == true) {
         setState(() => _isPremium = true);
-        _showSuccess('✨ Welcome to Premium! Enjoy unlimited conversations!');
+        _showSuccess(l.welcomePremium);
       } else {
         // エラーハンドリング
-        final message = result['message'] as String? ?? 'Purchase failed';
+        final message = result['message'] as String? ?? l.purchaseFailed;
         final retryable = result['retryable'] as bool? ?? false;
         final userInitiated = result['userInitiated'] as bool? ?? false;
 
@@ -919,7 +922,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         } else {
           _showErrorWithAction(
             message,
-            actionLabel: 'Close',
+            actionLabel: l.close,
             onAction: () => Navigator.pop(context),
           );
         }
@@ -928,7 +931,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (mounted) {
         Navigator.pop(context);
       }
-      _showError('Unexpected error: $e. Please try again later.');
+      _showError(l.unexpectedError(e.toString()));
     }
   }
 
@@ -937,19 +940,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('⚠️ Purchase Failed'),
+        title: Text(AppLocalizations.of(context).purchaseFailedTitle),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).cancel),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               onRetry();
             },
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context).retry),
           ),
         ],
       ),
@@ -959,18 +962,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   /// アクション付きエラーダイアログ
   void _showErrorWithAction(
     String message, {
-    String actionLabel = 'OK',
+    String? actionLabel,
     VoidCallback? onAction,
   }) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('❌ Error'),
+        title: Text(AppLocalizations.of(context).errorTitle),
         content: Text(message),
         actions: [
           ElevatedButton(
             onPressed: onAction ?? () => Navigator.pop(context),
-            child: Text(actionLabel),
+            child: Text(actionLabel ?? AppLocalizations.of(context).ok),
           ),
         ],
       ),

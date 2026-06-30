@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// Stats Dashboard Screen for Premium Users
-/// 
+///
 /// Displays learning progress, token usage, scene progress, etc.
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -16,7 +17,10 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen> {
   Map<String, dynamic>? _stats;
   bool _isLoading = true;
-  String? _error;
+  // Error is stored as a code (+ optional detail) and localized at build time,
+  // so we never need a BuildContext inside the async loader.
+  String? _errorCode; // 'auth' | 'premium' | 'load' | 'exception'
+  String? _errorDetail;
 
   @override
   void initState() {
@@ -29,7 +33,7 @@ class _StatsScreenState extends State<StatsScreen> {
       final token = Supabase.instance.client.auth.currentSession?.accessToken;
       if (token == null) {
         setState(() {
-          _error = 'Not authenticated';
+          _errorCode = 'auth';
           _isLoading = false;
         });
         return;
@@ -48,44 +52,60 @@ class _StatsScreenState extends State<StatsScreen> {
         });
       } else if (response.statusCode == 403) {
         setState(() {
-          _error = 'Premium subscription required';
+          _errorCode = 'premium';
           _isLoading = false;
         });
       } else {
         setState(() {
-          _error = 'Failed to load stats';
+          _errorCode = 'load';
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _error = 'Error loading stats: $e';
+        _errorCode = 'exception';
+        _errorDetail = e.toString();
         _isLoading = false;
       });
     }
   }
 
+  String _errorText(AppLocalizations l) {
+    switch (_errorCode) {
+      case 'auth':
+        return l.statsErrorNotAuthenticated;
+      case 'premium':
+        return l.statsErrorPremiumRequired;
+      case 'exception':
+        return l.statsErrorLoading(_errorDetail ?? '');
+      case 'load':
+      default:
+        return l.statsErrorLoadFailed;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('📊 Learning Stats'),
+        title: Text('📊 ${l.learningStats}'),
         elevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
+          : _errorCode != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.error_outline, size: 48, color: Colors.red),
                       const SizedBox(height: 16),
-                      Text(_error!, textAlign: TextAlign.center),
+                      Text(_errorText(l), textAlign: TextAlign.center),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadStats,
-                        child: const Text('Retry'),
+                        child: Text(l.retry),
                       ),
                     ],
                   ),
@@ -96,30 +116,30 @@ class _StatsScreenState extends State<StatsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Overview Cards
-                      _buildOverviewSection(),
+                      _buildOverviewSection(l),
                       const SizedBox(height: 24),
 
                       // Engagement Section
-                      _buildEngagementSection(),
+                      _buildEngagementSection(l),
                       const SizedBox(height: 24),
 
                       // Scene Progress
-                      _buildSceneProgressSection(),
+                      _buildSceneProgressSection(l),
                     ],
                   ),
                 ),
     );
   }
 
-  Widget _buildOverviewSection() {
+  Widget _buildOverviewSection(AppLocalizations l) {
     final overview = (_stats?['overview'] as Map<String, dynamic>?) ?? {};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Overview',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          l.statsOverview,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         GridView.count(
@@ -131,25 +151,25 @@ class _StatsScreenState extends State<StatsScreen> {
           children: [
             _StatCard(
               icon: '🔥',
-              title: 'Sessions',
+              title: l.statsSessions,
               value: '${overview['totalSessions'] ?? 0}',
               color: Colors.orange,
             ),
             _StatCard(
               icon: '⏱️',
-              title: 'Learning Hours',
+              title: l.statsLearningHours,
               value: '${overview['estimatedLearningHours'] ?? 0}h',
               color: Colors.blue,
             ),
             _StatCard(
               icon: '📝',
-              title: 'Total Tokens',
+              title: l.statsTotalTokens,
               value: '${overview['totalTokens'] ?? 0}',
               color: Colors.green,
             ),
             _StatCard(
               icon: '📅',
-              title: 'Today',
+              title: l.statsToday,
               value: '${overview['tokensToday'] ?? 0}',
               color: Colors.purple,
             ),
@@ -159,7 +179,7 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  Widget _buildEngagementSection() {
+  Widget _buildEngagementSection(AppLocalizations l) {
     final engagement = (_stats?['engagement'] as Map<String, dynamic>?) ?? {};
 
     return Container(
@@ -172,9 +192,9 @@ class _StatsScreenState extends State<StatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Engagement 🎯',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            l.statsEngagement,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -183,9 +203,9 @@ class _StatsScreenState extends State<StatsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Consecutive Days',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    l.statsConsecutiveDays,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -200,13 +220,13 @@ class _StatsScreenState extends State<StatsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Favorite Scene',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    l.statsFavoriteScene,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${engagement['favoriteScene'] ?? 'None'} ⭐',
+                    '${engagement['favoriteScene'] ?? l.statsNone} ⭐',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -221,7 +241,7 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  Widget _buildSceneProgressSection() {
+  Widget _buildSceneProgressSection(AppLocalizations l) {
     final sceneProgress = (_stats?['sceneProgress'] as Map<String, dynamic>?) ?? {};
 
     if (sceneProgress.isEmpty) {
@@ -231,9 +251,9 @@ class _StatsScreenState extends State<StatsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Scene Progress',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          l.statsSceneProgress,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         ...sceneProgress.entries.map((entry) {
@@ -263,8 +283,8 @@ class _StatsScreenState extends State<StatsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Messages: $messages'),
-                    Text('Tokens: $tokens'),
+                    Text(l.statsMessagesCount(messages)),
+                    Text(l.statsTokensCount(tokens)),
                   ],
                 ),
               ],

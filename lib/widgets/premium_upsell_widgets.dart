@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../services/premium_upsell_service.dart';
 
 /// PremiumUpsellToast: Stage 1用トースト通知
@@ -14,6 +15,7 @@ class PremiumUpsellToast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
@@ -41,7 +43,7 @@ class PremiumUpsellToast extends StatelessWidget {
           ),
           TextButton(
             onPressed: onDetailsTap,
-            child: const Text('詳細'),
+            child: Text(l.details),
           ),
         ],
       ),
@@ -62,40 +64,39 @@ class PremiumUpsellDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Premium メンバーになりませんか？'),
+      title: Text(l.premiumDialogTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Premium なら無制限に学習できます。',
-          ),
+          Text(l.premiumDialogBody),
           const SizedBox(height: 16),
-          const Text(
-            '✓ 1日無制限に使用可能',
-            style: TextStyle(fontWeight: FontWeight.w500),
+          Text(
+            l.premiumBenefitUnlimited,
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '✓ すべてのアニメシーン解放',
-            style: TextStyle(fontWeight: FontWeight.w500),
+          Text(
+            l.premiumBenefitAllScenes,
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '✓ 詳細な統計ダッシュボード',
-            style: TextStyle(fontWeight: FontWeight.w500),
+          Text(
+            l.premiumBenefitStats,
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
         ],
       ),
       actions: [
         TextButton(
           onPressed: onDismiss,
-          child: const Text('後で'),
+          child: Text(l.later),
         ),
         ElevatedButton(
           onPressed: onSubscribeTap,
-          child: const Text('登録（\$12.99/月）'),
+          child: Text(l.subscribeMonthlyPrice),
         ),
       ],
     );
@@ -115,6 +116,7 @@ class PremiumUpsellBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -131,10 +133,10 @@ class PremiumUpsellBanner extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '🎉 7日連続達成！',
-                  style: TextStyle(
+                  l.streak7Achieved,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -148,9 +150,9 @@ class PremiumUpsellBanner extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Premium でアニメシーンも解放して、学習を加速させましょう！',
-            style: TextStyle(color: Colors.white, fontSize: 13),
+          Text(
+            l.premiumBannerBody,
+            style: const TextStyle(color: Colors.white, fontSize: 13),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -160,9 +162,9 @@ class PremiumUpsellBanner extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
               ),
-              child: const Text(
-                'いますぐ登録',
-                style: TextStyle(color: Colors.orange),
+              child: Text(
+                l.subscribeNow,
+                style: const TextStyle(color: Colors.orange),
               ),
             ),
           ),

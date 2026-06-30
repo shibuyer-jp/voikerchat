@@ -12,8 +12,12 @@
   "@callsRemainingToday": {
     "description": "Daily remaining message count for free tier users",
     "placeholders": {
-      "remaining": { "type": "int" },
-      "total": { "type": "int" }
+      "remaining": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "goPremium": "Go Premium",
@@ -75,5 +79,284 @@
   "retry": "Retry",
   "@retry": {
     "description": "Generic retry button label"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel button"
+  },
+  "clear": "Clear",
+  "@clear": {
+    "description": "Confirm clearing conversation"
+  },
+  "later": "Later",
+  "@later": {
+    "description": "Dismiss / postpone button"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "Generic OK button"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Generic close button"
+  },
+  "details": "Details",
+  "@details": {
+    "description": "Show details button"
+  },
+  "upgrade": "Upgrade",
+  "@upgrade": {
+    "description": "Upgrade to premium button"
+  },
+  "subscribeNow": "Subscribe Now",
+  "@subscribeNow": {
+    "description": "Subscribe call to action"
+  },
+  "maybeLater": "Maybe Later",
+  "@maybeLater": {
+    "description": "Decline premium for now"
+  },
+  "learningStats": "Learning Stats",
+  "@learningStats": {
+    "description": "Stats screen title / tooltip"
+  },
+  "statsOverview": "Overview",
+  "@statsOverview": {
+    "description": "Stats overview section header"
+  },
+  "statsSessions": "Sessions",
+  "@statsSessions": {
+    "description": "Stat card: sessions"
+  },
+  "statsLearningHours": "Learning Hours",
+  "@statsLearningHours": {
+    "description": "Stat card: learning hours"
+  },
+  "statsTotalTokens": "Total Tokens",
+  "@statsTotalTokens": {
+    "description": "Stat card: total tokens"
+  },
+  "statsToday": "Today",
+  "@statsToday": {
+    "description": "Stat card: today"
+  },
+  "statsEngagement": "Engagement 🎯",
+  "@statsEngagement": {
+    "description": "Engagement section header"
+  },
+  "statsConsecutiveDays": "Consecutive Days",
+  "@statsConsecutiveDays": {
+    "description": "Consecutive learning days label"
+  },
+  "statsFavoriteScene": "Favorite Scene",
+  "@statsFavoriteScene": {
+    "description": "Favorite scene label"
+  },
+  "statsNone": "None",
+  "@statsNone": {
+    "description": "Fallback when no favorite scene"
+  },
+  "statsSceneProgress": "Scene Progress",
+  "@statsSceneProgress": {
+    "description": "Scene progress section header"
+  },
+  "statsMessagesCount": "Messages: {count}",
+  "@statsMessagesCount": {
+    "description": "Per-scene message count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statsTokensCount": "Tokens: {count}",
+  "@statsTokensCount": {
+    "description": "Per-scene token count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statsErrorNotAuthenticated": "Not authenticated",
+  "@statsErrorNotAuthenticated": {
+    "description": "Stats error: not authenticated"
+  },
+  "statsErrorPremiumRequired": "Premium subscription required",
+  "@statsErrorPremiumRequired": {
+    "description": "Stats error: premium required"
+  },
+  "statsErrorLoadFailed": "Failed to load stats",
+  "@statsErrorLoadFailed": {
+    "description": "Stats error: generic load failure"
+  },
+  "statsErrorLoading": "Error loading stats: {error}",
+  "@statsErrorLoading": {
+    "description": "Stats error with exception detail",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "premiumDialogTitle": "Become a Premium member?",
+  "@premiumDialogTitle": {
+    "description": "Upsell dialog title"
+  },
+  "premiumDialogBody": "With Premium you can learn without limits.",
+  "@premiumDialogBody": {
+    "description": "Upsell dialog body"
+  },
+  "premiumBenefitUnlimited": "✓ Unlimited daily use",
+  "@premiumBenefitUnlimited": {
+    "description": "Premium benefit: unlimited"
+  },
+  "premiumBenefitAllScenes": "✓ All anime scenes unlocked",
+  "@premiumBenefitAllScenes": {
+    "description": "Premium benefit: all scenes"
+  },
+  "premiumBenefitStats": "✓ Detailed stats dashboard",
+  "@premiumBenefitStats": {
+    "description": "Premium benefit: stats"
+  },
+  "subscribeMonthlyPrice": "Subscribe ($12.99/mo)",
+  "@subscribeMonthlyPrice": {
+    "description": "Subscribe button with monthly price"
+  },
+  "streak7Achieved": "🎉 7-day streak!",
+  "@streak7Achieved": {
+    "description": "Stage 3 banner: 7 day streak headline"
+  },
+  "premiumBannerBody": "Unlock anime scenes with Premium and accelerate your learning!",
+  "@premiumBannerBody": {
+    "description": "Stage 3 banner body"
+  },
+  "levelLabel": "Level {level}",
+  "@levelLabel": {
+    "description": "Scene level label in app bar",
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "chatEmptyState": "No messages yet\nStart the conversation!",
+  "@chatEmptyState": {
+    "description": "Empty chat placeholder"
+  },
+  "chatInputHint": "Type your response...",
+  "@chatInputHint": {
+    "description": "Message input hint"
+  },
+  "clearConversation": "Clear conversation",
+  "@clearConversation": {
+    "description": "Session option: clear conversation"
+  },
+  "clearConversationConfirmTitle": "Clear conversation?",
+  "@clearConversationConfirmTitle": {
+    "description": "Clear confirm dialog title"
+  },
+  "clearConversationConfirmBody": "This will delete all messages in this session.",
+  "@clearConversationConfirmBody": {
+    "description": "Clear confirm dialog body"
+  },
+  "exitConversation": "Exit conversation",
+  "@exitConversation": {
+    "description": "Session option: exit conversation"
+  },
+  "dailyLimitReachedTitle": "Daily Limit Reached",
+  "@dailyLimitReachedTitle": {
+    "description": "Rate limit dialog title"
+  },
+  "dailyLimitReachedBody": "You have used all your free daily calls.",
+  "@dailyLimitReachedBody": {
+    "description": "Rate limit dialog body"
+  },
+  "dailyLimitDetail": "Limit: {limit} calls/day",
+  "@dailyLimitDetail": {
+    "description": "Rate limit detail",
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "goPremiumUnlockCta": "✨ Go Premium to unlock unlimited calls!",
+  "@goPremiumUnlockCta": {
+    "description": "Rate limit dialog premium CTA"
+  },
+  "premiumSheetTitle": "🌟 Voikerchat Premium",
+  "@premiumSheetTitle": {
+    "description": "Premium dialog title"
+  },
+  "premiumSheetSubtitle": "Unlock unlimited conversations",
+  "@premiumSheetSubtitle": {
+    "description": "Premium dialog subtitle"
+  },
+  "featureUnlimitedTitle": "Unlimited Calls",
+  "@featureUnlimitedTitle": {
+    "description": "Premium feature: unlimited title"
+  },
+  "featureUnlimitedDesc": "No daily limits, talk as much as you want",
+  "@featureUnlimitedDesc": {
+    "description": "Premium feature: unlimited desc"
+  },
+  "featureAnimeTitle": "Anime Scenes",
+  "@featureAnimeTitle": {
+    "description": "Premium feature: anime title"
+  },
+  "featureAnimeDesc": "13 engaging scenes to master Japanese",
+  "@featureAnimeDesc": {
+    "description": "Premium feature: anime desc"
+  },
+  "featureStatsTitle": "Stats Dashboard",
+  "@featureStatsTitle": {
+    "description": "Premium feature: stats title"
+  },
+  "featureStatsDesc": "Track your learning progress",
+  "@featureStatsDesc": {
+    "description": "Premium feature: stats desc"
+  },
+  "pricePerMonth": "$12.99/month",
+  "@pricePerMonth": {
+    "description": "Monthly price tag"
+  },
+  "processingPurchase": "Processing purchase...",
+  "@processingPurchase": {
+    "description": "Purchase in-progress dialog"
+  },
+  "welcomePremium": "✨ Welcome to Premium! Enjoy unlimited conversations!",
+  "@welcomePremium": {
+    "description": "Purchase success message"
+  },
+  "purchaseFailed": "Purchase failed",
+  "@purchaseFailed": {
+    "description": "Purchase failed fallback message"
+  },
+  "purchaseFailedTitle": "⚠️ Purchase Failed",
+  "@purchaseFailedTitle": {
+    "description": "Retryable purchase error title"
+  },
+  "errorTitle": "❌ Error",
+  "@errorTitle": {
+    "description": "Generic error dialog title"
+  },
+  "unexpectedError": "Unexpected error: {error}. Please try again later.",
+  "@unexpectedError": {
+    "description": "Unexpected exception during purchase",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSendMessage": "Failed to send message: {error}",
+  "@failedToSendMessage": {
+    "description": "Error when sending a chat message fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
