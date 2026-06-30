@@ -1,0 +1,10 @@
+{
+  "@@locale": "ja",
+  "appTitle": "Voikerchat",
+  "premiumUnlimited": "プレミアム - 無制限",
+  "callsRemainingToday": "本日の残り {remaining} / {total} 回",
+  "goPremium": "プレミアムにする",
+  "watchAdForBonus": "広告を見て +5回",
+  "adBonusGranted": "+5回 追加されました！",
+  "adLoadFailed": "広告を読み込めませんでした。時間をおいて再度お試しください。"
+}

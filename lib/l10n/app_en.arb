@@ -1,0 +1,35 @@
+{
+  "@@locale": "en",
+  "appTitle": "Voikerchat",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "premiumUnlimited": "Premium - Unlimited",
+  "@premiumUnlimited": {
+    "description": "Label shown to premium users instead of a usage limit"
+  },
+  "callsRemainingToday": "{remaining} / {total} calls remaining today",
+  "@callsRemainingToday": {
+    "description": "Daily remaining message count for free tier users",
+    "placeholders": {
+      "remaining": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "goPremium": "Go Premium",
+  "@goPremium": {
+    "description": "Upgrade-to-premium call to action"
+  },
+  "watchAdForBonus": "Watch an ad for +5",
+  "@watchAdForBonus": {
+    "description": "Button to watch a rewarded ad and gain 5 extra messages"
+  },
+  "adBonusGranted": "+5 messages added!",
+  "@adBonusGranted": {
+    "description": "Confirmation after a rewarded ad grants bonus messages"
+  },
+  "adLoadFailed": "Could not load the ad. Please try again later.",
+  "@adLoadFailed": {
+    "description": "Shown when a rewarded ad fails to load"
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../models/rate_limit.dart';
 
 /// Widget to display rate limit status above message input
@@ -27,6 +28,7 @@ class RateLimitWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     if (rateLimit == null) {
       return const SizedBox.shrink();
     }
@@ -44,7 +46,7 @@ class RateLimitWidget extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              'Premium - Unlimited',
+              l.premiumUnlimited,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.amber.shade600,
@@ -71,7 +73,7 @@ class RateLimitWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$remaining / ${rateLimit!.dailyLimit} calls remaining today',
+                l.callsRemainingToday(remaining, rateLimit!.dailyLimit),
                 style: TextStyle(
                   fontSize: 12,
                   color: isNearLimit ? Colors.red[700] : Colors.grey.shade600,
@@ -82,7 +84,7 @@ class RateLimitWidget extends StatelessWidget {
                 InkWell(
                   onTap: onUpgradePressed,
                   child: Text(
-                    'Go Premium',
+                    l.goPremium,
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.blue[600],
@@ -120,9 +122,10 @@ class RateLimitWidget extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.play_circle_outline, size: 18),
-                label: const Text(
-                  '広告を見て +5回',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                label: Text(
+                  l.watchAdForBonus,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),

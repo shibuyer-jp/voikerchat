@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate localizations
+        run: flutter gen-l10n
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
         continue-on-error: true
@@ -60,6 +63,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
 
       # Supabase 接続を有効化した debug APK を生成する。
       # SUPABASE_PUBLISHABLE_KEY はクライアント配布前提の公開キー

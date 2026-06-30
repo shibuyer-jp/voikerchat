@@ -1,0 +1,11 @@
+# Flutter gen-l10n 設定。
+# ARB ファイルから AppLocalizations を生成する。
+# synthetic-package を使わず lib/l10n に実ファイルとして出力する
+# （最近の Flutter の推奨。import は package:voikerchat/l10n/app_localizations.dart）。
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+output-dir: lib/l10n
+synthetic-package: false
+nullable-getter: false

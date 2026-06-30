@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -218,8 +219,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (!_rewardedAdService.isReady) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('広告を読み込めませんでした。時間をおいて再度お試しください。'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).adLoadFailed),
             ),
           );
         }
@@ -232,7 +233,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         await _loadRateLimit(); // 残数表示を更新
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('+5回 追加されました！')),
+            SnackBar(content: Text(AppLocalizations.of(context).adBonusGranted)),
           );
         }
       }
