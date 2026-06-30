@@ -102,7 +102,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('バッジ'), elevation: 0),
+      appBar: const AppBar(title: Text('バッジ'), elevation: 0),
       body: _buildBody(),
     );
   }

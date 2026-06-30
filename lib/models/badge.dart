@@ -71,8 +71,6 @@ class BadgeStats {
 
 /// アプリ内バッジのカタログ（単一の正本）。
 class BadgeCatalog {
-  const BadgeCatalog._();
-
   static const List<AppBadge> all = [
     AppBadge(
       id: 'first_step',
