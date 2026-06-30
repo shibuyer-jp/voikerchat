@@ -20,7 +20,6 @@ class BadgesScreen extends StatefulWidget {
 
 class _BadgesScreenState extends State<BadgesScreen> {
   final BadgeService _badgeService = BadgeService();
-  final MessageService _messageService = MessageService();
 
   bool _isLoading = true;
   String? _error;
@@ -47,7 +46,8 @@ class _BadgesScreenState extends State<BadgesScreen> {
       var sessions = <ConversationSession>[];
       if (userId != null) {
         try {
-          sessions = await _messageService.getUserSessions(userId);
+          final messageService = MessageService(Supabase.instance.client);
+          sessions = await messageService.getUserSessions(userId);
         } catch (_) {
           // セッション取得失敗時はローカル実績（連続日数）のみで判定する。
           sessions = <ConversationSession>[];
@@ -102,7 +102,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppBar(title: Text('バッジ'), elevation: 0),
+      appBar: AppBar(title: const Text('バッジ'), elevation: 0),
       body: _buildBody(),
     );
   }
