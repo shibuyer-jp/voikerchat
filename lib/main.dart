@@ -5,7 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart'
   if (dart.library.html) 'package:voikerchat/stubs/firebase_messaging_stub.dart';
 import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
-import 'screens/onboarding/diagnostic_test_screen.dart';
+import 'screens/onboarding/diagnostic_test_screen_enhanced.dart';
 import 'screens/onboarding/level_result_screen.dart';
 import 'screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -258,8 +258,8 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
       );
     }
 
-    // 診断テスト画面（デフォルト）
-    return DiagnosticTestScreen(
+    // 診断テスト画面（enhanced 版：解説・ヒント・スコア表示付き）
+    return DiagnosticTestScreenEnhanced(
       onTestComplete: _handleDiagnosticComplete,
     );
   }
