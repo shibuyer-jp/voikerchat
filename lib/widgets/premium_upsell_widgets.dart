@@ -95,7 +95,7 @@ class PremiumUpsellDialog extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: onSubscribeTap,
-          child: const Text('登録（\$4.99/月）'),
+          child: const Text('登録（\$12.99/月）'),
         ),
       ],
     );

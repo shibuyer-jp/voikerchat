@@ -10,7 +10,9 @@ import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
 import '../services/revenuecat_service.dart';
 import '../services/streak_service.dart';
+import '../services/premium_upsell_service.dart';
 import '../widgets/rate_limit_widget.dart';
+import '../widgets/premium_upsell_widgets.dart';
 import 'stats_screen.dart';
 
 /// Chat screen for Voikerchat
@@ -41,6 +43,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late RateLimitService _rateLimitService;
   late RevenueCatService _revenueCatService;
   late StreakService _streakService;
+  late PremiumUpsellService _premiumUpsellService;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -51,6 +54,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   RateLimit? _rateLimit;
   bool _isPremium = false;
   int _currentStreak = 0;
+  // Stage 3 用のインラインバナー表示状態
+  PremiumUpsellStage? _activeBannerStage;
 
   @override
   void initState() {
@@ -59,6 +64,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _scrollController = ScrollController();
     _revenueCatService = RevenueCatService();
     _streakService = StreakService();
+    _premiumUpsellService = PremiumUpsellService();
 
     // WidgetsBinding オブザーバー登録（通知タップ処理）
     WidgetsBinding.instance.addObserver(this);
@@ -127,6 +133,60 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _currentStreak = streak);
     } catch (e) {
       logger.info('Failed to load streak: $e');
+    }
+  }
+
+  /// 段階的プレミアム勧導の表示判定。
+  /// Stage1=トースト / Stage2=ダイアログ / Stage3=インラインバナー。
+  /// Premium ユーザーには一切表示しない。各ステージは一度きり。
+  Future<void> _maybeShowUpsell() async {
+    if (_isPremium || !mounted) return;
+
+    try {
+      final stage = await _premiumUpsellService.getNextUpsellStage();
+      if (stage == null || !mounted) return;
+
+      switch (stage) {
+        case PremiumUpsellStage.stage1:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              duration: const Duration(seconds: 6),
+              content: PremiumUpsellToast(
+                onDetailsTap: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  _showPremiumDialog();
+                },
+                onDismiss: () =>
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+              ),
+            ),
+          );
+          break;
+        case PremiumUpsellStage.stage2:
+          await showDialog(
+            context: context,
+            builder: (ctx) => PremiumUpsellDialog(
+              onSubscribeTap: () {
+                Navigator.pop(ctx);
+                _purchasePremium();
+              },
+              onDismiss: () => Navigator.pop(ctx),
+            ),
+          );
+          break;
+        case PremiumUpsellStage.stage3:
+          setState(() => _activeBannerStage = PremiumUpsellStage.stage3);
+          break;
+      }
+
+      // 表示したステージは一度きり（再表示しない）
+      await _premiumUpsellService.markStageAsShown(stage);
+    } catch (e) {
+      // 勧導は非致命：失敗してもチャットは止めない
+      logger.info('Upsell check failed: $e');
     }
   }
 
@@ -203,6 +263,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       // ストリークをインクリメント（メッセージ送信成功時）
       final newStreak = await _streakService.incrementStreak(_userId!, widget.sceneId);
       setState(() => _currentStreak = newStreak);
+
+      // 段階的プレミアム勧導：会話を記録し、条件を満たせば該当ステージを表示
+      await _premiumUpsellService.recordConversation();
+      await _maybeShowUpsell();
 
     } catch (e) {
       _showError('Failed to send message: $e');
@@ -516,17 +580,24 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // 段階的勧導 Stage 3: インラインバナー（Premium 未加入時のみ）
+                    if (!_isPremium &&
+                        _activeBannerStage == PremiumUpsellStage.stage3)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                        child: PremiumUpsellBanner(
+                          onSubscribeTap: () {
+                            setState(() => _activeBannerStage = null);
+                            _purchasePremium();
+                          },
+                          onDismiss: () =>
+                              setState(() => _activeBannerStage = null),
+                        ),
+                      ),
                     // Rate Limit Widget
                     RateLimitWidget(
                       rateLimit: _rateLimit,
-                      onUpgradePressed: () {
-                        // TODO: Navigate to Premium purchase flow
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Premium upgrade feature coming soon!'),
-                          ),
-                        );
-                      },
+                      onUpgradePressed: _showPremiumDialog,
                     ),
                     // Message input
                     Container(
