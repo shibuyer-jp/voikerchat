@@ -236,16 +236,23 @@ class RemoteNotificationService {
     }
   }
 
-  /// 初期化時の推奨トピック購読
+  /// 初期化時の推奨トピック購読（全ユーザー共通）。
+  /// premium_users はここでは購読しない。課金状態に応じて
+  /// updatePremiumTopicSubscription() で個別に制御する
+  /// （非Premiumユーザーが premium 向け通知を受け取らないようにするため）。
   Future<void> subscribeToDefaultTopics() async {
-    const topics = [
-      'all_users',        // すべてのユーザー
-      'premium_users',    // プレミアムユーザー（後で条件付き）
-      'japanese_learners', // 日本語学習者
-    ];
+    await subscribeToTopic(FCMTopics.allUsers);
+    await subscribeToTopic(FCMTopics.japaneseContext);
+  }
 
-    for (final topic in topics) {
-      await subscribeToTopic(topic);
+  /// premium_users トピックの購読を課金状態に同期する。
+  /// Premium 解約後に premium 向け通知が届き続けないよう、
+  /// 非Premium時は購読を解除する。
+  Future<void> updatePremiumTopicSubscription(bool isPremium) async {
+    if (isPremium) {
+      await subscribeToTopic(FCMTopics.premiumUsers);
+    } else {
+      await unsubscribeFromTopic(FCMTopics.premiumUsers);
     }
   }
 

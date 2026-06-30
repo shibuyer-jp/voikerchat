@@ -76,6 +76,11 @@ void main() async {
         }
       },
     );
+
+    // 全ユーザー共通トピックを購読（Firebase Console からの
+    // トピック配信・テスト送信がアプリに届くようにする）。
+    // premium_users は課金状態に応じて後段で同期する。
+    await remoteNotificationService.subscribeToDefaultTopics();
   } catch (e) {
     // Web では通知機能なしで継続
   }
@@ -86,6 +91,15 @@ void main() async {
     await revenueCatService.initialize();
   } catch (e) {
     // RevenueCat initialization error is non-critical
+  }
+
+  // 課金状態に応じて premium_users トピックの購読を同期
+  // （Premiumなら購読、非Premium/解約済みなら解除）。
+  try {
+    final isPremium = await revenueCatService.checkPremiumStatus();
+    await RemoteNotificationService().updatePremiumTopicSubscription(isPremium);
+  } catch (e) {
+    logger.info('[main] Premium topic sync skipped: $e');
   }
   
   // Supabase 初期化（URL/publishableKey は --dart-define で注入。
