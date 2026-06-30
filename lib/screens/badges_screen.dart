@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../models/badge.dart';
 import '../models/message.dart';
 import '../services/badge_service.dart';
@@ -102,7 +103,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('バッジ'), elevation: 0),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).badgesTitle), elevation: 0),
       body: _buildBody(),
     );
   }
@@ -118,7 +119,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
           children: [
             Text(_error!),
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: _retry, child: const Text('再試行')),
+            ElevatedButton(onPressed: _retry, child: Text(AppLocalizations.of(context).retry)),
           ],
         ),
       );

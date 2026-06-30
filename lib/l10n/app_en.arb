@@ -31,5 +31,49 @@
   "adLoadFailed": "Could not load the ad. Please try again later.",
   "@adLoadFailed": {
     "description": "Shown when a rewarded ad fails to load"
+  },
+  "navScenes": "Scenes",
+  "@navScenes": {
+    "description": "Bottom navigation label for the scene selection tab"
+  },
+  "navBadges": "Badges",
+  "@navBadges": {
+    "description": "Bottom navigation label for the badges tab"
+  },
+  "navStats": "Stats",
+  "@navStats": {
+    "description": "Bottom navigation label for the statistics tab"
+  },
+  "navNotifications": "Notifications",
+  "@navNotifications": {
+    "description": "Bottom navigation label for the notifications tab"
+  },
+  "sceneSelectionTitle": "Choose a scene",
+  "@sceneSelectionTitle": {
+    "description": "App bar title on the scene selection screen"
+  },
+  "sceneSectionRecommended": "Recommended for you",
+  "@sceneSectionRecommended": {
+    "description": "Section header for scenes recommended by user level"
+  },
+  "sceneSectionFree": "Free scenes",
+  "@sceneSectionFree": {
+    "description": "Section header for free scenes"
+  },
+  "sceneSectionPremium": "Premium scenes",
+  "@sceneSectionPremium": {
+    "description": "Section header for premium scenes"
+  },
+  "premiumComingSoon": "Premium feature — coming soon",
+  "@premiumComingSoon": {
+    "description": "Snackbar shown when tapping a locked premium scene"
+  },
+  "badgesTitle": "Badges",
+  "@badgesTitle": {
+    "description": "App bar title on the badges screen"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Generic retry button label"
   }
 }

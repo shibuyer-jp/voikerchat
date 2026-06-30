@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../models/diagnostic.dart';
 import '../services/scene_service.dart';
 import '../widgets/scene_preview_card.dart';
@@ -37,7 +38,7 @@ class SceneSelectionScreen extends StatelessWidget {
   /// ロック済みプレミアムシーンをタップした時の案内
   void _showLockedMessage(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('プレミアム機能（近日実装）')),
+      SnackBar(content: Text(AppLocalizations.of(context).premiumComingSoon)),
     );
   }
 
@@ -86,24 +87,25 @@ class SceneSelectionScreen extends StatelessWidget {
     // (3) プレミアムシーン
     final premiumScenes = SceneService.getPremiumScenes();
 
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('シーンを選ぶ'),
+        title: Text(l.sceneSelectionTitle),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           if (recommended.isNotEmpty) ...[
-            _buildSectionHeader(context, 'あなたへのおすすめ'),
+            _buildSectionHeader(context, l.sceneSectionRecommended),
             ...recommended
                 .map((scene) => _buildCard(context, scene, isLocked: false)),
           ],
 
-          _buildSectionHeader(context, '無料シーン'),
+          _buildSectionHeader(context, l.sceneSectionFree),
           ...freeScenes
               .map((scene) => _buildCard(context, scene, isLocked: false)),
 
-          _buildSectionHeader(context, 'プレミアムシーン'),
+          _buildSectionHeader(context, l.sceneSectionPremium),
           ...premiumScenes.map(
             (scene) => _buildCard(context, scene, isLocked: !isPremiumUser),
           ),

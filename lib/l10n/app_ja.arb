@@ -6,5 +6,16 @@
   "goPremium": "プレミアムにする",
   "watchAdForBonus": "広告を見て +5回",
   "adBonusGranted": "+5回 追加されました！",
-  "adLoadFailed": "広告を読み込めませんでした。時間をおいて再度お試しください。"
+  "adLoadFailed": "広告を読み込めませんでした。時間をおいて再度お試しください。",
+  "navScenes": "シーン",
+  "navBadges": "バッジ",
+  "navStats": "統計",
+  "navNotifications": "通知",
+  "sceneSelectionTitle": "シーンを選ぶ",
+  "sceneSectionRecommended": "あなたへのおすすめ",
+  "sceneSectionFree": "無料シーン",
+  "sceneSectionPremium": "プレミアムシーン",
+  "premiumComingSoon": "プレミアム機能（近日実装）",
+  "badgesTitle": "バッジ",
+  "retry": "再試行"
 }

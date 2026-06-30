@@ -6,5 +6,16 @@
   "goPremium": "Mag-Premium",
   "watchAdForBonus": "Manood ng ad para sa +5",
   "adBonusGranted": "+5 na mensahe ang naidagdag!",
-  "adLoadFailed": "Hindi ma-load ang ad. Pakisubukan muli mamaya."
+  "adLoadFailed": "Hindi ma-load ang ad. Pakisubukan muli mamaya.",
+  "navScenes": "Mga Eksena",
+  "navBadges": "Mga Badge",
+  "navStats": "Estadistika",
+  "navNotifications": "Mga Abiso",
+  "sceneSelectionTitle": "Pumili ng eksena",
+  "sceneSectionRecommended": "Inirerekomenda para sa iyo",
+  "sceneSectionFree": "Mga libreng eksena",
+  "sceneSectionPremium": "Mga premium na eksena",
+  "premiumComingSoon": "Premium na feature — malapit na",
+  "badgesTitle": "Mga Badge",
+  "retry": "Subukan muli"
 }
