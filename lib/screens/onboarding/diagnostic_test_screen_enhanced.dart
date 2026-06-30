@@ -189,136 +189,140 @@ class _DiagnosticTestScreenEnhancedState
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     final question = questions[currentQuestionIndex];
     final currentScore = _calculateScore();
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // スコア表示
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '問題 ${currentQuestionIndex + 1}/${questions.length}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // スコア表示
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '問題 ${currentQuestionIndex + 1}/${questions.length}',
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0099FF).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '正解: $currentScore/${questions.length}',
-                      style: const TextStyle(
-                        color: Color(0xFF0099FF),
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0099FF).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '正解: $currentScore/${questions.length}',
+                        style: const TextStyle(
+                          color: Color(0xFF0099FF),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+
+              // 難易度表示
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Chip(
+                  label: Text(question.difficulty),
+                  backgroundColor: const Color(0xFFFF9900).withValues(alpha: 0.2),
+                  labelStyle: const TextStyle(color: Color(0xFFFF9900)),
+                ),
+              ),
+
+              // 問題文
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Text(
+                  question.questionText,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+
+              // 選択肢
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Column(
+                  children: List.generate(question.options.length, (index) {
+                    final option = question.options[index];
+                    final isSelected = userAnswers[currentQuestionIndex] == index;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _handleAnswerSelected(index);
+                          // 選択後に解説を表示
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            _showExplanation(currentQuestionIndex, index);
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isSelected
+                              ? const Color(0xFF0099FF)
+                              : Colors.white,
+                          foregroundColor:
+                              isSelected ? Colors.white : Colors.black,
+                          side: const BorderSide(color: Color(0xFF0099FF)),
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.all(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option,
+                                overflow: TextOverflow.visible,
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check_circle),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+
+              // ヒントとスキップボタン
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _handleShowHint,
+                    icon: const Icon(Icons.lightbulb_outline),
+                    label: Text(
+                      hintUsed[currentQuestionIndex]
+                          ? 'ヒント(使用済み)'
+                          : 'ヒント',
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _handleSkip,
+                    icon: const Icon(Icons.skip_next),
+                    label: const Text('スキップ'),
                   ),
                 ],
               ),
-            ),
-
-            // 難易度表示
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Chip(
-                label: Text(question.difficulty),
-                backgroundColor: const Color(0xFFFF9900).withValues(alpha: 0.2),
-                labelStyle: const TextStyle(color: Color(0xFFFF9900)),
-              ),
-            ),
-
-            // 問題文
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24.0),
-              child: Text(
-                question.questionText,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-            ),
-
-            // 選択肢
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24.0),
-              child: Column(
-                children: List.generate(question.options.length, (index) {
-                  final option = question.options[index];
-                  final isSelected = userAnswers[currentQuestionIndex] == index;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _handleAnswerSelected(index);
-                        // 選択後に解説を表示
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          _showExplanation(currentQuestionIndex, index);
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isSelected
-                            ? const Color(0xFF0099FF)
-                            : Colors.white,
-                        foregroundColor:
-                            isSelected ? Colors.white : Colors.black,
-                        side: const BorderSide(color: Color(0xFF0099FF)),
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.all(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              option,
-                              overflow: TextOverflow.visible,
-                            ),
-                          ),
-                          if (isSelected)
-                            const Icon(Icons.check_circle),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-
-            // ヒントとスキップボタン
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _handleShowHint,
-                  icon: const Icon(Icons.lightbulb_outline),
-                  label: Text(
-                    hintUsed[currentQuestionIndex]
-                        ? 'ヒント(使用済み)'
-                        : 'ヒント',
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _handleSkip,
-                  icon: const Icon(Icons.skip_next),
-                  label: const Text('スキップ'),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
