@@ -109,5 +109,10 @@
   "progressStep": "Hakbang {step}/5",
   "diagDontKnow": "Hindi ko alam",
   "sceneCharacterLabel": "Karakter: {name}",
-  "sceneRecommendedLabel": "Inirerekomenda: {level}"
+  "sceneRecommendedLabel": "Inirerekomenda: {level}",
+  "badgeUnlocked": "🎉 Bagong badge ang nakuha: {names}",
+  "badgeLoadError": "Nabigong i-load ang mga badge",
+  "badgeUnlockedCount": "{unlocked} / {total} ang nakuha",
+  "badgeUnlockedOn": "Nakuha noong {date}",
+  "badgeAlreadyUnlocked": "Nakuha na"
 }

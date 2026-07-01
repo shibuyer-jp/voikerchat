@@ -78,15 +78,16 @@ class _BadgesScreenState extends State<BadgesScreen> {
         final names = newlyUnlocked.map((b) => b.title).join('、');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('🎉 新しいバッジを獲得: $names'),
+            content: Text(AppLocalizations.of(context).badgeUnlocked(names)),
             duration: const Duration(seconds: 4),
           ),
         );
       }
     } catch (_) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
-        _error = 'バッジの読み込みに失敗しました';
+        _error = l10n.badgeLoadError;
         _isLoading = false;
       });
     }
@@ -137,7 +138,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
               const Icon(Icons.emoji_events, color: Color(0xFFFFC107)),
               const SizedBox(width: 8),
               Text(
-                '$unlockedCount / $total 個獲得',
+                AppLocalizations.of(context).badgeUnlockedCount(unlockedCount, total),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -239,8 +240,9 @@ class _BadgeCard extends StatelessWidget {
           if (isUnlocked)
             Text(
               unlockedAt != null
-                  ? '${unlockedAt!.year}/${unlockedAt!.month}/${unlockedAt!.day} 獲得'
-                  : '獲得済み',
+                  ? AppLocalizations.of(context).badgeUnlockedOn(
+                      '${unlockedAt!.year}/${unlockedAt!.month}/${unlockedAt!.day}')
+                  : AppLocalizations.of(context).badgeAlreadyUnlocked,
               style: const TextStyle(
                 fontSize: 10,
                 color: Color(0xFF4CAF50),

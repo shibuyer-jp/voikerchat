@@ -109,5 +109,10 @@
   "progressStep": "ステップ {step}/5",
   "diagDontKnow": "わかりません",
   "sceneCharacterLabel": "キャラ: {name}",
-  "sceneRecommendedLabel": "推奨: {level}"
+  "sceneRecommendedLabel": "推奨: {level}",
+  "badgeUnlocked": "🎉 新しいバッジを獲得: {names}",
+  "badgeLoadError": "バッジの読み込みに失敗しました",
+  "badgeUnlockedCount": "{unlocked} / {total} 個獲得",
+  "badgeUnlockedOn": "{date} 獲得",
+  "badgeAlreadyUnlocked": "獲得済み"
 }

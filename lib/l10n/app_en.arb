@@ -533,5 +533,43 @@
         "type": "String"
       }
     }
+  },
+  "badgeUnlocked": "🎉 New badge unlocked: {names}",
+  "@badgeUnlocked": {
+    "description": "SnackBar shown when one or more badges are newly unlocked",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeLoadError": "Failed to load badges",
+  "@badgeLoadError": {
+    "description": "Error message shown when badge data fails to load"
+  },
+  "badgeUnlockedCount": "{unlocked} / {total} unlocked",
+  "@badgeUnlockedCount": {
+    "description": "Header showing how many badges are unlocked out of the total",
+    "placeholders": {
+      "unlocked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "badgeUnlockedOn": "Unlocked {date}",
+  "@badgeUnlockedOn": {
+    "description": "Badge card label showing the date the badge was unlocked",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeAlreadyUnlocked": "Unlocked",
+  "@badgeAlreadyUnlocked": {
+    "description": "Badge card label when the unlock date is unknown"
   }
 }
