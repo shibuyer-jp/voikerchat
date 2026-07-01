@@ -22,8 +22,6 @@ enum BadgeConditionType {
 class AppBadge {
   const AppBadge({
     required this.id,
-    required this.title,
-    required this.description,
     required this.icon,
     required this.conditionType,
     required this.threshold,
@@ -31,8 +29,6 @@ class AppBadge {
   });
 
   final String id;
-  final String title;
-  final String description;
   final IconData icon;
   final BadgeConditionType conditionType;
   final int threshold;
@@ -74,8 +70,6 @@ class BadgeCatalog {
   static const List<AppBadge> all = [
     AppBadge(
       id: 'first_step',
-      title: '始まりの一歩',
-      description: '初めての会話を完了',
       icon: Icons.flag,
       conditionType: BadgeConditionType.conversations,
       threshold: 1,
@@ -83,8 +77,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'talkative_10',
-      title: 'おしゃべり',
-      description: '10 回の会話を達成',
       icon: Icons.forum,
       conditionType: BadgeConditionType.conversations,
       threshold: 10,
@@ -92,8 +84,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'conversation_master_50',
-      title: '会話マスター',
-      description: '50 回の会話を達成',
       icon: Icons.workspace_premium,
       conditionType: BadgeConditionType.conversations,
       threshold: 50,
@@ -101,8 +91,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'basic_master',
-      title: '基本制覇',
-      description: '基本 8 シーンすべてで会話',
       icon: Icons.school,
       conditionType: BadgeConditionType.basicScenes,
       threshold: 8,
@@ -110,8 +98,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'anime_explorer',
-      title: 'アニメの世界へ',
-      description: 'アニメシーンを初体験',
       icon: Icons.auto_awesome,
       conditionType: BadgeConditionType.animeScenes,
       threshold: 1,
@@ -119,8 +105,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'anime_master',
-      title: 'アニメマスター',
-      description: 'アニメ 5 シーンすべてで会話',
       icon: Icons.star,
       conditionType: BadgeConditionType.animeScenes,
       threshold: 5,
@@ -128,8 +112,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'streak_3',
-      title: '三日坊主卒業',
-      description: '3 日連続で学習',
       icon: Icons.local_fire_department,
       conditionType: BadgeConditionType.streakDays,
       threshold: 3,
@@ -137,8 +119,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'streak_7',
-      title: '習慣化',
-      description: '7 日連続で学習',
       icon: Icons.whatshot,
       conditionType: BadgeConditionType.streakDays,
       threshold: 7,
@@ -146,8 +126,6 @@ class BadgeCatalog {
     ),
     AppBadge(
       id: 'streak_30',
-      title: '不屈の継続',
-      description: '30 日連続で学習',
       icon: Icons.emoji_events,
       conditionType: BadgeConditionType.streakDays,
       threshold: 30,

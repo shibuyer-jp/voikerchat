@@ -86,18 +86,6 @@ class NotificationHistory {
     return DateTime.now().toUtc().difference(receivedAt).inSeconds;
   }
 
-  /// 通知受信からの経過時間（日本語表記）
-  /// 例: "5分前", "2時間前", "3日前"
-  String get relativeTime {
-    final seconds = secondsSinceReceived;
-    
-    if (seconds < 60) return '今';
-    if (seconds < 3600) return '${seconds ~/ 60}分前';
-    if (seconds < 86400) return '${seconds ~/ 3600}時間前';
-    if (seconds < 2592000) return '${seconds ~/ 86400}日前'; // 30日未満
-    return '${seconds ~/ 2592000}ヶ月前';
-  }
-
   @override
   String toString() => 'NotificationHistory('
       'id: $id, '

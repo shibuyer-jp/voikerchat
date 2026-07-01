@@ -45,17 +45,6 @@ class DiagnosticResult {
     return UserDiagnosticLevel.beginner;
   }
 
-  /// レベルの日本語表示
-  static String getLevelLabel(UserDiagnosticLevel level) {
-    switch (level) {
-      case UserDiagnosticLevel.beginner:
-        return '初心者';
-      case UserDiagnosticLevel.intermediate:
-        return '中級者';
-      case UserDiagnosticLevel.advanced:
-        return '上級者';
-    }
-  }
 }
 
 /// 診断テスト問題セット（固定3問）

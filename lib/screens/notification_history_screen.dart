@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
 import 'package:voikerchat/models/notification_history_model.dart';
 import 'package:voikerchat/services/notification_history_service.dart';
 
@@ -261,7 +262,8 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                notification.relativeTime,
+                relativeTimeLabel(
+                    AppLocalizations.of(context), notification.secondsSinceReceived),
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.grey.shade500,

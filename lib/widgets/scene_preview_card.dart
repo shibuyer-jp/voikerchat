@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
 import '../models/diagnostic.dart';
 
 /// ScenePreviewCard: シーン選択用のカード
@@ -72,15 +73,11 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
     }
   }
 
-  String _getLevelLabel(UserDiagnosticLevel level) {
-    return DiagnosticResult.getLevelLabel(level);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final levelColor = _getLevelColor(widget.recommendedLevel);
-    final levelLabel = _getLevelLabel(widget.recommendedLevel);
     final l10n = AppLocalizations.of(context);
+    final levelColor = _getLevelColor(widget.recommendedLevel);
+    final levelLabel = levelName(l10n, widget.recommendedLevel);
 
     return GestureDetector(
       onTap: widget.onTap,

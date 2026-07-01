@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
 import '../../models/diagnostic.dart';
 
 class LevelResultScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class LevelResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final levelLabel = DiagnosticResult.getLevelLabel(result.level);
+    final levelLabel = levelName(l10n, result.level);
     final levelColor = _getLevelColor(result.level);
 
     return Scaffold(

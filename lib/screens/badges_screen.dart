@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
 import '../models/badge.dart';
 import '../models/message.dart';
 import '../services/badge_service.dart';
@@ -75,7 +76,9 @@ class _BadgesScreenState extends State<BadgesScreen> {
       });
 
       if (newlyUnlocked.isNotEmpty) {
-        final names = newlyUnlocked.map((b) => b.title).join('、');
+        final names = newlyUnlocked
+            .map((b) => badgeTitle(AppLocalizations.of(context), b.id))
+            .join(', ');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).badgeUnlocked(names)),
@@ -193,6 +196,7 @@ class _BadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final progress = (current / badge.threshold).clamp(0.0, 1.0).toDouble();
     final iconColor = isUnlocked ? badge.color : Colors.grey.shade400;
 
@@ -219,7 +223,7 @@ class _BadgeCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            badge.title,
+            badgeTitle(l10n, badge.id),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -230,7 +234,7 @@ class _BadgeCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            badge.description,
+            badgeDesc(l10n, badge.id),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

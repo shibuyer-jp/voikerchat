@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -463,7 +464,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           children: [
             Text(widget.sceneName),
             Text(
-              l.levelLabel('${widget.sceneData['level'] ?? 'N/A'}'),
+              l.levelLabel(levelNameFromToken(l, widget.sceneData['level'] as String?)),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

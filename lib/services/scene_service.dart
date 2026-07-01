@@ -28,7 +28,7 @@ class Scene {
       'name': name,
       'character': characterName,
       'description': description,
-      'level': DiagnosticResult.getLevelLabel(recommendedLevel),
+      'level': recommendedLevel.name,
       'color': color,
       'isPremium': isPremium,
     };

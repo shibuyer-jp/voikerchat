@@ -571,5 +571,43 @@
   "badgeAlreadyUnlocked": "Unlocked",
   "@badgeAlreadyUnlocked": {
     "description": "Badge card label when the unlock date is unknown"
-  }
+  },
+  "levelBeginner": "Beginner",
+  "levelIntermediate": "Intermediate",
+  "levelAdvanced": "Advanced",
+  "timeJustNow": "Just now",
+  "minutesAgo": "{count} min ago",
+  "@minutesAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "hoursAgo": "{count} hr ago",
+  "@hoursAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "daysAgo": "{count} days ago",
+  "@daysAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "monthsAgo": "{count} mo ago",
+  "@monthsAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "badgeFirstStepTitle": "First Step",
+  "badgeFirstStepDesc": "Complete your first conversation",
+  "badgeTalkative10Title": "Chatterbox",
+  "badgeTalkative10Desc": "Reach 10 conversations",
+  "badgeConversationMaster50Title": "Conversation Master",
+  "badgeConversationMaster50Desc": "Reach 50 conversations",
+  "badgeBasicMasterTitle": "Basics Cleared",
+  "badgeBasicMasterDesc": "Chat in all 8 basic scenes",
+  "badgeAnimeExplorerTitle": "Into the Anime World",
+  "badgeAnimeExplorerDesc": "Try an anime scene for the first time",
+  "badgeAnimeMasterTitle": "Anime Master",
+  "badgeAnimeMasterDesc": "Chat in all 5 anime scenes",
+  "badgeStreak3Title": "Past the First Hurdle",
+  "badgeStreak3Desc": "Study 3 days in a row",
+  "badgeStreak7Title": "Habit Formed",
+  "badgeStreak7Desc": "Study 7 days in a row",
+  "badgeStreak30Title": "Unstoppable",
+  "badgeStreak30Desc": "Study 30 days in a row"
 }
