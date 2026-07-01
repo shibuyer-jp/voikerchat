@@ -166,5 +166,11 @@
   "scene12Name": "日常学園",
   "scene12Desc": "学校語彙・同年代会話",
   "scene13Name": "ギャグ会話",
-  "scene13Desc": "ユーモア理解・自然な反応"
+  "scene13Desc": "ユーモア理解・自然な反応",
+  "premiumUpsellStage1Message": "毎日たくさん使うなら Premium がお得です",
+  "premiumUpsellStage2Message": "Premium なら無制限に学習できます",
+  "premiumUpsellStage3Message": "7日連続達成！Premium でアニメシーンも解放",
+  "premiumUpsellStage1ButtonText": "詳細",
+  "premiumUpsellStage2ButtonText": "登録（$12.99/月）",
+  "premiumUpsellStage3ButtonText": "いますぐ登録"
 }

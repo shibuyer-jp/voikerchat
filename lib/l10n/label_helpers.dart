@@ -1,5 +1,6 @@
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/models/diagnostic.dart';
+import 'package:voikerchat/services/premium_upsell_service.dart';
 
 /// モデル/サービス層のID・enum を、画面表示用の翻訳文字列へ解決するヘルパー。
 ///
@@ -105,6 +106,30 @@ String sceneDesc(AppLocalizations l10n, int id) {
     case 12: return l10n.scene12Desc;
     case 13: return l10n.scene13Desc;
     default: return '';
+  }
+}
+
+/// Premium勧導ステージ → メッセージ。
+String premiumUpsellStageMessage(AppLocalizations l10n, PremiumUpsellStage stage) {
+  switch (stage) {
+    case PremiumUpsellStage.stage1:
+      return l10n.premiumUpsellStage1Message;
+    case PremiumUpsellStage.stage2:
+      return l10n.premiumUpsellStage2Message;
+    case PremiumUpsellStage.stage3:
+      return l10n.premiumUpsellStage3Message;
+  }
+}
+
+/// Premium勧導ステージ → ボタン文言。
+String premiumUpsellStageButtonText(AppLocalizations l10n, PremiumUpsellStage stage) {
+  switch (stage) {
+    case PremiumUpsellStage.stage1:
+      return l10n.premiumUpsellStage1ButtonText;
+    case PremiumUpsellStage.stage2:
+      return l10n.premiumUpsellStage2ButtonText;
+    case PremiumUpsellStage.stage3:
+      return l10n.premiumUpsellStage3ButtonText;
   }
 }
 

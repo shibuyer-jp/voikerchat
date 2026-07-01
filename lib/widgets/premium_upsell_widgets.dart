@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
 import '../services/premium_upsell_service.dart';
 
 /// PremiumUpsellToast: Stage 1用トースト通知
@@ -33,9 +34,7 @@ class PremiumUpsellToast extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  PremiumUpsellService.getStageMessage(
-                    PremiumUpsellStage.stage1,
-                  ),
+                  premiumUpsellStageMessage(l, PremiumUpsellStage.stage1),
                   style: const TextStyle(fontSize: 13),
                 ),
               ],

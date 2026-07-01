@@ -130,30 +130,6 @@ class PremiumUpsellService {
     }
   }
 
-  /// ステージメッセージを取得
-  static String getStageMessage(PremiumUpsellStage stage) {
-    switch (stage) {
-      case PremiumUpsellStage.stage1:
-        return '毎日たくさん使うなら Premium がお得です';
-      case PremiumUpsellStage.stage2:
-        return 'Premium なら無制限に学習できます';
-      case PremiumUpsellStage.stage3:
-        return '7日連続達成！Premium でアニメシーンも解放';
-    }
-  }
-
-  /// ステージボタンテキストを取得
-  static String getStageButtonText(PremiumUpsellStage stage) {
-    switch (stage) {
-      case PremiumUpsellStage.stage1:
-        return '詳細';
-      case PremiumUpsellStage.stage2:
-        return '登録（\$12.99/月）';
-      case PremiumUpsellStage.stage3:
-        return 'いますぐ登録';
-    }
-  }
-
   /// 開発用: リセット
   Future<void> resetForDebug() async {
     await _ensureInitialized();

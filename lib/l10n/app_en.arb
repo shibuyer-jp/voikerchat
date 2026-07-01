@@ -661,5 +661,17 @@
   "scene13Name": "Comedy Chat",
   "@scene13Name": { "description": "Scene 13: name (anime)" },
   "scene13Desc": "Understanding humor & natural reactions",
-  "@scene13Desc": { "description": "Scene 13: description (anime)" }
+  "@scene13Desc": { "description": "Scene 13: description (anime)" },
+  "premiumUpsellStage1Message": "Premium is worth it if you use it a lot every day",
+  "@premiumUpsellStage1Message": { "description": "Premium upsell stage 1: toast message" },
+  "premiumUpsellStage2Message": "With Premium you can learn without limits",
+  "@premiumUpsellStage2Message": { "description": "Premium upsell stage 2: dialog message" },
+  "premiumUpsellStage3Message": "7-day streak achieved! Unlock anime scenes with Premium",
+  "@premiumUpsellStage3Message": { "description": "Premium upsell stage 3: banner message" },
+  "premiumUpsellStage1ButtonText": "Details",
+  "@premiumUpsellStage1ButtonText": { "description": "Premium upsell stage 1: button text" },
+  "premiumUpsellStage2ButtonText": "Subscribe ($12.99/mo)",
+  "@premiumUpsellStage2ButtonText": { "description": "Premium upsell stage 2: button text" },
+  "premiumUpsellStage3ButtonText": "Subscribe Now",
+  "@premiumUpsellStage3ButtonText": { "description": "Premium upsell stage 3: button text" }
 }

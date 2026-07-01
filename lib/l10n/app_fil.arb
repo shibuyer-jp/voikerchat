@@ -166,5 +166,11 @@
   "scene12Name": "Buhay Estudyante",
   "scene12Desc": "Bokabularyo sa paaralan at usapan sa kapwa mag-aaral",
   "scene13Name": "Comedy Chat",
-  "scene13Desc": "Pag-unawa sa katatawanan at natural na reaksyon"
+  "scene13Desc": "Pag-unawa sa katatawanan at natural na reaksyon",
+  "premiumUpsellStage1Message": "Sulit ang Premium kung araw-araw mong ginagamit nang marami",
+  "premiumUpsellStage2Message": "Sa Premium, walang limitasyon ang pag-aaral mo",
+  "premiumUpsellStage3Message": "Nakamit ang 7-araw na streak! I-unlock ang mga anime scene gamit ang Premium",
+  "premiumUpsellStage1ButtonText": "Detalye",
+  "premiumUpsellStage2ButtonText": "Mag-subscribe ($12.99/buwan)",
+  "premiumUpsellStage3ButtonText": "Mag-subscribe Ngayon"
 }
