@@ -358,5 +358,180 @@
         "type": "String"
       }
     }
+  },
+  "errorWithDetail": "Error: {error}",
+  "@errorWithDetail": {
+    "description": "Generic error message with detail",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notifMarkedRead": "Notification marked as read",
+  "@notifMarkedRead": {
+    "description": "Snackbar after marking a notification read"
+  },
+  "notifDeleted": "Notification deleted",
+  "@notifDeleted": {
+    "description": "Snackbar after deleting a notification"
+  },
+  "notifDeleteError": "Delete error: {error}",
+  "@notifDeleteError": {
+    "description": "Snackbar when deleting a notification fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notifHistoryTitle": "Notifications",
+  "@notifHistoryTitle": {
+    "description": "Notification history screen app bar title"
+  },
+  "notifUnread": "Unread",
+  "@notifUnread": {
+    "description": "Unread filter chip / unread badge"
+  },
+  "notifEmpty": "No notifications",
+  "@notifEmpty": {
+    "description": "Empty state for notification list"
+  },
+  "refresh": "Refresh",
+  "@refresh": {
+    "description": "Refresh button"
+  },
+  "notifFilterAll": "All",
+  "@notifFilterAll": {
+    "description": "Notification filter: all"
+  },
+  "notifFilterRead": "Read",
+  "@notifFilterRead": {
+    "description": "Notification filter: read"
+  },
+  "diagHint": "Hint",
+  "@diagHint": {
+    "description": "Diagnostic test hint label/dialog title"
+  },
+  "diagCorrect": "Correct!",
+  "@diagCorrect": {
+    "description": "Diagnostic answer feedback: correct"
+  },
+  "diagIncorrect": "Incorrect",
+  "@diagIncorrect": {
+    "description": "Diagnostic answer feedback: incorrect"
+  },
+  "diagExplanation": "Explanation",
+  "@diagExplanation": {
+    "description": "Diagnostic explanation section heading"
+  },
+  "diagCorrectAnswer": "Correct answer: {answer}",
+  "@diagCorrectAnswer": {
+    "description": "Shows the correct answer text",
+    "placeholders": {
+      "answer": {
+        "type": "String"
+      }
+    }
+  },
+  "next": "Next",
+  "@next": {
+    "description": "Generic next button"
+  },
+  "diagQuestionProgress": "Question {current}/{total}",
+  "@diagQuestionProgress": {
+    "description": "Diagnostic question progress",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "diagScoreCount": "Correct: {score}/{total}",
+  "@diagScoreCount": {
+    "description": "Diagnostic running correct-count score",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "diagHintUsed": "Hint (used)",
+  "@diagHintUsed": {
+    "description": "Hint button label when hint already used"
+  },
+  "skip": "Skip",
+  "@skip": {
+    "description": "Generic skip button"
+  },
+  "resultYourLevelIs": "Your level is",
+  "@resultYourLevelIs": {
+    "description": "Level result screen title"
+  },
+  "resultScore": "Score: {score}/3",
+  "@resultScore": {
+    "description": "Diagnostic total score out of 3",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "resultLevelNote": "Scenes matched to this level will be recommended.\nYou can change your level anytime.",
+  "@resultLevelNote": {
+    "description": "Helper note on level result screen"
+  },
+  "resultContinueToScenes": "Continue to scene selection",
+  "@resultContinueToScenes": {
+    "description": "CTA button on level result screen"
+  },
+  "resultDescBeginner": "We recommend starting with beginner scenes (such as casual conversations with friends). You'll learn basic Japanese expressions.",
+  "@resultDescBeginner": {
+    "description": "Beginner level description"
+  },
+  "resultDescIntermediate": "We recommend intermediate scenes (such as ordering at a restaurant or shopping). You'll master polite forms and practical Japanese expressions.",
+  "@resultDescIntermediate": {
+    "description": "Intermediate level description"
+  },
+  "resultDescAdvanced": "We recommend advanced scenes (such as self-introductions or complex conversations). You can challenge yourself with business honorifics and advanced expressions.",
+  "@resultDescAdvanced": {
+    "description": "Advanced level description"
+  },
+  "progressStep": "Step {step}/5",
+  "@progressStep": {
+    "description": "Onboarding progress bar step indicator",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "diagDontKnow": "I don't know",
+  "@diagDontKnow": {
+    "description": "Diagnostic 'I don't know' answer option"
+  },
+  "sceneCharacterLabel": "Character: {name}",
+  "@sceneCharacterLabel": {
+    "description": "Scene preview character label",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sceneRecommendedLabel": "Recommended: {level}",
+  "@sceneRecommendedLabel": {
+    "description": "Scene preview recommended level tag",
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../models/diagnostic.dart';
 
 /// ScenePreviewCard: シーン選択用のカード
@@ -79,6 +80,7 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
   Widget build(BuildContext context) {
     final levelColor = _getLevelColor(widget.recommendedLevel);
     final levelLabel = _getLevelLabel(widget.recommendedLevel);
+    final l10n = AppLocalizations.of(context);
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -146,7 +148,7 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'キャラ: ${widget.characterName}',
+                          l10n.sceneCharacterLabel(widget.characterName),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -197,7 +199,7 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  '推奨: $levelLabel',
+                  l10n.sceneRecommendedLabel(levelLabel),
                   style: TextStyle(
                     color: levelColor,
                     fontWeight: FontWeight.bold,

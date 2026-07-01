@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/models/notification_history_model.dart';
 import 'package:voikerchat/services/notification_history_service.dart';
 
@@ -72,15 +73,16 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
   /// 通知を既読マーク
   Future<void> _markAsRead(NotificationHistory notification) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await _service.markAsRead(notification.id);
       _loadNotifications();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('通知を既読にしました'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(l10n.notifMarkedRead),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -88,7 +90,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('エラー: $e'),
+            content: Text(l10n.errorWithDetail(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -98,15 +100,16 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
   /// 通知を削除
   Future<void> _deleteNotification(NotificationHistory notification) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await _service.deleteNotification(notification.id);
       _loadNotifications();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('通知を削除しました'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(l10n.notifDeleted),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -114,7 +117,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('削除エラー: $e'),
+            content: Text(l10n.notifDeleteError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -124,9 +127,10 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('通知履歴'),
+        title: Text(l10n.notifHistoryTitle),
         elevation: 2,
       ),
       body: Column(
@@ -152,11 +156,12 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
                       children: [
                         const Icon(Icons.error, size: 48, color: Colors.red),
                         const SizedBox(height: 16),
-                        Text('エラー: ${snapshot.error}'),
+                        Text(l10n.errorWithDetail(
+                            snapshot.error.toString())),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadNotifications,
-                          child: const Text('再試行'),
+                          child: Text(l10n.retry),
                         ),
                       ],
                     ),
@@ -187,6 +192,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
   /// フィルタータブを構築
   Widget _buildFilterTabs() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       color: Colors.grey.shade100,
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -198,7 +204,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: FilterChip(
-                label: Text(status.label),
+                label: Text(_filterLabel(status, l10n)),
                 selected: isSelected,
                 onSelected: (selected) {
                   setState(() {
@@ -312,6 +318,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     if (notification.isRead) {
       return null;
     }
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -319,9 +326,9 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
         color: Colors.blue,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Text(
-        '未読',
-        style: TextStyle(
+      child: Text(
+        l10n.notifUnread,
+        style: const TextStyle(
           color: Colors.white,
           fontSize: 11,
           fontWeight: FontWeight.bold,
@@ -332,6 +339,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
   /// 通知なし時の空状態を表示
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -343,7 +351,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '通知はありません',
+            l10n.notifEmpty,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade600,
@@ -352,20 +360,29 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _loadNotifications,
-            child: const Text('更新'),
+            child: Text(l10n.refresh),
           ),
         ],
       ),
     );
   }
+
+  /// フィルター状態の表示ラベル（多言語対応）
+  String _filterLabel(FilterStatus status, AppLocalizations l10n) {
+    switch (status) {
+      case FilterStatus.all:
+        return l10n.notifFilterAll;
+      case FilterStatus.unread:
+        return l10n.notifUnread;
+      case FilterStatus.read:
+        return l10n.notifFilterRead;
+    }
+  }
 }
 
 /// フィルター状態の列挙
 enum FilterStatus {
-  all('すべて'),
-  unread('未読'),
-  read('既読');
-
-  final String label;
-  const FilterStatus(this.label);
+  all,
+  unread,
+  read,
 }

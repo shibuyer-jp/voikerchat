@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../../models/diagnostic.dart';
 
 class LevelResultScreen extends StatelessWidget {
@@ -13,6 +14,7 @@ class LevelResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final levelLabel = DiagnosticResult.getLevelLabel(result.level);
     final levelColor = _getLevelColor(result.level);
 
@@ -30,9 +32,9 @@ class LevelResultScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // タイトル
-              const Text(
-                'あなたのレベルは',
-                style: TextStyle(
+              Text(
+                l10n.resultYourLevelIs,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey,
@@ -71,7 +73,7 @@ class LevelResultScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'スコア: ${result.totalScore}/3',
+                      l10n.resultScore(result.totalScore),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -91,7 +93,7 @@ class LevelResultScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _getLevelDescription(result.level),
+                  _getLevelDescription(l10n, result.level),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -104,9 +106,9 @@ class LevelResultScreen extends StatelessWidget {
               const SizedBox(height: 40),
 
               // 説明テキスト
-              const Text(
-                'このレベルに合わせたシーンがおすすめされます。\nいつでもレベルを変更できます。',
-                style: TextStyle(
+              Text(
+                l10n.resultLevelNote,
+                style: const TextStyle(
                   fontSize: 13,
                   color: Colors.grey,
                   height: 1.6,
@@ -128,9 +130,9 @@ class LevelResultScreen extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'シーン選択へ進む',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.resultContinueToScenes,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -156,14 +158,14 @@ class LevelResultScreen extends StatelessWidget {
     }
   }
 
-  String _getLevelDescription(UserDiagnosticLevel level) {
+  String _getLevelDescription(AppLocalizations l10n, UserDiagnosticLevel level) {
     switch (level) {
       case UserDiagnosticLevel.beginner:
-        return '初心者向けシーン（友達とのカジュアルな会話など）から始めるのがおすすめです。基礎的な日本語表現を学べます。';
+        return l10n.resultDescBeginner;
       case UserDiagnosticLevel.intermediate:
-        return '中級者向けシーン（レストランでの注文、買い物など）がおすすめです。敬語や実用的な日本語表現を習得できます。';
+        return l10n.resultDescIntermediate;
       case UserDiagnosticLevel.advanced:
-        return '上級者向けシーン（自己紹介、複雑な会話など）がおすすめです。ビジネス敬語や高度な表現に挑戦できます。';
+        return l10n.resultDescAdvanced;
     }
   }
 }

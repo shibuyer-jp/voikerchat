@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 
 /// OnboardingProgressBar: Onboarding フロー全体のプログレスバー
 /// 
@@ -84,6 +85,7 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -94,7 +96,7 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'ステップ ${widget.currentStep}/5',
+                l10n.progressStep(widget.currentStep),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF0099FF),

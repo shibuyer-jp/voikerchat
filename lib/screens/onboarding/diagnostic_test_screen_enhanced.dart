@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../../models/diagnostic.dart';
 import '../../services/onboarding_service.dart';
 
@@ -121,16 +122,17 @@ class _DiagnosticTestScreenEnhancedState
   }
 
   void _showHintDialog() {
+    final l10n = AppLocalizations.of(context);
     final hint = questions[currentQuestionIndex].hint;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ヒント'),
+        title: Text(l10n.diagHint),
         content: Text(hint),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: Text(l10n.ok),
           ),
         ],
       ),
@@ -138,6 +140,7 @@ class _DiagnosticTestScreenEnhancedState
   }
 
   void _showExplanation(int questionIndex, int selectedAnswer) {
+    final l10n = AppLocalizations.of(context);
     final question = questions[questionIndex];
     final isCorrect = question.correctAnswerIndex == selectedAnswer;
     final explanation = question.explanation;
@@ -146,7 +149,7 @@ class _DiagnosticTestScreenEnhancedState
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          isCorrect ? '正解！' : '不正解です',
+          isCorrect ? l10n.diagCorrect : l10n.diagIncorrect,
           style: TextStyle(
             color: isCorrect ? Colors.green : Colors.red,
           ),
@@ -157,14 +160,15 @@ class _DiagnosticTestScreenEnhancedState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '解説',
+                l10n.diagExplanation,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
               Text(explanation),
               const SizedBox(height: 16),
               Text(
-                '正解: ${question.options[question.correctAnswerIndex]}',
+                l10n.diagCorrectAnswer(
+                    question.options[question.correctAnswerIndex]),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -179,7 +183,7 @@ class _DiagnosticTestScreenEnhancedState
               Navigator.pop(context);
               _moveToNextQuestion();
             },
-            child: const Text('次へ'),
+            child: Text(l10n.next),
           ),
         ],
       ),
@@ -196,6 +200,7 @@ class _DiagnosticTestScreenEnhancedState
 
     final question = questions[currentQuestionIndex];
     final currentScore = _calculateScore();
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -211,7 +216,8 @@ class _DiagnosticTestScreenEnhancedState
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '問題 ${currentQuestionIndex + 1}/${questions.length}',
+                      l10n.diagQuestionProgress(
+                          currentQuestionIndex + 1, questions.length),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     Container(
@@ -224,7 +230,7 @@ class _DiagnosticTestScreenEnhancedState
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '正解: $currentScore/${questions.length}',
+                        l10n.diagScoreCount(currentScore, questions.length),
                         style: const TextStyle(
                           color: Color(0xFF0099FF),
                           fontWeight: FontWeight.bold,
@@ -310,14 +316,14 @@ class _DiagnosticTestScreenEnhancedState
                     icon: const Icon(Icons.lightbulb_outline),
                     label: Text(
                       hintUsed[currentQuestionIndex]
-                          ? 'ヒント(使用済み)'
-                          : 'ヒント',
+                          ? l10n.diagHintUsed
+                          : l10n.diagHint,
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _handleSkip,
                     icon: const Icon(Icons.skip_next),
-                    label: const Text('スキップ'),
+                    label: Text(l10n.skip),
                   ),
                 ],
               ),

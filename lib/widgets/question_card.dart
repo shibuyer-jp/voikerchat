@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import '../models/diagnostic.dart';
 
 class QuestionCard extends StatelessWidget {
@@ -21,6 +22,7 @@ class QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -32,7 +34,7 @@ class QuestionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '問題 $questionNumber/$totalQuestions',
+                  l10n.diagQuestionProgress(questionNumber, totalQuestions),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -99,9 +101,9 @@ class QuestionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'スキップ',
-                  style: TextStyle(
+                child: Text(
+                  l10n.skip,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey,
@@ -160,7 +162,9 @@ class QuestionCard extends StatelessWidget {
               // 選択肢テキスト
               Expanded(
                 child: Text(
-                  isWakarimasen ? 'わかりません' : question.options[index],
+                  isWakarimasen
+                      ? AppLocalizations.of(context).diagDontKnow
+                      : question.options[index],
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
