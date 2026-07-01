@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
 import '../models/diagnostic.dart';
 import '../services/scene_service.dart';
 import '../widgets/scene_preview_card.dart';
@@ -23,12 +24,13 @@ class SceneSelectionScreen extends StatelessWidget {
 
   /// 無料シーンを開いてチャット画面へ遷移
   void _openScene(BuildContext context, Scene scene) {
+    final l10n = AppLocalizations.of(context);
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           sceneId: scene.id.toString(),
-          sceneName: scene.name,
+          sceneName: sceneName(l10n, scene.id),
           sceneData: scene.toSceneData(),
         ),
       ),
@@ -60,11 +62,12 @@ class SceneSelectionScreen extends StatelessWidget {
     Scene scene, {
     required bool isLocked,
   }) {
+    final l10n = AppLocalizations.of(context);
     return ScenePreviewCard(
       sceneId: scene.id,
-      sceneName: scene.name,
+      sceneName: sceneName(l10n, scene.id),
       characterName: scene.characterName,
-      description: scene.description,
+      description: sceneDesc(l10n, scene.id),
       recommendedLevel: scene.recommendedLevel,
       isPremium: scene.isPremium,
       isLocked: isLocked,

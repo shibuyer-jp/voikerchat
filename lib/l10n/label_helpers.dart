@@ -68,6 +68,46 @@ String badgeTitle(AppLocalizations l10n, String id) {
   }
 }
 
+/// シーン ID → 表示名。
+String sceneName(AppLocalizations l10n, int id) {
+  switch (id) {
+    case 1: return l10n.scene1Name;
+    case 2: return l10n.scene2Name;
+    case 3: return l10n.scene3Name;
+    case 4: return l10n.scene4Name;
+    case 5: return l10n.scene5Name;
+    case 6: return l10n.scene6Name;
+    case 7: return l10n.scene7Name;
+    case 8: return l10n.scene8Name;
+    case 9: return l10n.scene9Name;
+    case 10: return l10n.scene10Name;
+    case 11: return l10n.scene11Name;
+    case 12: return l10n.scene12Name;
+    case 13: return l10n.scene13Name;
+    default: return '';
+  }
+}
+
+/// シーン ID → 説明文。
+String sceneDesc(AppLocalizations l10n, int id) {
+  switch (id) {
+    case 1: return l10n.scene1Desc;
+    case 2: return l10n.scene2Desc;
+    case 3: return l10n.scene3Desc;
+    case 4: return l10n.scene4Desc;
+    case 5: return l10n.scene5Desc;
+    case 6: return l10n.scene6Desc;
+    case 7: return l10n.scene7Desc;
+    case 8: return l10n.scene8Desc;
+    case 9: return l10n.scene9Desc;
+    case 10: return l10n.scene10Desc;
+    case 11: return l10n.scene11Desc;
+    case 12: return l10n.scene12Desc;
+    case 13: return l10n.scene13Desc;
+    default: return '';
+  }
+}
+
 /// バッジID → 説明。
 String badgeDesc(AppLocalizations l10n, String id) {
   switch (id) {
