@@ -1,7 +1,12 @@
 pre-push:
   parallel: false
   commands:
+    gen_l10n:
+      priority: 1
+      run: flutter gen-l10n
     analyze:
+      priority: 2
       run: flutter analyze
     test:
+      priority: 3
       run: flutter test
