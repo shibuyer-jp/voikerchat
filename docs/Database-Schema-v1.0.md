@@ -153,22 +153,31 @@ CREATE POLICY "System can update rate limits"
 Audit trail for all API usage (analytics).
 
 ```sql
+-- 実テーブル定義（本番 rfwbwwhqclabhnbsrygw / 2026-07-02 時点）。
+-- append-only の分析イベントログ。クォータ強制は rate_limits が担当し、
+-- usage_logs は非同期の記録専用（書込み失敗は握り潰す）。
 CREATE TABLE public.usage_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.user_profiles ON DELETE CASCADE,
-  scene_id UUID,
-  api_endpoint TEXT,
-  tokens_consumed INT,
-  cost DECIMAL(10, 4),
-  status TEXT CHECK (status IN ('success', 'error')),
-  error_message TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  event         TEXT NOT NULL CHECK (event IN (
+                  'session_start','message_sent','ad_reward','quota_reached',
+                  'upsell_shown','upsell_clicked','upsell_converted')),
+  scene_id      SMALLINT CHECK (scene_id >= 1 AND scene_id <= 13),
+  session_id    UUID,
+  model         TEXT,
+  platform      TEXT CHECK (platform IN ('ios','android','web')),
+  locale        TEXT CHECK (locale IN ('ja','en','fil')),
+  is_premium    BOOLEAN NOT NULL DEFAULT false,
+  input_tokens  INTEGER CHECK (input_tokens >= 0),
+  output_tokens INTEGER CHECK (output_tokens >= 0),
+  metadata      JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
--- RLS Policy: System insert only (no user SELECT)
-CREATE POLICY "System can insert usage logs" 
-  ON public.usage_logs 
-  FOR INSERT WITH CHECK (true);
+-- RLS: owner-scoped（insert / select は自分の行のみ。update/delete 不可＝append-only）。
+-- Index: (user_id, created_at) と (event, created_at)。
+-- 注意: scene_id は smallint(1..13)。アプリのシーンは文字列IDのため、API 側は
+--       scene_id を NULL とし、文字列シーン名を metadata.scene に格納している。
 ```
 
 ---

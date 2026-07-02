@@ -90,22 +90,22 @@ async function getAnalyticsStats(
   userId: string
 ): Promise<any> {
   try {
-    // 1. 総トークン使用数
+    // 1. 総トークン使用数（usage_logs 新スキーマ: event='message_sent' の output_tokens を集計）
     const { data: tokensData } = await supabase
       .from('usage_logs')
-      .select('tokens_consumed, created_at')
+      .select('input_tokens, output_tokens, created_at')
       .eq('user_id', userId)
-      .eq('status', 'success');
+      .eq('event', 'message_sent');
 
     const totalTokens = (tokensData || []).reduce(
-      (sum, log) => sum + (log.tokens_consumed || 0),
+      (sum, log) => sum + (log.output_tokens || 0),
       0
     );
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tokensToday = (tokensData || [])
       .filter((log) => new Date(log.created_at) >= today)
-      .reduce((sum, log) => sum + (log.tokens_consumed || 0), 0);
+      .reduce((sum, log) => sum + (log.output_tokens || 0), 0);
 
     // 2. シーン別進捗
     const { data: sessions } = await supabase
@@ -143,20 +143,16 @@ async function getAnalyticsStats(
     const estimatedHours = Math.floor(estimatedMinutes / 60);
 
     // 4. 使用エラー数
-    const { data: errorLogs } = await supabase
-      .from('usage_logs')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('status', 'error');
-
-    const totalErrors = errorLogs?.length || 0;
+    // 新スキーマの usage_logs はエラーイベントを持たない（event はすべて正常系）ため 0 を返す。
+    // 将来エラーを可観測にする場合は event 許容値の追加が必要。
+    const totalErrors = 0;
 
     // 5. 連続学習日数（簡易版）
     const { data: dateActivity } = await supabase
       .from('usage_logs')
       .select('created_at')
       .eq('user_id', userId)
-      .eq('status', 'success')
+      .eq('event', 'message_sent')
       .order('created_at', { ascending: false });
 
     let consecutiveDays = 0;

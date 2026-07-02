@@ -84,6 +84,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!isPremium) {
       const canCall = await checkAndIncrementRateLimit(supabase, userId);
       if (!canCall) {
+        // 上限到達を分析イベントとして記録（強制はしない・書込み失敗は無視）
+        await logUsage(supabase, {
+          userId,
+          event: 'quota_reached',
+          isPremium: false,
+          metadata: sceneId ? { scene: sceneId } : {},
+        });
         return res.status(429).json({
           error: 'Daily limit reached',
           message: 'Go Premium to unlock unlimited calls',
@@ -107,13 +114,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })),
     });
 
-    // 6. 使用ログ（成功）
+    // 6. 使用ログ（成功）— usage_logs 新スキーマ準拠（event ベース）
     await logUsage(supabase, {
       userId,
-      sceneId,
-      endpoint: '/api/chat',
-      tokensConsumed: response.usage.output_tokens,
-      status: 'success',
+      event: 'message_sent',
+      model: 'claude-haiku-4-5-20251001',
+      isPremium,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      metadata: sceneId ? { scene: sceneId } : {},
     });
 
     // 7. 成功レスポンス
@@ -230,26 +239,54 @@ function buildSystemPrompt(sceneId: string): string {
 /**
  * usage_logs への記録（失敗しても本処理は止めない）
  */
+type UsageEvent =
+  | 'session_start'
+  | 'message_sent'
+  | 'ad_reward'
+  | 'quota_reached'
+  | 'upsell_shown'
+  | 'upsell_clicked'
+  | 'upsell_converted';
+
 async function logUsage(
   supabase: SupabaseClient,
   params: {
     userId: string;
-    sceneId?: string;
-    endpoint: string;
-    tokensConsumed: number;
-    status: 'success' | 'error';
-    errorMessage?: string;
+    event: UsageEvent;
+    sessionId?: string;
+    model?: string;
+    isPremium?: boolean;
+    inputTokens?: number;
+    outputTokens?: number;
+    locale?: string;
+    platform?: string;
+    metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
   try {
+    // locale / platform は CHECK 制約付き。許容値以外は null に落とす（書込み失敗を防ぐ）
+    const ALLOWED_LOCALES = ['ja', 'en', 'fil'];
+    const ALLOWED_PLATFORMS = ['ios', 'android', 'web'];
+    const locale =
+      params.locale && ALLOWED_LOCALES.includes(params.locale) ? params.locale : null;
+    const platform =
+      params.platform && ALLOWED_PLATFORMS.includes(params.platform)
+        ? params.platform
+        : null;
+
+    // 注意: scene_id 列は smallint(1..13)。アプリの sceneId は文字列のため列には入れず、
+    // metadata.scene に格納する（数値ID対応表が整うまでの暫定）。created_at は DB 既定 now() に委ねる。
     await supabase.from('usage_logs').insert({
       user_id: params.userId,
-      scene_id: params.sceneId || null,
-      api_endpoint: params.endpoint,
-      tokens_consumed: params.tokensConsumed,
-      status: params.status,
-      error_message: params.errorMessage || null,
-      created_at: new Date().toISOString(),
+      event: params.event,
+      session_id: params.sessionId ?? null,
+      model: params.model ?? null,
+      platform,
+      locale,
+      is_premium: params.isPremium ?? false,
+      input_tokens: params.inputTokens ?? null,
+      output_tokens: params.outputTokens ?? null,
+      metadata: params.metadata ?? {},
     });
   } catch (err) {
     console.error('Failed to log usage:', err);
