@@ -14,6 +14,7 @@ import 'screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/revenuecat_service.dart';
 import 'services/local_notification_service.dart';
+import 'services/notification_scheduler.dart';
 import 'services/remote_notification_service.dart';
 import 'models/notification_data_model.dart';
 
@@ -191,8 +192,30 @@ class RootScreen extends StatefulWidget {
   State<RootScreen> createState() => _RootScreenState();
 }
 
-class _RootScreenState extends State<RootScreen> {
+class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
   late final Future<Widget> _initialScreen = _resolveInitialScreen();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    // 予約通知はスケジュール時点のロケールで焼き込まれるため、
+    // ロケール変更時に貼り直す。scheduler が未初期化（Phase2未着手）
+    // の間は no-op。
+    if (NotificationScheduler().isInitialized) {
+      NotificationScheduler().rescheduleForLocaleChange();
+    }
+  }
 
   Future<Widget> _resolveInitialScreen() async {
     final prefs = await SharedPreferences.getInstance();

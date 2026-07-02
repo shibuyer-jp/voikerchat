@@ -1,6 +1,21 @@
+import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voikerchat/l10n/app_localizations.dart';
 import 'local_notification_service.dart';
+
+/// 端末ロケールを supportedLocales に解決する（アプリに言語切替UIは無く、
+/// デバイスロケール駆動のため）。通知はBuildContextを持ちえない経路
+/// （バックグラウンド/スケジュール済み通知の発火）でも文言解決が必要。
+Locale _resolveLocale() {
+  final device = WidgetsBinding.instance.platformDispatcher.locale;
+  for (final l in AppLocalizations.supportedLocales) {
+    if (l.languageCode == device.languageCode) return l;
+  }
+  return AppLocalizations.supportedLocales.first;
+}
+
+AppLocalizations get _l10n => lookupAppLocalizations(_resolveLocale());
 
 /// NotificationScheduler
 /// 4種類の通知（Daily Reminder, Milestone, Premium Upsell, Feature Update）を一元管理
@@ -17,11 +32,16 @@ class NotificationScheduler {
 
   late LocalNotificationService _notificationService;
   late SharedPreferences _prefs;
+  bool _initialized = false;
+
+  /// 初期化済みかどうか（未初期化状態での操作を防ぐガード用）
+  bool get isInitialized => _initialized;
 
   /// 初期化
   Future<void> initialize(LocalNotificationService notificationService) async {
     _notificationService = notificationService;
     _prefs = await SharedPreferences.getInstance();
+    _initialized = true;
   }
 
   /// ===== Daily Reminder Notifications =====
@@ -42,15 +62,15 @@ class NotificationScheduler {
     ];
 
     final titles = [
-      '朝の学習時間',
-      '昼休みの学習',
-      '夕方の学習時間',
+      _l10n.notifDailyMorningTitle,
+      _l10n.notifDailyNoonTitle,
+      _l10n.notifDailyEveningTitle,
     ];
 
     final bodies = [
-      'Voikerchatで日本語を学習しましょう！',
-      'Voikerchatで日本語会話の練習をしましょう！',
-      'Voikerchatで今日の学習を振り返りましょう！',
+      _l10n.notifDailyMorningBody,
+      _l10n.notifDailyNoonBody,
+      _l10n.notifDailyEveningBody,
     ];
 
     for (int i = 0; i < times.length; i++) {
@@ -87,10 +107,10 @@ class NotificationScheduler {
   /// マイルストーン通知をスケジュール（3日、7日、14日、30日達成時）
   Future<void> checkAndScheduleMilestoneNotifications(int streakDays) async {
     final milestones = [
-      (days: 3, id: NotificationIds.milestone3Days, title: '🎉 3日間連続達成！', body: '継続は力なり！この調子で頑張りましょう'),
-      (days: 7, id: NotificationIds.milestone7Days, title: '⭐ 1週間連続達成！', body: 'すごい！習慣が形成されています'),
-      (days: 14, id: NotificationIds.milestone14Days, title: '💪 2週間連続達成！', body: 'あなたは確実に成長しています'),
-      (days: 30, id: NotificationIds.milestone30Days, title: '🏆 30日連続達成！', body: '素晴らしい！あなたは学習の達人です'),
+      (days: 3, id: NotificationIds.milestone3Days, title: _l10n.notifMilestone3Title, body: _l10n.notifMilestone3Body),
+      (days: 7, id: NotificationIds.milestone7Days, title: _l10n.notifMilestone7Title, body: _l10n.notifMilestone7Body),
+      (days: 14, id: NotificationIds.milestone14Days, title: _l10n.notifMilestone14Title, body: _l10n.notifMilestone14Body),
+      (days: 30, id: NotificationIds.milestone30Days, title: _l10n.notifMilestone30Title, body: _l10n.notifMilestone30Body),
     ];
 
     for (final milestone in milestones) {
@@ -137,9 +157,9 @@ class NotificationScheduler {
     required DateTime scheduledTime,
   }) async {
     final Map<int, (int, String, String)> stageConfig = {
-      1: (NotificationIds.premiumUpsellStage1, '🎁 プレミアムコースをお試しください', 'より多くの会話練習で上達が加速します'),
-      2: (NotificationIds.premiumUpsellStage2, '⭐ プレミアムで学習を加速', '3日間の連続使用で効果を実感！'),
-      3: (NotificationIds.premiumUpsellStage3, '🚀 プレミアムで無制限学習', '7日間の成長を次のレベルへ'),
+      1: (NotificationIds.premiumUpsellStage1, _l10n.notifUpsellStage1Title, _l10n.notifUpsellStage1Body),
+      2: (NotificationIds.premiumUpsellStage2, _l10n.notifUpsellStage2Title, _l10n.notifUpsellStage2Body),
+      3: (NotificationIds.premiumUpsellStage3, _l10n.notifUpsellStage3Title, _l10n.notifUpsellStage3Body),
     };
 
     if (!stageConfig.containsKey(stage)) return;
@@ -183,7 +203,7 @@ class NotificationScheduler {
     try {
       await _notificationService.showNotification(
         id: NotificationIds.featureUpdate,
-        title: '✨ 新機能: $featureName',
+        title: _l10n.notifFeatureUpdateTitle(featureName),
         body: description,
         payload: 'feature_update',
       );
@@ -191,6 +211,17 @@ class NotificationScheduler {
     } catch (e) {
       logger.info('[NotificationScheduler] Error showing feature update: $e');
     }
+  }
+
+  /// ロケール変更時に予約通知を現ロケールで貼り直す。
+  /// Daily はスケジュール時点のロケールで文言が焼き込まれるため、
+  /// 同一時刻で再スケジュールする。Premium upsell の予約時刻は
+  /// 呼び出し側が保持し scheduler は持たないため、ここではキャンセルのみ
+  /// とし、再予約は通常のアップセル判定フローに委ねる（prefsで二重管理しない）。
+  Future<void> rescheduleForLocaleChange() async {
+    await cancelDailyReminders();
+    await scheduleDailyReminders();
+    await cancelPremiumUpsellNotifications();
   }
 
   /// ===== Utility Methods =====
