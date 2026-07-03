@@ -31,35 +31,6 @@ class RateLimitService {
     }
   }
 
-  /// Check and increment rate limit after API call
-  /// Returns true if call succeeded within limits, false if limited
-  Future<bool> checkAndIncrement(String userId) async {
-    try {
-      final rateLimit = await getRateLimit(userId);
-
-      // Premium users have no limit
-      if (rateLimit.isPremium) {
-        return true;
-      }
-
-      // Check if within daily limit
-      if (!rateLimit.canMakeCall) {
-        return false;
-      }
-
-      // Increment counter
-      await _supabase.from('rate_limits').update({
-        'used_today': rateLimit.usedToday + 1,
-      }).eq('user_id', userId);
-
-      return true;
-    } catch (e) {
-      logger.info('RateLimitService error: $e');
-      // On error, allow call (fail-open approach)
-      return true;
-    }
-  }
-
   /// Reset daily counter (called by scheduled job or manually)
   Future<void> resetDailyLimit(String userId) async {
     try {

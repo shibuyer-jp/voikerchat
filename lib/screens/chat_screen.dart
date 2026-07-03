@@ -302,8 +302,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _messages.add(assistantMessage));
       _scrollToBottom();
 
-      // Increment rate limit counter
-      await _rateLimitService.checkAndIncrement(_userId!);
+      // レート制限カウントはサーバー側 (api/chat.ts) で既にインクリメント済み。
+      // ここでは表示更新のみ行う（クライアント側で再度加算すると二重カウントになる）。
       await _loadRateLimit(); // Refresh display
 
       // ストリークをインクリメント（メッセージ送信成功時）
