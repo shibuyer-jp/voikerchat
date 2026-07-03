@@ -71,10 +71,9 @@ class _DiagnosticTestScreenEnhancedState
       userAnswers[currentQuestionIndex] = answerIndex;
     });
 
-    // アニメーション後に次問へ
-    _animationController.forward().then((_) {
-      _moveToNextQuestion();
-    });
+    // 解答時のアニメーション。次問への遷移は解説ダイアログの「次へ」ボタン
+    // (_showExplanation) でのみ行う — ここで二重に呼ぶと1問飛ばしになる。
+    _animationController.forward();
 
     // ヒント使用の記録
     if (hintUsed[currentQuestionIndex]) {
@@ -272,10 +271,14 @@ class _DiagnosticTestScreenEnhancedState
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: ElevatedButton(
                         onPressed: () {
+                          // タップ時点の問題インデックスを固定で保持する。
+                          // currentQuestionIndex をそのまま遅延クロージャで参照すると、
+                          // 300ms待つ間に進行してしまった場合に誤った設問の解説を表示しうる。
+                          final answeredQuestionIndex = currentQuestionIndex;
                           _handleAnswerSelected(index);
                           // 選択後に解説を表示
                           Future.delayed(const Duration(milliseconds: 300), () {
-                            _showExplanation(currentQuestionIndex, index);
+                            _showExplanation(answeredQuestionIndex, index);
                           });
                         },
                         style: ElevatedButton.styleFrom(
