@@ -137,6 +137,17 @@ void main() async {
         await auth.signInAnonymously();
         logger.info('[main] Signed in anonymously');
       }
+
+      // RevenueCat の app_user_id を Supabase の user_id に紐付ける。
+      // これにより RevenueCat Webhook が rate_limits.user_id と突合できるようになる。
+      final userId = auth.currentUser?.id;
+      if (userId != null) {
+        final linked = await revenueCatService.loginWithUserId(userId);
+        if (linked) {
+          final isPremium = await revenueCatService.checkPremiumStatus();
+          await RemoteNotificationService().updatePremiumTopicSubscription(isPremium);
+        }
+      }
     } catch (e) {
       logger.warning('[main] Supabase init / anonymous sign-in failed: $e');
     }

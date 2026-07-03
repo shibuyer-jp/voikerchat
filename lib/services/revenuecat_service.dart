@@ -59,6 +59,24 @@ class RevenueCatService {
   /// Premium ステータス取得
   bool get isPremium => _isPremium;
 
+  /// Supabase user_id と RevenueCat の app_user_id を紐付ける
+  ///
+  /// Webhook が RevenueCat の app_user_id しか受け取れないため、
+  /// これを Supabase の user_id と一致させる必要がある。
+  /// restorePurchases() は logIn() 自体は Webhook を発火させないための安全網
+  /// （別デバイス購入・レシート再紐付けのトリガーとして機能する）。
+  Future<bool> loginWithUserId(String supabaseUserId) async {
+    try {
+      await Purchases.logIn(supabaseUserId);
+      await Purchases.restorePurchases();
+      logger.info('[RevenueCat] Logged in as $supabaseUserId');
+      return true;
+    } catch (e) {
+      logger.info('[RevenueCat] loginWithUserId error: $e');
+      return false;
+    }
+  }
+
   /// Premium ステータスを確認してローカル保存
   Future<bool> checkPremiumStatus() async {
     try {
