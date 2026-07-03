@@ -58,6 +58,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('user_id', userId)
       .single();
 
+    if (rateLimitError) {
+      console.error('rate_limits select (is_premium) failed:', rateLimitError.code, rateLimitError.message, rateLimitError.details);
+    }
     if (rateLimitError || !rateLimit?.is_premium) {
       return res.status(403).json({
         error: 'Premium required',
@@ -91,11 +94,14 @@ async function getAnalyticsStats(
 ): Promise<any> {
   try {
     // 1. 総トークン使用数（usage_logs 新スキーマ: event='message_sent' の output_tokens を集計）
-    const { data: tokensData } = await supabase
+    const { data: tokensData, error: tokensError } = await supabase
       .from('usage_logs')
       .select('input_tokens, output_tokens, created_at')
       .eq('user_id', userId)
       .eq('event', 'message_sent');
+    if (tokensError) {
+      console.error('usage_logs select (tokens) failed:', tokensError.code, tokensError.message, tokensError.details);
+    }
 
     const totalTokens = (tokensData || []).reduce(
       (sum, log) => sum + (log.output_tokens || 0),
@@ -108,10 +114,13 @@ async function getAnalyticsStats(
       .reduce((sum, log) => sum + (log.output_tokens || 0), 0);
 
     // 2. シーン別進捗
-    const { data: sessions } = await supabase
+    const { data: sessions, error: sessionsError } = await supabase
       .from('conversation_sessions')
       .select('scene_id, total_messages, total_tokens_used, last_message_at')
       .eq('user_id', userId);
+    if (sessionsError) {
+      console.error('conversation_sessions select failed:', sessionsError.code, sessionsError.message, sessionsError.details);
+    }
 
     const sceneProgress = (sessions || []).reduce(
       (acc: any, session: any) => {
@@ -148,12 +157,15 @@ async function getAnalyticsStats(
     const totalErrors = 0;
 
     // 5. 連続学習日数（簡易版）
-    const { data: dateActivity } = await supabase
+    const { data: dateActivity, error: dateActivityError } = await supabase
       .from('usage_logs')
       .select('created_at')
       .eq('user_id', userId)
       .eq('event', 'message_sent')
       .order('created_at', { ascending: false });
+    if (dateActivityError) {
+      console.error('usage_logs select (dateActivity) failed:', dateActivityError.code, dateActivityError.message, dateActivityError.details);
+    }
 
     let consecutiveDays = 0;
     if (dateActivity && dateActivity.length > 0) {

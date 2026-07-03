@@ -75,6 +75,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .single();
       if (!error && data) {
         isPremium = data.is_premium === true;
+      } else if (error) {
+        console.error('rate_limits select (is_premium) failed:', error.code, error.message, error.details);
       }
     } catch (err) {
       console.error('Error checking premium status:', err);
@@ -161,14 +163,20 @@ async function checkAndIncrementRateLimit(
       .single();
 
     if (fetchError || !rateLimit) {
+      if (fetchError) {
+        console.error('rate_limits select failed:', fetchError.code, fetchError.message, fetchError.details);
+      }
       // レコードなし → デフォルト作成（5回/日）
-      await supabase.from('rate_limits').insert({
+      const { error: insertError } = await supabase.from('rate_limits').insert({
         user_id: userId,
         used_today: 1,
         daily_limit: 5,
         is_premium: false,
         last_reset_utc: new Date().toISOString(),
       });
+      if (insertError) {
+        console.error('rate_limits insert failed:', insertError.code, insertError.message, insertError.details);
+      }
       return true;
     }
 
@@ -179,10 +187,13 @@ async function checkAndIncrementRateLimit(
     );
 
     if (daysPassed >= 1) {
-      await supabase
+      const { error: resetError } = await supabase
         .from('rate_limits')
         .update({ used_today: 1, last_reset_utc: today.toISOString() })
         .eq('user_id', userId);
+      if (resetError) {
+        console.error('rate_limits reset update failed:', resetError.code, resetError.message, resetError.details);
+      }
       return true;
     }
 
@@ -190,10 +201,13 @@ async function checkAndIncrementRateLimit(
       return false;
     }
 
-    await supabase
+    const { error: incrementError } = await supabase
       .from('rate_limits')
       .update({ used_today: rateLimit.used_today + 1 })
       .eq('user_id', userId);
+    if (incrementError) {
+      console.error('rate_limits increment update failed:', incrementError.code, incrementError.message, incrementError.details);
+    }
     return true;
   } catch (err) {
     console.error('Rate limit check error:', err);
@@ -276,7 +290,7 @@ async function logUsage(
 
     // 注意: scene_id 列は smallint(1..13)。アプリの sceneId は文字列のため列には入れず、
     // metadata.scene に格納する（数値ID対応表が整うまでの暫定）。created_at は DB 既定 now() に委ねる。
-    await supabase.from('usage_logs').insert({
+    const { error } = await supabase.from('usage_logs').insert({
       user_id: params.userId,
       event: params.event,
       session_id: params.sessionId ?? null,
@@ -288,6 +302,9 @@ async function logUsage(
       output_tokens: params.outputTokens ?? null,
       metadata: params.metadata ?? {},
     });
+    if (error) {
+      console.error('usage_logs insert failed:', error.code, error.message, error.details);
+    }
   } catch (err) {
     console.error('Failed to log usage:', err);
   }

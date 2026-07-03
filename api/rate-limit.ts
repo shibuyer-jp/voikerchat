@@ -59,6 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) {
+      console.error('rate_limits select failed:', error.code, error.message, error.details);
       // レコードなし → デフォルトを返す
       return res.status(200).json({
         userId,
@@ -80,13 +81,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let usedToday = data.used_today;
     if (daysPassed >= 1) {
-      await supabase
+      const { error: resetError } = await supabase
         .from('rate_limits')
         .update({
           used_today: 0,
           last_reset_utc: today.toISOString(),
         })
         .eq('user_id', userId);
+      if (resetError) {
+        console.error('rate_limits reset update failed:', resetError.code, resetError.message, resetError.details);
+      }
       usedToday = 0;
     }
 
