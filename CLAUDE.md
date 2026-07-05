@@ -88,43 +88,25 @@ CI が最終ゲートだが、**push 前に必ずローカルで緑を確認す�
 - セッション終了サイン時は引き継ぎ MD を自作:
   ① 前スレ成果 ② 確定した決定 ③ 次タスク（優先順）④ メモリ参照。
 
-## 現在の開発状況（2026-07-01 時点）
-> 以下は過去セッションの記憶ベース。実態とズレがあれば修正すること（特にステータス欄）。
+## 状態管理の絶対ルール(このファイルの範囲)
+- **このCLAUDE.mdには「不変の指針」のみを書く。プロジェクトの現在状態・課題・作業予定は書かない**
+- 現在状態は `docs/STATE.md` を参照。**セッション開始時に必ず読み、セッション終了時に必ず更新してコミットする**(更新漏れ=次セッションの不具合原因)
+- 設計・仕様の決定は `docs/DECISIONS.md` に1行追記(追記専用・削除禁止。「いつ・何を・なぜ」)
+- Git identity: `shibuyer-jp` / `262262561+shibuyer-jp@users.noreply.github.com`(Vercel連携リポジトリで他のメールを使うとデプロイがブロックされる)
 
-### 機能ステータス
-| 機能 | 状態 | 備考 |
-|------|------|------|
-| 認証（Supabase 匿名認証 anon） | ✅ 有効 | プロジェクト `rfwbwwhqclabhnbsrygw`（Tokyo） |
-| チャット | ✅ 稼働中 | `messages` / `conversation_sessions` / `user_streaks` / `rate_limits`（RLS 有） |
-| 連続日数（ストリーク） | ✅ 実装 | `user_streaks` |
-| プッシュ通知 | 🚧 Phase2 進行中 | Phase1 完了（`e235539`）。Phase2 は APNs キー Firebase 登録待ちでブロック |
-| 多言語化（ARB i18n） | 🚧 進行中 | 4b 完了（main `742ceeb` / 各 141 キー）。次 4c |
-| プレミアム（RevenueCat） | 🚧 配線中 | iOS+Android 構成済。upsell wiring 未 |
-| バッジ | 🚧 要確認 | `models/badge.dart` 実装＋ラベル ARB 化済。付与/表示ロジックは要確認 |
-| AdMob | 📋 未着手 | 実 ID 差し替えで本番化（i18n 完了後） |
-| usage_logs テーブル | ✅ 作成済 | 分析イベントログ（本番）。API層を新スキーマに整合済 |
-
-### 既知の課題 / オープン項目
-- [ ] APNs キー（Key ID `26PUZTM353` / Team ID `S6XJP274T2`）を Firebase Console にアップロード → 通知 Phase2 のブロック解除
-- [x] `analytics.ts` / `rate-limit.ts` を `supabase.auth.getUser` に統一（commit `2124bde`）。usage_logs 新スキーマ整合も対応済
-- [ ] fil 訳のネイティブレビュー（本番化前）
-- [ ] サービス層（`notification_scheduler.dart` / `premium_upsell_service.dart`）の i18n は `BuildContext` 無し層のため設計判断が別途必要
-
-### 直近の作業予定
-1. **4c**: `lib/services/scene_service.dart` のシーン `name` / `description`（13 × 2 = 26 文字列）を ID 駆動で多言語化
-2. サービス層 i18n（別バッチ・要相談）
-3. fil ネイティブレビュー → AdMob 本番化
+## モデル運用(2026-07-07以降)
+- 実装・定型作業: Sonnet / Claude Code(1タスク=1セッション、計画ループ禁止、質問は1つまで)
+- 設計判断・障害切り分けのみ: Opus(温存運用)
+- 本番AI: Claude Haiku(`claude-haiku-4-5-20251001`)固定
 
 ## lib/ ディレクトリ構成
 ```
 lib/
 ├── main.dart              # エントリポイント
-├── l10n/                  # ARB・生成 AppLocalizations・label_helpers.dart
-├── models/                # データモデル（JSON シリアライズ含む）
-├── screens/               # 画面 Widget
-│   └── onboarding/        # オンボーディング画面群
+├── l10n/                  # ARB・生成AppLocalizations・label_helpers.dart
+├── models/                # データモデル
+├── screens/               # 画面Widget(onboarding/含む)
 ├── services/              # API・Supabase・通知等のアクセス層
 ├── stubs/                 # テスト用スタブ
-└── widgets/               # 共有 Widget
+└── widgets/               # 共有Widget
 ```
-※ `lib/constants/` は CLAUDE.md 本文で言及しているが**未作成**。マジックナンバー集約の際に作成すること。
