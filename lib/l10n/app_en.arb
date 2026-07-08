@@ -894,5 +894,13 @@
   "voiceAutoRead": "Auto-read",
   "@voiceAutoRead": {
     "description": "Tooltip for toggling auto read-aloud of assistant replies"
+  },
+  "micRationaleMessage": "We need microphone access to check your pronunciation during Japanese practice.",
+  "@micRationaleMessage": {
+    "description": "Pre-permission rationale shown before the OS microphone permission prompt"
+  },
+  "micRationaleContinue": "Continue",
+  "@micRationaleContinue": {
+    "description": "Button that proceeds to the OS microphone permission prompt"
   }
 }

@@ -17,6 +17,7 @@ import '../services/rewarded_ad_service.dart';
 import '../services/voice/speech_recognition_service.dart';
 import '../services/voice/text_to_speech_service.dart';
 import '../services/voice/tts_text_cleaner.dart';
+import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import 'stats_screen.dart';
@@ -58,6 +59,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _voiceReady = false;
   bool _ttsReady = false;
   bool _isListening = false;
+  // STT は権限プロンプトを伴うため起動時に初期化せず、初回マイクタップ時に
+  // 説明ダイアログ(G6)を挟んで遅延初期化する。以下はその状態管理。
+  bool _sttInitAttempted = false; // initialize() を一度でも試みたか
+  bool _sttUnavailable = false; // 未対応/権限拒否が確定したか（true でマイクボタンを隠す）
   bool _autoRead = true;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
@@ -260,12 +265,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   /// 音声(STT/TTS)の初期化。非致命なので失敗してもチャットは継続する。
   Future<void> _initVoice() async {
+    // TTS のみ起動時に初期化（マイク権限不要）。STT は権限プロンプトを伴うため、
+    // 初回マイクタップ時に説明ダイアログ(G6)→initialize() の順で遅延初期化する。
     try {
-      final sttOk = await _speechService.initialize();
       await _ttsService.initialize();
       if (!mounted) return;
       setState(() {
-        _voiceReady = sttOk;
         _ttsReady = _ttsService.isSupported;
       });
     } catch (e) {
@@ -276,12 +281,35 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   /// マイクのトグル（Push-to-Talk）。認識中なら停止、そうでなければ開始する。
   /// iOSは約1分で強制終了・連続再起動でスロットリングされるため自動再起動はしない。
   Future<void> _toggleListening() async {
-    if (!_voiceReady) return;
-
     if (_isListening) {
       await _speechService.stop(); // onComplete 経由で自動送信される
       return;
     }
+
+    // 初回のみ: OS標準の権限プロンプトを出す「前」に理由を説明する(G6)。
+    // 「続ける」を選んだときだけ initialize()（＝OS権限プロンプト）へ進む。
+    if (!_sttInitAttempted) {
+      final l = AppLocalizations.of(context);
+      final proceed = await showMicRationaleDialog(
+        context,
+        message: l.micRationaleMessage,
+        allowLabel: l.micRationaleContinue,
+        cancelLabel: l.cancel,
+      );
+      if (!proceed) return; // 説明ダイアログでキャンセル → 権限要求せず何もしない
+      if (!mounted) return;
+
+      final sttOk = await _speechService.initialize(); // ここでOS権限プロンプト
+      _sttInitAttempted = true;
+      if (!mounted) return;
+      setState(() {
+        _voiceReady = sttOk;
+        _sttUnavailable = !sttOk; // 未対応/拒否ならボタンを隠しテキスト入力へフォールバック
+      });
+      if (!sttOk) return;
+    }
+
+    if (!_voiceReady) return;
 
     await _ttsService.stop(); // 進行中の読み上げを止めてから録音
     setState(() => _isListening = true);
@@ -760,7 +788,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               onSubmitted: (_) => _isSending ? null : _sendMessage(),
                             ),
                           ),
-                          if (_voiceReady) ...[
+                          // 起動時はSTT未初期化でも表示（初回タップで説明→権限へ）。
+                          // 未対応/拒否が確定した場合のみ隠し、テキスト入力へフォールバック。
+                          if (!_sttUnavailable) ...[
                             IconButton(
                               icon: Icon(
                                 _isListening ? Icons.stop : Icons.mic,

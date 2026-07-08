@@ -206,5 +206,7 @@
   "deleteAccountError": "Nabigong tanggalin ang account. Pakisubukang muli.",
   "voiceInputStart": "Magsalita",
   "voiceInputStop": "Ihinto",
-  "voiceAutoRead": "Awtomatikong pagbasa"
+  "voiceAutoRead": "Awtomatikong pagbasa",
+  "micRationaleMessage": "Kailangan namin ng access sa mikropono upang suriin ang iyong pagbigkas.",
+  "micRationaleContinue": "Magpatuloy"
 }

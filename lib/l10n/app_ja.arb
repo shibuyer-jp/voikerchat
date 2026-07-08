@@ -206,5 +206,7 @@
   "deleteAccountError": "アカウントの削除に失敗しました。もう一度お試しください。",
   "voiceInputStart": "話す",
   "voiceInputStop": "停止",
-  "voiceAutoRead": "自動読み上げ"
+  "voiceAutoRead": "自動読み上げ",
+  "micRationaleMessage": "日本語の発音をチェックするため、マイクへのアクセスを許可してください。",
+  "micRationaleContinue": "続ける"
 }
