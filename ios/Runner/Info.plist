@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Voikerchat uses the microphone so you can practice Japanese conversation by speaking.</string>
+	<string>Used to record your voice for Japanese practice.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Voikerchat uses speech recognition to turn your spoken Japanese into text for practice.</string>
+	<string>Used to evaluate your Japanese pronunciation.</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

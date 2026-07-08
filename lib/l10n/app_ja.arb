@@ -203,5 +203,8 @@
   "deleteAccountConfirmButton": "削除",
   "deleteAccountInProgress": "アカウントを削除しています…",
   "deleteAccountSuccess": "アカウントを削除しました。",
-  "deleteAccountError": "アカウントの削除に失敗しました。もう一度お試しください。"
+  "deleteAccountError": "アカウントの削除に失敗しました。もう一度お試しください。",
+  "voiceInputStart": "話す",
+  "voiceInputStop": "停止",
+  "voiceAutoRead": "自動読み上げ"
 }

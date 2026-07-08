@@ -613,7 +613,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           if (_ttsReady)
             IconButton(
               icon: Icon(_autoRead ? Icons.volume_up : Icons.volume_off),
-              tooltip: 'Auto read',
+              tooltip: l.voiceAutoRead,
               onPressed: () => setState(() => _autoRead = !_autoRead),
             ),
           IconButton(
@@ -766,7 +766,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 _isListening ? Icons.stop : Icons.mic,
                                 color: _isListening ? Colors.red : null,
                               ),
-                              tooltip: _isListening ? 'Stop' : 'Speak',
+                              tooltip: _isListening ? l.voiceInputStop : l.voiceInputStart,
                               onPressed: _isSending ? null : _toggleListening,
                             ),
                           ],

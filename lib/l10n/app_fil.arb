@@ -203,5 +203,8 @@
   "deleteAccountConfirmButton": "Tanggalin",
   "deleteAccountInProgress": "Binubura ang account…",
   "deleteAccountSuccess": "Natanggal na ang iyong account.",
-  "deleteAccountError": "Nabigong tanggalin ang account. Pakisubukang muli."
+  "deleteAccountError": "Nabigong tanggalin ang account. Pakisubukang muli.",
+  "voiceInputStart": "Magsalita",
+  "voiceInputStop": "Ihinto",
+  "voiceAutoRead": "Awtomatikong pagbasa"
 }

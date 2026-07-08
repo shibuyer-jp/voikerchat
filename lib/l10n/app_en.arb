@@ -882,5 +882,17 @@
   "deleteAccountError": "Failed to delete account. Please try again.",
   "@deleteAccountError": {
     "description": "Snackbar shown when deletion fails"
+  },
+  "voiceInputStart": "Speak",
+  "@voiceInputStart": {
+    "description": "Tooltip for mic button to start voice input"
+  },
+  "voiceInputStop": "Stop",
+  "@voiceInputStop": {
+    "description": "Tooltip for mic button to stop voice input"
+  },
+  "voiceAutoRead": "Auto-read",
+  "@voiceAutoRead": {
+    "description": "Tooltip for toggling auto read-aloud of assistant replies"
   }
 }
