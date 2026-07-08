@@ -11,3 +11,5 @@
 - 2026-07-05 | Phase2の順序をAdMob先・push通知後に変更 | 収益直結を優先(事業設計図v1.1)
 - 2026-07-05 | コミットは 262262561+shibuyer-jp@users.noreply.github.com を使用 | 他メールはVercelがデプロイをブロック(tokyo-bibleで実証)
 - 2026-07-06 | 特商法ページの氏名は「屋号(Shibuyer)+個人名(安倍隆任)」併記固定、住所・電話番号は「請求があれば遅滞なく開示」で非公開 | 消費者庁ガイドラインで氏名は省略不可、住所等は請求時開示可
+- 2026-07-08 | アカウント削除は `/api/delete-account`(全ユーザーテーブルを明示DELETE→`auth.admin.deleteUser`)、成功後にサインアウト+オンボーディングprefsクリア+匿名再サインイン | ストア(Apple/Google)必須要件。FK cascade有無に依存しない堅牢化。削除後もアプリが継続動作する状態を保つ
+- 2026-07-08 | Flutterのローカルanalyze/test不可な作業環境ではmain直pushせずfeature branch+CI検証→mergeとする | redなmainを避ける。api単体のような検証容易な変更は従来どおり直pushも可
