@@ -14,6 +14,9 @@ import '../services/revenuecat_service.dart';
 import '../services/streak_service.dart';
 import '../services/premium_upsell_service.dart';
 import '../services/rewarded_ad_service.dart';
+import '../services/voice/speech_recognition_service.dart';
+import '../services/voice/text_to_speech_service.dart';
+import '../services/voice/tts_text_cleaner.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import 'stats_screen.dart';
@@ -49,6 +52,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late PremiumUpsellService _premiumUpsellService;
   final RewardedAdService _rewardedAdService = RewardedAdService();
   bool _isAdLoading = false;
+  // 音声（会話）: STT/TTS
+  final SpeechRecognitionService _speechService = SpeechRecognitionService();
+  final TextToSpeechService _ttsService = TextToSpeechService();
+  bool _voiceReady = false;
+  bool _ttsReady = false;
+  bool _isListening = false;
+  bool _autoRead = true;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -73,6 +83,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     // リワード広告を事前ロード（Web では no-op）。
     _rewardedAdService.loadAd();
+
+    // 音声(STT/TTS)を初期化（非同期・非致命）。
+    _initVoice();
 
     // WidgetsBinding オブザーバー登録（通知タップ処理）
     WidgetsBinding.instance.addObserver(this);
@@ -245,6 +258,54 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// 音声(STT/TTS)の初期化。非致命なので失敗してもチャットは継続する。
+  Future<void> _initVoice() async {
+    try {
+      final sttOk = await _speechService.initialize();
+      await _ttsService.initialize();
+      if (!mounted) return;
+      setState(() {
+        _voiceReady = sttOk;
+        _ttsReady = _ttsService.isSupported;
+      });
+    } catch (e) {
+      logger.info('Voice init failed: $e');
+    }
+  }
+
+  /// マイクのトグル（Push-to-Talk）。認識中なら停止、そうでなければ開始する。
+  /// iOSは約1分で強制終了・連続再起動でスロットリングされるため自動再起動はしない。
+  Future<void> _toggleListening() async {
+    if (!_voiceReady) return;
+
+    if (_isListening) {
+      await _speechService.stop(); // onComplete 経由で自動送信される
+      return;
+    }
+
+    await _ttsService.stop(); // 進行中の読み上げを止めてから録音
+    setState(() => _isListening = true);
+
+    await _speechService.start(
+      localeId: 'ja-JP',
+      onResult: (transcript, _) {
+        _inputController.text = transcript;
+      },
+      onComplete: () {
+        if (!mounted) return;
+        setState(() => _isListening = false);
+        if (_inputController.text.trim().isNotEmpty && !_isSending) {
+          _sendMessage();
+        }
+      },
+      onError: (code) {
+        if (!mounted) return;
+        setState(() => _isListening = false);
+        logger.info('Speech recognition error: $code');
+      },
+    );
+  }
+
   Future<void> _loadMessages() async {
     if (_userId == null) return;
 
@@ -301,6 +362,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
       setState(() => _messages.add(assistantMessage));
       _scrollToBottom();
+
+      // アシスタント応答を自動読み上げ（ONかつTTS利用可能なとき）。
+      if (_autoRead && _ttsReady) {
+        final reply = assistantResponse['content'] as String? ?? '';
+        if (reply.isNotEmpty) {
+          await _ttsService.speak(cleanForSpeech(reply));
+        }
+      }
 
       // レート制限カウントはサーバー側 (api/chat.ts) で既にインクリメント済み。
       // ここでは表示更新のみ行う（クライアント側で再度加算すると二重カウントになる）。
@@ -451,6 +520,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _inputController.dispose();
     _scrollController.dispose();
     _rewardedAdService.dispose();
+    _speechService.dispose();
+    _ttsService.dispose();
     super.dispose();
   }
 
@@ -539,6 +610,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
             ),
           ),
+          if (_ttsReady)
+            IconButton(
+              icon: Icon(_autoRead ? Icons.volume_up : Icons.volume_off),
+              tooltip: 'Auto read',
+              onPressed: () => setState(() => _autoRead = !_autoRead),
+            ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: _showSessionOptions,
@@ -683,6 +760,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               onSubmitted: (_) => _isSending ? null : _sendMessage(),
                             ),
                           ),
+                          if (_voiceReady) ...[
+                            IconButton(
+                              icon: Icon(
+                                _isListening ? Icons.stop : Icons.mic,
+                                color: _isListening ? Colors.red : null,
+                              ),
+                              tooltip: _isListening ? 'Stop' : 'Speak',
+                              onPressed: _isSending ? null : _toggleListening,
+                            ),
+                          ],
                           const SizedBox(width: 8),
                           IconButton(
                             icon: _isSending
