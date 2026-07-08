@@ -1,7 +1,7 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
 > **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。
-> 最終更新: 2026-07-08(Fable: 実態と突合して更新。i18n・premium配線・アカウント削除の完了を反映)
+> 最終更新: 2026-07-08(実態と突合。AdMobリワード=コード完了(実ID待ち)/Push=実装+配線+FCM設定+Android plugin完了(iOS capability・APNsアップロード・実機待ち) の2点ドリフト是正)
 
 ## 機能ステータス
 | 機能 | 状態 | 備考 |
@@ -17,8 +17,8 @@
 | **アカウント削除(ストア必須)** | ✅ 完了 | `/api/delete-account`+設定画面(⚙)。全テーブル明示削除+`auth.admin.deleteUser`。PR #1(`7142043`/merge `6cfec3b`)本番デプロイ済(2026-07-08) |
 | badges | ✅ 実装済 | service/model/screen あり |
 | lefthook pre-push | ✅ 稼働 | analyze/test(`371b1ea`) |
-| プッシュ通知 | 🚧 Phase2 | ブロッカー: APNsキー(Key ID `26PUZTM353`)のFirebase登録待ち。→ RemoteNotificationService実装→実機テスト |
-| AdMob | 📋 未着手 | テストID(`ca-app-pub-3940256099942544`)のまま。実ID発行=**AdMobコンソールで広告ユニット登録(手動)**が先。集約先 `lib/services/ad_config.dart` |
+| プッシュ通知 | 🚧 Phase2(コード実装済/設定待ち) | `remote_notification_service.dart`(285行)実装 + main.dart配線(initialize/setMessageHandler/subscribeToDefaultTopics/premium同期) + FCM設定(google-services.json / GoogleService-Info.plist = 実物・Firebaseプロジェクト`voikerchat`/`446972546346`) + Android google-services plugin(`.kts`済) = **全て済**。残(手動): ①iOS Xcodeで Push Notifications + Background Modes(remote-notification) capability有効化 ②APNsキー(`26PUZTM353`, .p8)を Firebase Console → Cloud Messaging にアップロード ③実機テスト。※submission非必須(機能拡張) |
+| AdMob リワード広告 | ✅ コード完了 / 📋 実ID待ち | 実装フル完了: `rewarded_ad_service`(io/web facade) → `chat_screen` 配線(loadAd/isReady/showAd/grantAdBonus +5/snackbar/dispose/showWatchAdButton)。残=**AdMobコンソールで広告ユニット登録(手動)** → `ad_config.dart` の `_prod*` に実ID + `useTestAds=false`(submission必須: テストID出荷はAdMobポリシー違反)。現状テストID(`ca-app-pub-3940256099942544`) |
 | fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
 
 ## 確定定数(変更時はDECISIONSに記録)
@@ -29,10 +29,12 @@
 - サポート: voikerchat.support@gmail.com(forward→takatoh01@gmail.com)。kizunavi.support は非運用 / APNs `.p8`: Drive `00_Project_Credentials`(`1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)
 - 設計書: repo `docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
 
-## 次タスク(優先順・v1.1ロードマップ準拠)
-1. AdMobリワード広告(+5回)実装 — 要: AdMobコンソールで広告ユニット登録(手動) → `lib/services/ad_config.dart` に実ID反映
-2. APNsキーFirebase登録 → RemoteNotificationService実装 → 実機テスト
-3. fil訳ネイティブレビュー → 本番化
+## 次タスク(優先順・submission最短経路)
+> 主要機能のコードは概ね完了。残りは大半が手動(コンソール/Xcode/実機)。
+1. **AdMob実ID**(submission必須): AdMobコンソールで広告ユニット登録(手動) → `ad_config.dart` の `_prod*` に実ID + `useTestAds=false`
+2. **iOS submission**(Xcode導入済で着手可): Xcodeで署名/capabilities → Archive → App Store Connect(スクショ・メタデータ・特商法) → TestFlight → 審査提出
+3. **Push Phase2**(submission非必須・機能拡張): iOSで Push/Background Modes capability有効化 + APNsキーをFirebase Consoleにアップロード + 実機テスト
+4. **fil訳ネイティブレビュー**(妻に依頼) → 本番化
 
 ## 完了(直近・2026-07-08)
 - i18nサービス層 全完了(notification_scheduler=最後の残り。現物検証で完了確認)
