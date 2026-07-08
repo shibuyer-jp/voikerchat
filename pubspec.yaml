@@ -52,6 +52,9 @@ dependencies:
   firebase_messaging: ^14.0.0
   google_mobile_ads: ^8.0.0
   logging: ^1.2.0
+  # 音声会話（STT/TTS）— 端末内蔵エンジンを使用（クラウド課金なし）。
+  speech_to_text: ^7.3.0
+  flutter_tts: ^4.2.0
 
 dev_dependencies:
   flutter_test:
