@@ -193,5 +193,15 @@
   "notifUpsellStage2Body": "Ramdam ang pagbabago pagkatapos ng 3 magkakasunod na araw!",
   "notifUpsellStage3Title": "🚀 Walang limitasyong pag-aaral sa Premium",
   "notifUpsellStage3Body": "Dalhin sa susunod na antas ang 7 araw mong pag-unlad.",
-  "notifFeatureUpdateTitle": "✨ Bagong feature: {featureName}"
+  "notifFeatureUpdateTitle": "✨ Bagong feature: {featureName}",
+  "settingsTitle": "Mga Setting",
+  "settingsAccountSectionTitle": "Account",
+  "deleteAccountTitle": "Tanggalin ang account",
+  "deleteAccountSubtitle": "Permanenteng tanggalin ang iyong account at data",
+  "deleteAccountConfirmTitle": "Tanggalin ang account?",
+  "deleteAccountConfirmBody": "Permanenteng buburahin nito ang iyong account at lahat ng data sa pag-aaral (kasaysayan ng chat, istatistika, mga badge). Hindi na ito maibabalik.",
+  "deleteAccountConfirmButton": "Tanggalin",
+  "deleteAccountInProgress": "Binubura ang account…",
+  "deleteAccountSuccess": "Natanggal na ang iyong account.",
+  "deleteAccountError": "Nabigong tanggalin ang account. Pakisubukang muli."
 }
