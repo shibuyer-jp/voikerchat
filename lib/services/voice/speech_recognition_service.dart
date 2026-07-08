@@ -62,8 +62,10 @@ class SpeechRecognitionService {
         onResult: (SpeechRecognitionResult result) {
           onResult(result.recognizedWords, result.finalResult);
         },
-        localeId: localeId,
-        listenOptions: SpeechListenOptions(partialResults: true),
+        listenOptions: SpeechListenOptions(
+          partialResults: true,
+          localeId: localeId,
+        ),
       );
       _logger.info('SpeechToText listening (locale=$localeId).');
     } catch (e) {
