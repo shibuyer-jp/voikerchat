@@ -193,5 +193,15 @@
   "notifUpsellStage2Body": "3日間の連続使用で効果を実感！",
   "notifUpsellStage3Title": "🚀 プレミアムで無制限学習",
   "notifUpsellStage3Body": "7日間の成長を次のレベルへ",
-  "notifFeatureUpdateTitle": "✨ 新機能: {featureName}"
+  "notifFeatureUpdateTitle": "✨ 新機能: {featureName}",
+  "settingsTitle": "設定",
+  "settingsAccountSectionTitle": "アカウント",
+  "deleteAccountTitle": "アカウントを削除",
+  "deleteAccountSubtitle": "アカウントとデータを完全に削除します",
+  "deleteAccountConfirmTitle": "アカウントを削除しますか？",
+  "deleteAccountConfirmBody": "アカウントと、すべての学習データ（会話履歴・統計・バッジ）が完全に削除されます。この操作は取り消せません。",
+  "deleteAccountConfirmButton": "削除",
+  "deleteAccountInProgress": "アカウントを削除しています…",
+  "deleteAccountSuccess": "アカウントを削除しました。",
+  "deleteAccountError": "アカウントの削除に失敗しました。もう一度お試しください。"
 }

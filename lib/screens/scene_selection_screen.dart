@@ -5,6 +5,7 @@ import '../models/diagnostic.dart';
 import '../services/scene_service.dart';
 import '../widgets/scene_preview_card.dart';
 import 'chat_screen.dart';
+import 'settings_screen.dart';
 
 /// SceneSelectionScreen: シーン選択画面
 ///
@@ -94,6 +95,17 @@ class SceneSelectionScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l.sceneSelectionTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l.settingsTitle,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
