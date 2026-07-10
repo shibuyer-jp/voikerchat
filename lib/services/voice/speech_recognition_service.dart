@@ -60,7 +60,7 @@ class SpeechRecognitionService {
     try {
       await _speech.listen(
         onResult: (SpeechRecognitionResult result) {
-          onResult(result.recognizedWords, result.finalResult);
+          onResult(_dedupe(result.recognizedWords), result.finalResult);
         },
         listenOptions: SpeechListenOptions(
           partialResults: true,
@@ -72,6 +72,24 @@ class SpeechRecognitionService {
       _logger.severe('Failed to start listen: $e');
       onError?.call('start_failed');
     }
+  }
+
+  /// iOS 17+ の認識リセットバグ緩和策(プラグイン側の結果連結)の副作用で、
+  /// 発話中にポーズを挟むと同一フレーズが二重連結されることがある
+  /// (例:「おはようございます」→「おはようございますおはようございます」)。
+  /// 前半と後半が完全一致する場合のみ前半を採用する。
+  /// 「はいはい」等の正当な繰り返し表現を誤って潰さないよう、
+  /// 片側5文字以上の場合に限定する。
+  String _dedupe(String transcript) {
+    final s = transcript.trim();
+    if (s.length >= 10 && s.length.isEven) {
+      final half = s.length ~/ 2;
+      if (s.substring(0, half) == s.substring(half)) {
+        _logger.info('Deduped doubled transcript (len=${s.length}).');
+        return s.substring(0, half);
+      }
+    }
+    return s;
   }
 
   /// 停止して確定（onComplete が発火する）。
