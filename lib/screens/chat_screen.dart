@@ -910,6 +910,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     sceneId: widget.sceneId,
                   );
                   setState(() => _messages.clear());
+                  // リセット直後もシーン別オープニング第一声を再表示する
+                  await _insertOpeningLineIfNeeded();
                 }
               },
             ),
