@@ -315,6 +315,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (!_voiceReady) return;
 
     await _ttsService.stop(); // 進行中の読み上げを止めてから録音
+    // 前回の認識結果や入力途中のテキストが残っていると、新しい発話と
+    // 混ざって送信されてしまうため、録音開始時に必ずクリアする。
+    _inputController.clear();
     setState(() => _isListening = true);
 
     await _speechService.start(
