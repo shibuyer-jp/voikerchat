@@ -64,6 +64,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   // STT は権限プロンプトを伴うため起動時に初期化せず、初回マイクタップ時に
   // 説明ダイアログ(G6)を挟んで遅延初期化する。以下はその状態管理。
   bool _sttInitAttempted = false; // initialize() を一度でも試みたか
+  // ユーザーが自分でマイクをタップして停止したか。true のときだけ自動送信する。
+  // false のまま onComplete が来た場合は OS 側の無音自動停止(Android約5秒/iOS約1分)
+  // なので、途中の発話を勝手に送らずテキストを入力欄に残す。
+  bool _stopRequestedByUser = false;
   bool _autoRead = true;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
@@ -291,6 +295,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   /// iOSは約1分で強制終了・連続再起動でスロットリングされるため自動再起動はしない。
   Future<void> _toggleListening() async {
     if (_isListening) {
+      _stopRequestedByUser = true;
       await _speechService.stop(); // onComplete 経由で自動送信される
       return;
     }
@@ -336,9 +341,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
 
     await _ttsService.stop(); // 進行中の読み上げを止めてから録音
-    // 前回の認識結果や入力途中のテキストが残っていると、新しい発話と
-    // 混ざって送信されてしまうため、録音開始時に必ずクリアする。
-    _inputController.clear();
+    // 入力欄に残っているテキスト（無音自動停止で保持された前回の発話や、
+    // 手入力の途中文）は破棄せず接頭辞として保持し、新しい認識結果を後ろに連結する。
+    // これにより「考え込み→無音自動停止→マイク再タップ」で発話の続きを追記できる。
+    final prefix = _inputController.text.trim();
+    _stopRequestedByUser = false;
     setState(() => _isListening = true);
 
     await _speechService.start(
@@ -348,14 +355,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         // このガードがないと、_sendMessage でクリアした入力欄に
         // 送信済みの発話テキストが復活してしまう（非同期の競合）。
         if (!_isListening || _isSending) return;
-        _inputController.text = transcript;
+        _inputController.text = prefix.isEmpty ? transcript : '$prefix$transcript';
       },
       onComplete: () {
         if (!mounted) return;
         setState(() => _isListening = false);
-        if (_inputController.text.trim().isNotEmpty && !_isSending) {
+        // 自動送信はユーザー自身がマイクタップで停止したときのみ。
+        // OS の無音自動停止（Android約5秒/iOS約1分上限）で終了した場合は、
+        // 発話途中の可能性があるため送信せず、入力欄にテキストを残す。
+        // ユーザーはマイク再タップで続きを話すか、送信ボタンで確定できる。
+        if (_stopRequestedByUser &&
+            _inputController.text.trim().isNotEmpty &&
+            !_isSending) {
           _sendMessage();
         }
+        _stopRequestedByUser = false;
       },
       onError: (code) {
         if (!mounted) return;
