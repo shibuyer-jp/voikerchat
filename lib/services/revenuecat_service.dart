@@ -16,8 +16,11 @@ class RevenueCatService {
   bool _initialized = false;
   bool _isPremium = false;
 
-  // RevenueCat API キー（テスト）
-  static const String _apiKey = 'test_bvqgeBBNoUiKVbBHI0aPMOnwg7Cw';
+  // RevenueCat 公開SDKキー（--dart-define で注入。プラットフォーム別）
+  // 例: --dart-define=REVENUECAT_IOS_KEY=appl_xxx --dart-define=REVENUECAT_ANDROID_KEY=goog_xxx
+  static const String _iosApiKey = String.fromEnvironment('REVENUECAT_IOS_KEY');
+  static const String _androidApiKey =
+      String.fromEnvironment('REVENUECAT_ANDROID_KEY');
 
   RevenueCatService._internal();
 
@@ -33,17 +36,26 @@ class RevenueCatService {
       _prefs = await SharedPreferences.getInstance();
       
       // RevenueCat SDK 初期化
-      await Purchases.setLogLevel(LogLevel.debug);
-      
-      if (Platform.isIOS) {
-        await Purchases.configure(
-          PurchasesConfiguration(_apiKey),
-        );
-      } else if (Platform.isAndroid) {
-        await Purchases.configure(
-          PurchasesConfiguration(_apiKey),
-        );
+      final apiKey = Platform.isIOS
+          ? _iosApiKey
+          : Platform.isAndroid
+              ? _androidApiKey
+              : '';
+
+      if (apiKey.isEmpty) {
+        // キー未注入（開発ビルド等）: configure をスキップし、
+        // キャッシュ済み Premium 状態のみで動作する。
+        logger.warning(
+            '[RevenueCat] API key not provided via --dart-define; skipping configure');
+        _isPremium = _prefs.getBool('isPremium') ?? false;
+        _initialized = true;
+        return;
       }
+
+      await Purchases.setLogLevel(LogLevel.debug);
+      await Purchases.configure(
+        PurchasesConfiguration(apiKey),
+      );
 
       // 既存の Premium ステータスをロード
       _isPremium = _prefs.getBool('isPremium') ?? false;
