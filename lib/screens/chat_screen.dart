@@ -323,6 +323,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     await _speechService.start(
       localeId: 'ja-JP',
       onResult: (transcript, _) {
+        // 録音停止/送信後に iOS から遅れて届く最終認識結果を無視する。
+        // このガードがないと、_sendMessage でクリアした入力欄に
+        // 送信済みの発話テキストが復活してしまう（非同期の競合）。
+        if (!_isListening || _isSending) return;
         _inputController.text = transcript;
       },
       onComplete: () {
