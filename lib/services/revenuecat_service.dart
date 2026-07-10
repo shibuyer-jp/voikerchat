@@ -14,10 +14,14 @@ class RevenueCatService {
   
   late SharedPreferences _prefs;
   bool _initialized = false;
+  bool _configured = false; // Purchases.configure 済みか
   bool _isPremium = false;
 
-  // RevenueCat API キー（テスト）
-  static const String _apiKey = 'test_bvqgeBBNoUiKVbBHI0aPMOnwg7Cw';
+  // RevenueCat 公開SDKキー（--dart-define で注入。プラットフォーム別）
+  // 例: --dart-define=REVENUECAT_IOS_KEY=appl_xxx --dart-define=REVENUECAT_ANDROID_KEY=goog_xxx
+  static const String _iosApiKey = String.fromEnvironment('REVENUECAT_IOS_KEY');
+  static const String _androidApiKey =
+      String.fromEnvironment('REVENUECAT_ANDROID_KEY');
 
   RevenueCatService._internal();
 
@@ -33,17 +37,27 @@ class RevenueCatService {
       _prefs = await SharedPreferences.getInstance();
       
       // RevenueCat SDK 初期化
-      await Purchases.setLogLevel(LogLevel.debug);
-      
-      if (Platform.isIOS) {
-        await Purchases.configure(
-          PurchasesConfiguration(_apiKey),
-        );
-      } else if (Platform.isAndroid) {
-        await Purchases.configure(
-          PurchasesConfiguration(_apiKey),
-        );
+      final apiKey = Platform.isIOS
+          ? _iosApiKey
+          : Platform.isAndroid
+              ? _androidApiKey
+              : '';
+
+      if (apiKey.isEmpty) {
+        // キー未注入（開発ビルド等）: configure をスキップし、
+        // キャッシュ済み Premium 状態のみで動作する。
+        logger.warning(
+            '[RevenueCat] API key not provided via --dart-define; skipping configure');
+        _isPremium = _prefs.getBool('isPremium') ?? false;
+        _initialized = true;
+        return;
       }
+
+      await Purchases.setLogLevel(LogLevel.debug);
+      await Purchases.configure(
+        PurchasesConfiguration(apiKey),
+      );
+      _configured = true;
 
       // 既存の Premium ステータスをロード
       _isPremium = _prefs.getBool('isPremium') ?? false;
@@ -66,6 +80,7 @@ class RevenueCatService {
   /// restorePurchases() は logIn() 自体は Webhook を発火させないための安全網
   /// （別デバイス購入・レシート再紐付けのトリガーとして機能する）。
   Future<bool> loginWithUserId(String supabaseUserId) async {
+    if (!_configured) return false;
     try {
       await Purchases.logIn(supabaseUserId);
       await Purchases.restorePurchases();
@@ -79,6 +94,7 @@ class RevenueCatService {
 
   /// Premium ステータスを確認してローカル保存
   Future<bool> checkPremiumStatus() async {
+    if (!_configured) return _isPremium;
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       
@@ -101,6 +117,9 @@ class RevenueCatService {
   /// Premium 購入フロー
   /// エラー分類: cancelled, network, payment, unknown
   Future<Map<String, dynamic>> purchasePremium() async {
+    if (!_configured) {
+      return {'success': false, 'error': 'RevenueCat not configured'};
+    }
     try {
       final offerings = await Purchases.getOfferings();
       
@@ -216,6 +235,7 @@ class RevenueCatService {
 
   /// Premium サブスクリプション情報取得
   Future<Map<String, dynamic>?> getPremiumInfo() async {
+    if (!_configured) return null;
     try {
       final offerings = await Purchases.getOfferings();
       
@@ -245,6 +265,7 @@ class RevenueCatService {
 
   /// Premium 復元（別のデバイスから購入した場合）
   Future<bool> restorePurchases() async {
+    if (!_configured) return false;
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       

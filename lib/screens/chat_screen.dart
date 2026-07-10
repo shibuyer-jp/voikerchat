@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/l10n/label_helpers.dart';
 import 'package:logging/logging.dart';
@@ -10,10 +11,15 @@ import '../models/message.dart';
 import '../models/rate_limit.dart';
 import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
+import '../services/scene_service.dart';
 import '../services/revenuecat_service.dart';
 import '../services/streak_service.dart';
 import '../services/premium_upsell_service.dart';
 import '../services/rewarded_ad_service.dart';
+import '../services/voice/speech_recognition_service.dart';
+import '../services/voice/text_to_speech_service.dart';
+import '../services/voice/tts_text_cleaner.dart';
+import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import 'stats_screen.dart';
@@ -49,6 +55,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   late PremiumUpsellService _premiumUpsellService;
   final RewardedAdService _rewardedAdService = RewardedAdService();
   bool _isAdLoading = false;
+  // 音声（会話）: STT/TTS
+  final SpeechRecognitionService _speechService = SpeechRecognitionService();
+  final TextToSpeechService _ttsService = TextToSpeechService();
+  bool _voiceReady = false;
+  bool _ttsReady = false;
+  bool _isListening = false;
+  // STT は権限プロンプトを伴うため起動時に初期化せず、初回マイクタップ時に
+  // 説明ダイアログ(G6)を挟んで遅延初期化する。以下はその状態管理。
+  bool _sttInitAttempted = false; // initialize() を一度でも試みたか
+  // ユーザーが自分でマイクをタップして停止したか。true のときだけ自動送信する。
+  // false のまま onComplete が来た場合は OS 側の無音自動停止(Android約5秒/iOS約1分)
+  // なので、途中の発話を勝手に送らずテキストを入力欄に残す。
+  bool _stopRequestedByUser = false;
+  bool _autoRead = true;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
 
@@ -74,6 +94,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     // リワード広告を事前ロード（Web では no-op）。
     _rewardedAdService.loadAd();
 
+    // 音声(STT/TTS)を初期化（非同期・非致命）。
+    _initVoice();
+
     // WidgetsBinding オブザーバー登録（通知タップ処理）
     WidgetsBinding.instance.addObserver(this);
 
@@ -85,6 +108,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
         _showError('User not authenticated');
+        // ローディングを解除しないと画面が無限にぐるぐるし続ける。
+        // （Supabase未初期化 = --dart-define 未指定時にこの経路に入る）
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
@@ -107,6 +133,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
       // Load existing messages and rate limit status
       await _loadMessages();
+
+      // 初回（履歴なし）はシーン別オープニング第一声をAI発話として挿入。
+      // API呼び出し不要（固定スクリプト）＝コスト・遅延ゼロ、利用回数も消費しない。
+      await _insertOpeningLineIfNeeded();
+
       await _loadRateLimit();
       
       // Premium ステータス確認
@@ -245,6 +276,135 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// 音声(STT/TTS)の初期化。非致命なので失敗してもチャットは継続する。
+  Future<void> _initVoice() async {
+    // TTS のみ起動時に初期化（マイク権限不要）。STT は権限プロンプトを伴うため、
+    // 初回マイクタップ時に説明ダイアログ(G6)→initialize() の順で遅延初期化する。
+    try {
+      await _ttsService.initialize();
+      if (!mounted) return;
+      setState(() {
+        _ttsReady = _ttsService.isSupported;
+      });
+    } catch (e) {
+      logger.info('Voice init failed: $e');
+    }
+  }
+
+  /// マイクのトグル（Push-to-Talk）。認識中なら停止、そうでなければ開始する。
+  /// iOSは約1分で強制終了・連続再起動でスロットリングされるため自動再起動はしない。
+  Future<void> _toggleListening() async {
+    if (_isListening) {
+      _stopRequestedByUser = true;
+      await _speechService.stop(); // onComplete 経由で自動送信される
+      return;
+    }
+
+    // 初回のみ: OS標準の権限プロンプトを出す「前」に理由を説明する(G6)。
+    // 「続ける」を選んだときだけ initialize()（＝OS権限プロンプト）へ進む。
+    if (!_sttInitAttempted) {
+      final l = AppLocalizations.of(context);
+      final proceed = await showMicRationaleDialog(
+        context,
+        message: l.micRationaleMessage,
+        allowLabel: l.micRationaleContinue,
+        cancelLabel: l.cancel,
+      );
+      if (!proceed) return; // 説明ダイアログでキャンセル → 権限要求せず何もしない
+      if (!mounted) return;
+
+      final sttOk = await _speechService.initialize(); // ここでOS権限プロンプト
+      _sttInitAttempted = true;
+      if (!mounted) return;
+      setState(() => _voiceReady = sttOk);
+      if (!sttOk) {
+        await _showMicDeniedDialog();
+        return;
+      }
+    }
+
+    // 過去に拒否された場合もボタンは隠さず、タップで復帰導線（設定画面）を案内する。
+    // 注意: iOSは設定アプリで権限を変更すると本アプリを強制終了する（OS仕様）ため、
+    // 変更後はアプリが再起動され、次回の初期化で新しい権限状態が反映される。
+    if (!_voiceReady) {
+      await _showMicDeniedDialog();
+      return;
+    }
+
+    // iOSではマイク権限と音声認識権限が別管理で、initialize() 成功でも
+    // マイクだけOFFのことがある（無音で空振りする）。開始前に毎回確認する。
+    final micOk = await _speechService.hasPermission();
+    logger.info('Mic permission check before listen: $micOk');
+    if (!micOk) {
+      await _showMicDeniedDialog();
+      return;
+    }
+
+    await _ttsService.stop(); // 進行中の読み上げを止めてから録音
+    // 入力欄に残っているテキスト（無音自動停止で保持された前回の発話や、
+    // 手入力の途中文）は破棄せず接頭辞として保持し、新しい認識結果を後ろに連結する。
+    // これにより「考え込み→無音自動停止→マイク再タップ」で発話の続きを追記できる。
+    final prefix = _inputController.text.trim();
+    _stopRequestedByUser = false;
+    setState(() => _isListening = true);
+
+    await _speechService.start(
+      localeId: 'ja-JP',
+      onResult: (transcript, _) {
+        // 録音停止/送信後に iOS から遅れて届く最終認識結果を無視する。
+        // このガードがないと、_sendMessage でクリアした入力欄に
+        // 送信済みの発話テキストが復活してしまう（非同期の競合）。
+        if (!_isListening || _isSending) return;
+        _inputController.text = prefix.isEmpty ? transcript : '$prefix$transcript';
+      },
+      onComplete: () {
+        if (!mounted) return;
+        setState(() => _isListening = false);
+        // 自動送信はユーザー自身がマイクタップで停止したときのみ。
+        // OS の無音自動停止（Android約5秒/iOS約1分上限）で終了した場合は、
+        // 発話途中の可能性があるため送信せず、入力欄にテキストを残す。
+        // ユーザーはマイク再タップで続きを話すか、送信ボタンで確定できる。
+        if (_stopRequestedByUser &&
+            _inputController.text.trim().isNotEmpty &&
+            !_isSending) {
+          _sendMessage();
+        }
+        _stopRequestedByUser = false;
+      },
+      onError: (code) {
+        if (!mounted) return;
+        setState(() => _isListening = false);
+        logger.info('Speech recognition error: $code');
+      },
+    );
+  }
+
+  /// マイク/音声認識が拒否・未対応のときに表示する復帰導線ダイアログ。
+  Future<void> _showMicDeniedDialog() async {
+    if (!mounted) return;
+    final l = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.micDeniedTitle),
+        content: Text(l.micDeniedMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              AppSettings.openAppSettings();
+            },
+            child: Text(l.openSettings),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _loadMessages() async {
     if (_userId == null) return;
 
@@ -261,6 +421,30 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// 履歴が空のとき、シーン別のオープニング第一声を assistant メッセージとして
+  /// 保存・表示する。ユーザーが何を話せばよいか分かるきっかけを作る。
+  Future<void> _insertOpeningLineIfNeeded() async {
+    if (_userId == null || _messages.isNotEmpty) return;
+
+    final openingLine = SceneService.openingLineFor(widget.sceneId);
+    if (openingLine == null) return;
+
+    try {
+      final openingMessage = await _messageService.saveMessage(
+        userId: _userId!,
+        sceneId: widget.sceneId,
+        role: 'assistant',
+        content: openingLine,
+      );
+      if (!mounted) return;
+      setState(() => _messages.add(openingMessage));
+      _scrollToBottom();
+    } catch (e) {
+      // オープニング挿入の失敗は致命的でないため、ログのみで継続
+      logger.warning('Failed to insert opening line: $e');
+    }
+  }
+
   Future<void> _sendMessage() async {
     final l = AppLocalizations.of(context);
     final text = _inputController.text.trim();
@@ -274,6 +458,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     setState(() => _isSending = true);
     _inputController.clear();
+
+    // 進行中のAI読み上げを止める(ユーザーが次の発話をした=前の読み上げは不要)。
+    await _ttsService.stop();
+
+    // 録音中に手動送信された場合、マイクを確実に止める。
+    // 止めないと、この後のTTS読み上げ(スピーカー出力)をマイクが拾い、
+    // AIの発話が入力欄に書き起こされる自己ループが発生する。
+    if (_speechService.isListening) {
+      await _speechService.cancel(); // 確定させず破棄（onCompleteの自動送信も防ぐ）
+      if (mounted) setState(() => _isListening = false);
+    }
 
     try {
       // Save user message
@@ -302,6 +497,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _messages.add(assistantMessage));
       _scrollToBottom();
 
+      // アシスタント応答を自動読み上げ（ONかつTTS利用可能なとき）。
+      if (_autoRead && _ttsReady) {
+        final reply = assistantResponse['content'] as String? ?? '';
+        if (reply.isNotEmpty) {
+          await _ttsService.speak(cleanForSpeech(reply));
+        }
+      }
+
       // レート制限カウントはサーバー側 (api/chat.ts) で既にインクリメント済み。
       // ここでは表示更新のみ行う（クライアント側で再度加算すると二重カウントになる）。
       await _loadRateLimit(); // Refresh display
@@ -327,19 +530,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   /// Returns map with 'content' and 'tokens_used'
   Future<Map<String, dynamic>> _getAssistantResponse(String userMessage) async {
     try {
-      // Build conversation context from stored messages
+      // Build conversation context from stored messages.
+      // 注意: 送信中のユーザーメッセージは _sendMessage 側で既に _messages に
+      // 追加済みのため、ここで再追加しない（従来は末尾が二重送信されていた）。
       final conversationHistory = _messages
           .map((msg) => {
             'role': msg.role,
             'content': msg.content,
           })
           .toList();
-
-      // Add current message
-      conversationHistory.add({
-        'role': 'user',
-        'content': userMessage,
-      });
 
       // Call Claude Haiku API (via Firebase Functions or Vercel)
       // This assumes T-12b already implemented the backend
@@ -436,13 +635,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    // initState 中（画面構築完了前）に呼ばれると ScaffoldMessenger.of(context)
+    // が例外を投げてぐるぐる（無限ローディング）の原因になるため、
+    // 描画フレーム完了後に表示するよう遅延させる。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
   }
 
   @override
@@ -451,6 +656,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _inputController.dispose();
     _scrollController.dispose();
     _rewardedAdService.dispose();
+    _speechService.dispose();
+    _ttsService.dispose();
     super.dispose();
   }
 
@@ -539,6 +746,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
             ),
           ),
+          if (_ttsReady)
+            IconButton(
+              icon: Icon(_autoRead ? Icons.volume_up : Icons.volume_off),
+              tooltip: l.voiceAutoRead,
+              onPressed: () => setState(() => _autoRead = !_autoRead),
+            ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: _showSessionOptions,
@@ -547,7 +760,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
+          : GestureDetector(
+              // 入力欄の枠外タップでキーボードを閉じる（iOS標準的な操作感）
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              behavior: HitTestBehavior.translucent,
+              child: Column(
               children: [
                 // Messages list
                 Expanded(
@@ -572,6 +789,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         )
                       : ListView.builder(
                           controller: _scrollController,
+                          // メッセージ一覧のスクロール操作でもキーボードを閉じる
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: const EdgeInsets.all(16),
                           itemCount: _messages.length,
                           itemBuilder: (context, index) {
@@ -683,6 +903,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               onSubmitted: (_) => _isSending ? null : _sendMessage(),
                             ),
                           ),
+                          // 起動時はSTT未初期化でも表示（初回タップで説明→権限へ）。
+                          // 未対応/拒否が確定した場合のみ隠し、テキスト入力へフォールバック。
+                          // マイクボタンは常時表示（拒否時はタップで設定誘導ダイアログを出す）
+                          ...[
+                            IconButton(
+                              icon: Icon(
+                                _isListening ? Icons.stop : Icons.mic,
+                                color: _isListening ? Colors.red : null,
+                              ),
+                              tooltip: _isListening ? l.voiceInputStop : l.voiceInputStart,
+                              onPressed: _isSending ? null : _toggleListening,
+                            ),
+                          ],
                           const SizedBox(width: 8),
                           IconButton(
                             icon: _isSending
@@ -702,6 +935,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   ],
                 ),
               ],
+            ),
             ),
     );
   }
@@ -743,6 +977,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     sceneId: widget.sceneId,
                   );
                   setState(() => _messages.clear());
+                  // リセット直後もシーン別オープニング第一声を再表示する
+                  await _insertOpeningLineIfNeeded();
                 }
               },
             ),

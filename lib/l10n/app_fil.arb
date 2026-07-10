@@ -203,5 +203,13 @@
   "deleteAccountConfirmButton": "Tanggalin",
   "deleteAccountInProgress": "Binubura ang account…",
   "deleteAccountSuccess": "Natanggal na ang iyong account.",
-  "deleteAccountError": "Nabigong tanggalin ang account. Pakisubukang muli."
+  "deleteAccountError": "Nabigong tanggalin ang account. Pakisubukang muli.",
+  "voiceInputStart": "Magsalita",
+  "voiceInputStop": "Ihinto",
+  "voiceAutoRead": "Awtomatikong pagbasa",
+  "micRationaleMessage": "Kailangan namin ng access sa mikropono upang suriin ang iyong pagbigkas.",
+  "micRationaleContinue": "Magpatuloy",
+  "micDeniedTitle": "Hindi magamit ang mikropono",
+  "micDeniedMessage": "Naka-disable ang voice input. Paki-enable ang Mikropono at Speech Recognition para sa Voikerchat sa Settings ng iyong device.",
+  "openSettings": "Buksan ang Settings"
 }

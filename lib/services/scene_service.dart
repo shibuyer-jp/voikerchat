@@ -42,7 +42,7 @@ class SceneService {
     Scene(
       id: 1,
       name: '友達',
-      characterName: 'Emi',
+      characterName: 'Sakura',
       description: '友人との日常会話',
       recommendedLevel: UserDiagnosticLevel.beginner,
       color: '#0099FF',
@@ -50,7 +50,7 @@ class SceneService {
     Scene(
       id: 2,
       name: 'レストラン',
-      characterName: 'Taro',
+      characterName: 'Takuya',
       description: '食事をしながらの丁寧な会話',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#FF9900',
@@ -58,7 +58,7 @@ class SceneService {
     Scene(
       id: 3,
       name: '買い物',
-      characterName: 'Akiko',
+      characterName: 'Yumi',
       description: '商品説明・値段交渉',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#FF66CC',
@@ -66,7 +66,7 @@ class SceneService {
     Scene(
       id: 4,
       name: '電車',
-      characterName: 'Yuki',
+      characterName: 'Kouki',
       description: '公共交通での会話',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#FF0000',
@@ -74,7 +74,7 @@ class SceneService {
     Scene(
       id: 5,
       name: '病院',
-      characterName: 'Dr. Nakamura',
+      characterName: 'Akari',
       description: '医療表現・症状説明',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#CCCCCC',
@@ -90,7 +90,7 @@ class SceneService {
     Scene(
       id: 7,
       name: 'カフェ',
-      characterName: 'Hana',
+      characterName: 'Minato',
       description: 'カフェでのリラックス会話',
       recommendedLevel: UserDiagnosticLevel.beginner,
       color: '#8B4513',
@@ -98,7 +98,7 @@ class SceneService {
     Scene(
       id: 8,
       name: 'フリートーク',
-      characterName: 'AI',
+      characterName: 'Eiko',
       description: '自由な話題で練習',
       recommendedLevel: UserDiagnosticLevel.beginner,
       color: '#9933FF',
@@ -108,7 +108,7 @@ class SceneService {
     Scene(
       id: 9,
       name: '熱血戦闘',
-      characterName: 'Raiden',
+      characterName: 'Raiki',
       description: '意志表明・強い決意表現',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#FF3333',
@@ -117,7 +117,7 @@ class SceneService {
     Scene(
       id: 10,
       name: '友情協力',
-      characterName: 'Sakura & Lily',
+      characterName: 'Hana',
       description: '励ましの表現・チームワーク',
       recommendedLevel: UserDiagnosticLevel.beginner,
       color: '#FF99FF',
@@ -126,7 +126,7 @@ class SceneService {
     Scene(
       id: 11,
       name: '感動涙',
-      characterName: 'Grandmother',
+      characterName: 'Luna',
       description: '感情表現・感謝',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#CC99FF',
@@ -135,7 +135,7 @@ class SceneService {
     Scene(
       id: 12,
       name: '日常学園',
-      characterName: 'Classmates',
+      characterName: 'Taro',
       description: '学校語彙・同年代会話',
       recommendedLevel: UserDiagnosticLevel.intermediate,
       color: '#00CCFF',
@@ -144,13 +144,40 @@ class SceneService {
     Scene(
       id: 13,
       name: 'ギャグ会話',
-      characterName: 'Tanaka',
+      characterName: 'Jiro',
       description: 'ユーモア理解・自然な反応',
       recommendedLevel: UserDiagnosticLevel.beginner,
       color: '#FFFF00',
       isPremium: true,
     ),
   ];
+
+
+  /// シーン別オープニング第一声（AIキャラクターの最初の発話）。
+  /// 出典キャラクター設定: docs/Persona-Design-v1.0.md
+  /// 会話コンテンツ（練習対象の日本語）のため i18n(ARB) 対象外。
+  static const Map<int, String> openingLines = {
+    1: 'あ、おまたせ！来てくれてありがとう。最近どう？なにか楽しいことあった？',
+    2: 'いらっしゃいませ。お席へどうぞ。こちらがメニューでございます。本日のおすすめは日替わりパスタです。ご注文はお決まりですか？',
+    3: 'いらっしゃいませ！なにかお探しですか？ちょうど新作が入ったばかりなんですよ。',
+    4: 'あ、この電車は新宿方面ですよ。どちらまで行かれるんですか？',
+    5: 'こんにちは。本日はどうされましたか？初めての方は、こちらの問診票にご記入をお願いします。',
+    6: '初めまして、けんじと申します。本日はよろしくお願いいたします。よろしければ、お名前とご出身を教えていただけますか？',
+    7: 'いい雰囲気のカフェだね。ここのコーヒー、おいしいんだよ。最近なにか面白いことあった？',
+    8: 'こんにちは！今日はなにについて話しましょうか？好きな話題でいいですよ。',
+    9: 'おう、来たな！今日も特訓の時間だ！まずはお前の目標を聞かせてくれ！',
+    10: 'やっほー！会えてうれしい！ねえ、今日は一緒になにをがんばる？',
+    11: '……来てくれたんだね。ありがとう。今日は、少しだけ昔の話をしてもいいかな。',
+    12: 'おっす、おはよう！昨日の宿題やった？オレ、まだ全然終わってないんだけど！',
+    13: 'どうもどうも〜！ジローです！いきなりですが…今日はどんな話でツッコんでくれる？',
+  };
+
+  /// sceneId（文字列）からオープニング第一声を取得。未定義シーンは null。
+  static String? openingLineFor(String sceneId) {
+    final id = int.tryParse(sceneId);
+    if (id == null) return null;
+    return openingLines[id];
+  }
 
   /// レベル別にシーンをフィルタリング
   static List<Scene> filterByLevel(UserDiagnosticLevel level) {

@@ -202,7 +202,9 @@ class _DiagnosticTestScreenEnhancedState
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      body: SingleChildScrollView(
+      // SafeArea: ステータスバー（時計・電池表示）とコンテンツの重なりを防ぐ
+      body: SafeArea(
+        child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -332,6 +334,7 @@ class _DiagnosticTestScreenEnhancedState
               ),
             ],
           ),
+        ),
         ),
       ),
     );
