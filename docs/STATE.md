@@ -1,7 +1,7 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
 > **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。
-> 最終更新: 2026-07-10(PR #2 音声会話マージ。Android/iOS実機テスト全項目合格)
+> 最終更新: 2026-07-10 夜(PR #2マージ+リポジトリ掃除 `1db8073`+tool/起動スクリプト。運用: shibuyer-ops/skills/ 新設 — 作業前に該当スキル参照)
 
 ## 機能ステータス
 | 機能 | 状態 | 備考 |
@@ -37,9 +37,10 @@
 3. **Push Phase2**(submission非必須・機能拡張): iOSで Push/Background Modes capability有効化 + APNsキーをFirebase Consoleにアップロード + 実機テスト
 4. **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)
 5. **fil訳ネイティブレビュー**(妻に依頼) → 本番化
-6. 小タスク: `l10n.yaml` の `synthetic-package` 非推奨警告(1行削除)/ ラップトップ側 `.dart_tool` 等がgit管理に混入している疑い(要 `.gitignore` 確認)/ G6ダイアログを権限取得済み時はスキップする改善(任意)
+6. 小タスク: G6ダイアログを権限取得済み時はスキップする改善(任意)。~~l10n.yaml非推奨行~~ ~~.dart_tool混入~~ → `1db8073` で完了
 
 ## 完了(直近・2026-07-10)
+- **リポジトリ掃除+devスクリプト**(`1db8073`): `.dart_tool/`(38ファイル)+`.flutter-plugins-dependencies` をgit管理から除外・ignore追加 / `l10n.yaml` 非推奨 `synthetic-package` 行削除 / `tool/run_ios.sh`・`tool/run_android.bat`・`tool/README.md` 追加(dart-define内蔵)。**各マシンは次回pull時に注意**: `.dart_tool` にローカル変更があるとpullが弾かれる → `git checkout -- .dart_tool .flutter-plugins-dependencies` 後にpull(以後は再発しない)
 - **PR #2 音声会話マージ**(squash `17ee53e`、ブランチ削除済)。Androidエミュレーター+iOS実機で全テスト項目合格。iOS署名検証エラーは自宅Wi-Fi環境で解消
 
 ## 完了(2026-07-08)
