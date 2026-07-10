@@ -445,6 +445,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     setState(() => _isSending = true);
     _inputController.clear();
 
+    // 進行中のAI読み上げを止める(ユーザーが次の発話をした=前の読み上げは不要)。
+    await _ttsService.stop();
+
     // 録音中に手動送信された場合、マイクを確実に止める。
     // 止めないと、この後のTTS読み上げ(スピーカー出力)をマイクが拾い、
     // AIの発話が入力欄に書き起こされる自己ループが発生する。
