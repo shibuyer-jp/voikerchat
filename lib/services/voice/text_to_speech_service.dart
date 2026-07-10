@@ -7,14 +7,19 @@ import 'package:logging/logging.dart';
 /// アシスタントの日本語応答を ja-JP で読み上げる。
 /// 速度はプラットフォームでスケールが異なる点に注意:
 /// - iOS(AVSpeechUtterance): 0.5 が標準速度。0.9 はほぼ最速で早口になる
-/// - Android/Web: 1.0 が標準速度。学習用にやや遅めの 0.9 を既定とする
+/// - Android: flutter_tts が値を2倍してネイティブに渡す(rate * 2.0f)ため
+///   0.5 が標準速度。0.9 を渡すとネイティブ1.8倍速の早口になる
+/// - Web: 1.0 が標準速度。学習用にやや遅めの 0.9 を既定とする
 class TextToSpeechService {
   final FlutterTts _flutterTts = FlutterTts();
   final Logger _logger = Logger('TextToSpeechService');
 
   /// プラットフォーム別の既定読み上げ速度。
-  static double get defaultRate =>
-      (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 0.5 : 0.9;
+  /// iOS/Android とも 0.5 = 標準。学習用にやや遅めの 0.45(≒0.9倍速)。
+  static double get defaultRate {
+    if (kIsWeb) return 0.9;
+    return 0.45;
+  }
 
   bool _isSupported = false;
   bool _isSpeaking = false;
@@ -41,6 +46,7 @@ class TextToSpeechService {
       await _flutterTts.setLanguage('ja-JP');
       await _flutterTts.setSpeechRate(defaultRate);
       await _flutterTts.setPitch(1.0);
+      await _flutterTts.setVolume(1.0); // 明示的に最大音量(0.0〜1.0)
 
       _flutterTts.setStartHandler(() {
         _isSpeaking = true;
