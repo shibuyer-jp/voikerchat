@@ -103,6 +103,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
         _showError('User not authenticated');
+        // ローディングを解除しないと画面が無限にぐるぐるし続ける。
+        // （Supabase未初期化 = --dart-define 未指定時にこの経路に入る）
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
@@ -533,13 +536,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    // initState 中（画面構築完了前）に呼ばれると ScaffoldMessenger.of(context)
+    // が例外を投げてぐるぐる（無限ローディング）の原因になるため、
+    // 描画フレーム完了後に表示するよう遅延させる。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
   }
 
   @override
