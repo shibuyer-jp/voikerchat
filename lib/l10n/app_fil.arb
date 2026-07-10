@@ -208,5 +208,8 @@
   "voiceInputStop": "Ihinto",
   "voiceAutoRead": "Awtomatikong pagbasa",
   "micRationaleMessage": "Kailangan namin ng access sa mikropono upang suriin ang iyong pagbigkas.",
-  "micRationaleContinue": "Magpatuloy"
+  "micRationaleContinue": "Magpatuloy",
+  "micDeniedTitle": "Hindi magamit ang mikropono",
+  "micDeniedMessage": "Naka-disable ang voice input. Paki-enable ang Mikropono at Speech Recognition para sa Voikerchat sa Settings ng iyong device.",
+  "openSettings": "Buksan ang Settings"
 }

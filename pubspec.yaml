@@ -54,6 +54,8 @@ dependencies:
   logging: ^1.2.0
   # 音声会話（STT/TTS）— 端末内蔵エンジンを使用（クラウド課金なし）。
   speech_to_text: ^7.3.0
+  # 権限拒否時にOSの設定画面を開くため（マイク権限の復帰導線）
+  app_settings: ^5.1.1
   flutter_tts: ^4.2.0
 
 dev_dependencies:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/l10n/label_helpers.dart';
 import 'package:logging/logging.dart';
@@ -63,7 +64,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   // STT は権限プロンプトを伴うため起動時に初期化せず、初回マイクタップ時に
   // 説明ダイアログ(G6)を挟んで遅延初期化する。以下はその状態管理。
   bool _sttInitAttempted = false; // initialize() を一度でも試みたか
-  bool _sttUnavailable = false; // 未対応/権限拒否が確定したか（true でマイクボタンを隠す）
   bool _autoRead = true;
   late TextEditingController _inputController;
   late ScrollController _scrollController;
@@ -311,14 +311,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final sttOk = await _speechService.initialize(); // ここでOS権限プロンプト
       _sttInitAttempted = true;
       if (!mounted) return;
-      setState(() {
-        _voiceReady = sttOk;
-        _sttUnavailable = !sttOk; // 未対応/拒否ならボタンを隠しテキスト入力へフォールバック
-      });
-      if (!sttOk) return;
+      setState(() => _voiceReady = sttOk);
+      if (!sttOk) {
+        await _showMicDeniedDialog();
+        return;
+      }
     }
 
-    if (!_voiceReady) return;
+    // 過去に拒否された場合もボタンは隠さず、タップで復帰導線（設定画面）を案内する。
+    // 注意: iOSは設定アプリで権限を変更すると本アプリを強制終了する（OS仕様）ため、
+    // 変更後はアプリが再起動され、次回の初期化で新しい権限状態が反映される。
+    if (!_voiceReady) {
+      await _showMicDeniedDialog();
+      return;
+    }
 
     await _ttsService.stop(); // 進行中の読み上げを止めてから録音
     // 前回の認識結果や入力途中のテキストが残っていると、新しい発話と
@@ -347,6 +353,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         setState(() => _isListening = false);
         logger.info('Speech recognition error: $code');
       },
+    );
+  }
+
+  /// マイク/音声認識が拒否・未対応のときに表示する復帰導線ダイアログ。
+  Future<void> _showMicDeniedDialog() async {
+    if (!mounted) return;
+    final l = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.micDeniedTitle),
+        content: Text(l.micDeniedMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              AppSettings.openAppSettings();
+            },
+            child: Text(l.openSettings),
+          ),
+        ],
+      ),
     );
   }
 
@@ -847,7 +879,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ),
                           // 起動時はSTT未初期化でも表示（初回タップで説明→権限へ）。
                           // 未対応/拒否が確定した場合のみ隠し、テキスト入力へフォールバック。
-                          if (!_sttUnavailable) ...[
+                          // マイクボタンは常時表示（拒否時はタップで設定誘導ダイアログを出す）
+                          ...[
                             IconButton(
                               icon: Icon(
                                 _isListening ? Icons.stop : Icons.mic,

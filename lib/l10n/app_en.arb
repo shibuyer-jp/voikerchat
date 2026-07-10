@@ -902,5 +902,17 @@
   "micRationaleContinue": "Continue",
   "@micRationaleContinue": {
     "description": "Button that proceeds to the OS microphone permission prompt"
+  },
+  "micDeniedTitle": "Microphone unavailable",
+  "@micDeniedTitle": {
+    "description": "Dialog title shown when microphone/speech permission is denied or unavailable"
+  },
+  "micDeniedMessage": "Voice input is currently disabled. Please enable Microphone and Speech Recognition for Voikerchat in your device Settings.",
+  "@micDeniedMessage": {
+    "description": "Dialog body shown when microphone/speech permission is denied or unavailable"
+  },
+  "openSettings": "Open Settings",
+  "@openSettings": {
+    "description": "Button that opens the OS app settings screen"
   }
 }

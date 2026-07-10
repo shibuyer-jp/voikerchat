@@ -208,5 +208,8 @@
   "voiceInputStop": "停止",
   "voiceAutoRead": "自動読み上げ",
   "micRationaleMessage": "日本語の発音をチェックするため、マイクへのアクセスを許可してください。",
-  "micRationaleContinue": "続ける"
+  "micRationaleContinue": "続ける",
+  "micDeniedTitle": "マイクが使用できません",
+  "micDeniedMessage": "音声入力が無効になっています。端末の「設定」でVoikerchatのマイクと音声認識を有効にしてください。",
+  "openSettings": "設定を開く"
 }
