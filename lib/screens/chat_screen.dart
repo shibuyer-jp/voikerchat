@@ -10,6 +10,7 @@ import '../models/message.dart';
 import '../models/rate_limit.dart';
 import '../services/message_service.dart';
 import '../services/rate_limit_service.dart';
+import '../services/scene_service.dart';
 import '../services/revenuecat_service.dart';
 import '../services/streak_service.dart';
 import '../services/premium_upsell_service.dart';
@@ -128,6 +129,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
       // Load existing messages and rate limit status
       await _loadMessages();
+
+      // 初回（履歴なし）はシーン別オープニング第一声をAI発話として挿入。
+      // API呼び出し不要（固定スクリプト）＝コスト・遅延ゼロ、利用回数も消費しない。
+      await _insertOpeningLineIfNeeded();
+
       await _loadRateLimit();
       
       // Premium ステータス確認
@@ -360,6 +366,30 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// 履歴が空のとき、シーン別のオープニング第一声を assistant メッセージとして
+  /// 保存・表示する。ユーザーが何を話せばよいか分かるきっかけを作る。
+  Future<void> _insertOpeningLineIfNeeded() async {
+    if (_userId == null || _messages.isNotEmpty) return;
+
+    final openingLine = SceneService.openingLineFor(widget.sceneId);
+    if (openingLine == null) return;
+
+    try {
+      final openingMessage = await _messageService.saveMessage(
+        userId: _userId!,
+        sceneId: widget.sceneId,
+        role: 'assistant',
+        content: openingLine,
+      );
+      if (!mounted) return;
+      setState(() => _messages.add(openingMessage));
+      _scrollToBottom();
+    } catch (e) {
+      // オープニング挿入の失敗は致命的でないため、ログのみで継続
+      logger.warning('Failed to insert opening line: $e');
+    }
+  }
+
   Future<void> _sendMessage() async {
     final l = AppLocalizations.of(context);
     final text = _inputController.text.trim();
@@ -442,19 +472,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   /// Returns map with 'content' and 'tokens_used'
   Future<Map<String, dynamic>> _getAssistantResponse(String userMessage) async {
     try {
-      // Build conversation context from stored messages
+      // Build conversation context from stored messages.
+      // 注意: 送信中のユーザーメッセージは _sendMessage 側で既に _messages に
+      // 追加済みのため、ここで再追加しない（従来は末尾が二重送信されていた）。
       final conversationHistory = _messages
           .map((msg) => {
             'role': msg.role,
             'content': msg.content,
           })
           .toList();
-
-      // Add current message
-      conversationHistory.add({
-        'role': 'user',
-        'content': userMessage,
-      });
 
       // Call Claude Haiku API (via Firebase Functions or Vercel)
       // This assumes T-12b already implemented the backend
