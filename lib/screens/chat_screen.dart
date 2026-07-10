@@ -702,7 +702,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
+          : GestureDetector(
+              // 入力欄の枠外タップでキーボードを閉じる（iOS標準的な操作感）
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              behavior: HitTestBehavior.translucent,
+              child: Column(
               children: [
                 // Messages list
                 Expanded(
@@ -727,6 +731,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         )
                       : ListView.builder(
                           controller: _scrollController,
+                          // メッセージ一覧のスクロール操作でもキーボードを閉じる
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: const EdgeInsets.all(16),
                           itemCount: _messages.length,
                           itemBuilder: (context, index) {
@@ -869,6 +876,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   ],
                 ),
               ],
+            ),
             ),
     );
   }
