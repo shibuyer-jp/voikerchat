@@ -14,6 +14,7 @@ class RevenueCatService {
   
   late SharedPreferences _prefs;
   bool _initialized = false;
+  bool _configured = false; // Purchases.configure 済みか
   bool _isPremium = false;
 
   // RevenueCat 公開SDKキー（--dart-define で注入。プラットフォーム別）
@@ -56,6 +57,7 @@ class RevenueCatService {
       await Purchases.configure(
         PurchasesConfiguration(apiKey),
       );
+      _configured = true;
 
       // 既存の Premium ステータスをロード
       _isPremium = _prefs.getBool('isPremium') ?? false;
@@ -78,6 +80,7 @@ class RevenueCatService {
   /// restorePurchases() は logIn() 自体は Webhook を発火させないための安全網
   /// （別デバイス購入・レシート再紐付けのトリガーとして機能する）。
   Future<bool> loginWithUserId(String supabaseUserId) async {
+    if (!_configured) return false;
     try {
       await Purchases.logIn(supabaseUserId);
       await Purchases.restorePurchases();
@@ -91,6 +94,7 @@ class RevenueCatService {
 
   /// Premium ステータスを確認してローカル保存
   Future<bool> checkPremiumStatus() async {
+    if (!_configured) return _isPremium;
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       
@@ -113,6 +117,9 @@ class RevenueCatService {
   /// Premium 購入フロー
   /// エラー分類: cancelled, network, payment, unknown
   Future<Map<String, dynamic>> purchasePremium() async {
+    if (!_configured) {
+      return {'success': false, 'error': 'RevenueCat not configured'};
+    }
     try {
       final offerings = await Purchases.getOfferings();
       
@@ -228,6 +235,7 @@ class RevenueCatService {
 
   /// Premium サブスクリプション情報取得
   Future<Map<String, dynamic>?> getPremiumInfo() async {
+    if (!_configured) return null;
     try {
       final offerings = await Purchases.getOfferings();
       
@@ -257,6 +265,7 @@ class RevenueCatService {
 
   /// Premium 復元（別のデバイスから購入した場合）
   Future<bool> restorePurchases() async {
+    if (!_configured) return false;
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       
