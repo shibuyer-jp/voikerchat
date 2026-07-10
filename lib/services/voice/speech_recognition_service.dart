@@ -21,6 +21,18 @@ class SpeechRecognitionService {
   /// この端末/ブラウザで音声認識が使えるか（未対応・権限拒否なら false）。
   bool get isSupported => _isSupported;
 
+  /// マイク/音声認識の権限が現在有効か。iOSではマイク権限と音声認識権限が
+  /// 別管理のため、initialize() が true でもマイクだけ拒否されている場合がある。
+  /// 録音開始前に毎回チェックする用途。
+  Future<bool> hasPermission() async {
+    try {
+      return await _speech.hasPermission;
+    } catch (e) {
+      _logger.warning('hasPermission check failed: $e');
+      return false;
+    }
+  }
+
   /// 現在リッスン中か。
   bool get isListening => _speech.isListening;
 

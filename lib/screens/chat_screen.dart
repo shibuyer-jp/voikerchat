@@ -326,6 +326,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       return;
     }
 
+    // iOSではマイク権限と音声認識権限が別管理で、initialize() 成功でも
+    // マイクだけOFFのことがある（無音で空振りする）。開始前に毎回確認する。
+    final micOk = await _speechService.hasPermission();
+    logger.info('Mic permission check before listen: $micOk');
+    if (!micOk) {
+      await _showMicDeniedDialog();
+      return;
+    }
+
     await _ttsService.stop(); // 進行中の読み上げを止めてから録音
     // 前回の認識結果や入力途中のテキストが残っていると、新しい発話と
     // 混ざって送信されてしまうため、録音開始時に必ずクリアする。
