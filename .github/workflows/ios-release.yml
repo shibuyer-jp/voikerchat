@@ -45,7 +45,8 @@ jobs:
         run: |
           flutter build ios --release --no-codesign \
             --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" \
+            --dart-define=REVENUECAT_IOS_KEY="${{ secrets.REVENUECAT_IOS_KEY }}"
 
       - name: Install App Store Connect API key
         env:
