@@ -8,6 +8,14 @@ class AdConfig {
   /// true の間は Google 公式テスト広告を配信する（登録不要・課金リスクなし）。
   static const bool useTestAds = false;
 
+  /// 非パーソナライズ広告のみ配信する（npa=1）。
+  ///
+  /// 初版は ATT/UMP 同意フロー未実装のためトラッキングなしで提出する方針（方針B）。
+  /// App Store Connect のプライバシー申告「トラッキング: なし」と整合させること。
+  /// v1.1 で ATT/UMP を実装したら false に変更し、申告も「あり」へ更新する
+  /// （skills/ios-submission.md ② 参照）。
+  static const bool nonPersonalizedOnly = true;
+
   // Google 公式テスト用リワード広告ユニット（そのまま使用可）。
   static const String _testRewardedAndroid =
       'ca-app-pub-3940256099942544/5224354917';

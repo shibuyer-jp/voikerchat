@@ -30,7 +30,8 @@ class RewardedAdService {
 
     await RewardedAd.load(
       adUnitId: AdConfig.rewardedUnitId,
-      request: const AdRequest(),
+      // 初版は非パーソナライズ広告のみ（npa=1）。ATT/UMP 実装後に解除（AdConfig 参照）。
+      request: const AdRequest(nonPersonalizedAds: AdConfig.nonPersonalizedOnly),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           _ad = ad;
