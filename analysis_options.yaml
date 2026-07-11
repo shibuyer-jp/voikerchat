@@ -9,6 +9,13 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # build/ios/SourcePackages は Swift Package Manager が `flutter analyze` の
+  # たびに google_mobile_ads 等を再ミラーリングする生成物。pub-cache の実体と
+  # 同一パッケージが二重に見え、ambiguous_import 等の誤検知になるため除外。
+  exclude:
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
