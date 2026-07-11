@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 /// 発行した実 ID を設定するだけで本番広告に切り替わる（差し替えはここだけ）。
 class AdConfig {
   /// true の間は Google 公式テスト広告を配信する（登録不要・課金リスクなし）。
-  static const bool useTestAds = true;
+  static const bool useTestAds = false;
 
   // Google 公式テスト用リワード広告ユニット（そのまま使用可）。
   static const String _testRewardedAndroid =
@@ -15,8 +15,8 @@ class AdConfig {
       'ca-app-pub-3940256099942544/1712485313';
 
   // 本番リワード広告ユニット（AdMob 登録後に実 ID を設定）。
-  static const String _prodRewardedAndroid = 'TODO_SET_ANDROID_REWARDED_ID';
-  static const String _prodRewardedIos = 'TODO_SET_IOS_REWARDED_ID';
+  static const String _prodRewardedAndroid = 'ca-app-pub-1612072387421821/5678139568';
+  static const String _prodRewardedIos = 'ca-app-pub-1612072387421821/7701667676';
 
   /// プラットフォーム別のリワード広告ユニット ID。
   static String get rewardedUnitId {

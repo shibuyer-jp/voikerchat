@@ -7,7 +7,7 @@
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Used to evaluate your Japanese pronunciation.</string>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-1612072387421821~6991221234</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
