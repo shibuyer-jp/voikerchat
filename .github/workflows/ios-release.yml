@@ -85,6 +85,19 @@ jobs:
           echo "== signing identities =="
           security find-identity -v -p codesigning "$KEYCHAIN_PATH"
 
+      # App Store 用プロビジョニングプロファイル(W8XH2M23DC,
+      # "voikerchat App Store 2026")を ASC API で作成済み。
+      # Export は ExportOptions.plist の manual 署名でこのプロファイルを使う。
+      - name: Install provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          printf '%s' "$IOS_PROVISIONING_PROFILE" | base64 -d > "$RUNNER_TEMP/profile.mobileprovision"
+          UUID=$(security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" | plutil -extract UUID raw -o - -)
+          cp "$RUNNER_TEMP/profile.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/"$UUID".mobileprovision
+          echo "installed profile UUID: $UUID"
+
       - name: Archive
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}

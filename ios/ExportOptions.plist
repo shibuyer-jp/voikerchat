@@ -7,7 +7,14 @@
     <key>teamID</key>
     <string>S6XJP274T2</string>
     <key>signingStyle</key>
-    <string>automatic</string>
+    <string>manual</string>
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>jp.shibuyer.voikerchat</key>
+        <string>voikerchat App Store 2026</string>
+    </dict>
     <key>uploadSymbols</key>
     <true/>
 </dict>
