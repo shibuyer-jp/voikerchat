@@ -18,6 +18,16 @@ void main() {
     test('連続改行を句点+空白に正規化しtrimする', () {
       expect(cleanForSpeech('  hello\n\nworld  '), 'hello. world');
     });
+    test('日本語の段落区切りは句点「。」で区切る', () {
+      expect(cleanForSpeech('こんにちは\n\n元気ですか'), 'こんにちは。元気ですか');
+    });
+    test('日本語で直前が句読点なら句点を重複させない', () {
+      expect(cleanForSpeech('そうです。\n\n次に行きましょう'), 'そうです。次に行きましょう');
+      expect(cleanForSpeech('本当に？\n\nすごいね'), '本当に？すごいね');
+    });
+    test('日本語の単一改行は空白に正規化する', () {
+      expect(cleanForSpeech('一行目\n二行目'), '一行目 二行目');
+    });
     test('リンクはテキストのみ残す', () {
       expect(cleanForSpeech('[リンク](https://example.com)'), 'リンク');
     });

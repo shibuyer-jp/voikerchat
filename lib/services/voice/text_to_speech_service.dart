@@ -25,6 +25,11 @@ class TextToSpeechService {
   bool _isSpeaking = false;
   void Function()? _onCompleteCallback;
 
+  /// 自動選択した高品質日本語音声（未選択なら null = OS既定音声）。
+  /// 注意: iOS ネイティブ実装は setLanguage で選択音声を破棄する
+  /// (self.voice = nil) ため、speak() 側で毎回再適用する。
+  Map<String, String>? _selectedJaVoice;
+
   bool get isSupported => _isSupported;
   bool get isSpeaking => _isSpeaking;
 
@@ -44,6 +49,7 @@ class TextToSpeechService {
       }
 
       await _flutterTts.setLanguage('ja-JP');
+      await _selectBestJapaneseVoice();
       await _flutterTts.setSpeechRate(defaultRate);
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0); // 明示的に最大音量(0.0〜1.0)
@@ -93,12 +99,90 @@ class TextToSpeechService {
       }
 
       await _flutterTts.setLanguage(localeId);
+      // iOS は setLanguage で選択音声が破棄されるため、日本語読み上げ時は
+      // 高品質音声を毎回再適用する（未選択・非日本語時は OS 既定のまま）。
+      if (_selectedJaVoice != null && localeId.toLowerCase().startsWith('ja')) {
+        await _flutterTts.setVoice(_selectedJaVoice!);
+      }
       await _flutterTts.setSpeechRate(rate ?? defaultRate);
       await _flutterTts.setPitch(pitch);
       await _flutterTts.speak(text);
     } catch (e) {
       _isSpeaking = false;
       _logger.severe('Error during TTS speak: $e');
+    }
+  }
+
+  /// 端末にインストール済みの日本語音声から最高品質のものを自動選択する。
+  ///
+  /// - iOS: quality = premium > enhanced > default（識別子で厳密指定）
+  /// - Android: quality = very high > high > normal（name+locale で指定、
+  ///   ネットワーク必須音声は遅延・オフライン不可のため除外）
+  /// - Web: 品質情報が取得できないため選択しない（既定音声のまま）
+  ///
+  /// 高品質音声が見つからない場合・取得や設定に失敗した場合は
+  /// 何もせず OS 既定音声にフォールバックする（従来と同じ挙動）。
+  Future<void> _selectBestJapaneseVoice() async {
+    if (kIsWeb) return;
+    try {
+      final dynamic voices = await _flutterTts.getVoices;
+      if (voices is! List) return;
+
+      Map<String, String>? best;
+      var bestScore = 1; // 1 = 既定品質。これを上回る音声のみ採用する。
+      for (final dynamic v in voices) {
+        if (v is! Map) continue;
+        final voice = <String, String>{
+          for (final entry in v.entries)
+            entry.key.toString(): entry.value?.toString() ?? '',
+        };
+        final locale = (voice['locale'] ?? '').toLowerCase();
+        if (!locale.startsWith('ja')) continue;
+        if (voice['network_required'] == '1') continue; // Android のみ存在
+        final score = _voiceQualityScore(voice['quality']);
+        if (score > bestScore) {
+          bestScore = score;
+          best = voice;
+        }
+      }
+
+      if (best == null) {
+        _logger.info('No enhanced ja voice found; using default voice.');
+        return;
+      }
+
+      final selection = <String, String>{
+        'name': best['name'] ?? '',
+        'locale': best['locale'] ?? '',
+        // iOS はこの識別子で音声を厳密に特定する（Android では無視される）。
+        if ((best['identifier'] ?? '').isNotEmpty)
+          'identifier': best['identifier']!,
+      };
+      final dynamic ok = await _flutterTts.setVoice(selection);
+      if (ok == 1) {
+        _selectedJaVoice = selection;
+        _logger.info(
+          'TTS voice upgraded: ${best['name']} (quality: ${best['quality']})',
+        );
+      }
+    } catch (e) {
+      // 失敗しても致命的ではない: 既定音声で読み上げを継続する。
+      _logger.warning('Voice quality selection skipped: $e');
+    }
+  }
+
+  /// flutter_tts が返す品質文字列を共通スコアに変換する。
+  /// iOS: default / enhanced / premium、Android: normal / high / very high 等。
+  int _voiceQualityScore(String? quality) {
+    switch (quality) {
+      case 'premium': // iOS 最高品質
+      case 'very high': // Android 最高品質
+        return 3;
+      case 'enhanced': // iOS 拡張品質
+      case 'high': // Android 高品質
+        return 2;
+      default:
+        return 1;
     }
   }
 

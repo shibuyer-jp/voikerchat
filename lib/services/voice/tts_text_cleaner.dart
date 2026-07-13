@@ -33,9 +33,25 @@ String cleanForSpeech(String raw) {
     '',
   );
 
-  // 連続改行→句点、単一改行→空白
-  text = text.replaceAll(RegExp(r'\n{2,}'), '. ');
-  text = text.replaceAll('\n', ' ');
+  // 連続改行→文区切り、単一改行→空白。
+  // 日本語テキストでは '. ' だと TTS のポーズが不自然になる（もしくは
+  // 記号として読まれる）ため、句点「。」で区切る。直前がすでに
+  // 句読点（。！？!?.）の場合は重複させない。
+  final hasJapanese =
+      RegExp(r'[\u3040-\u30ff\u4e00-\u9fff]').hasMatch(text);
+  if (hasJapanese) {
+    text = text.replaceAllMapped(
+      RegExp(r'([^\n])\n{2,}'),
+      (m) {
+        final prev = m[1]!;
+        final needsPunct = !RegExp(r'[。！？!?\.]').hasMatch(prev);
+        return needsPunct ? '$prev。' : prev;
+      },
+    );
+  } else {
+    text = text.replaceAll(RegExp(r'\n{2,}'), '. ');
+  }
+  text = text.replaceAll(RegExp(r'\n+'), ' ');
 
   return text.trim();
 }
