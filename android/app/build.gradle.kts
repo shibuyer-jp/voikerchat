@@ -25,7 +25,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // google_mobile_ads (Google Mobile Ads SDK) requires Android minSdk 23.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -53,4 +53,7 @@ flutter {
 dependencies {
     // core library desugaring 用ライブラリ（flutter_local_notifications 要件）
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // google_mobile_ads が WorkManager を暗黙に要求するが work-runtime 本体を
+    // 引き込まないため、明示的に追加してWorkDatabase初期化クラッシュを防ぐ。
+    implementation("androidx.work:work-runtime:2.11.1")
 }
