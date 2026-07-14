@@ -33,35 +33,12 @@ class RateLimitWidget extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Premium users: no limit indicator
-    if (rateLimit!.isPremium) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-        child: Row(
-          children: [
-            Icon(
-              Icons.flash_on,
-              size: 16,
-              color: Colors.amber.shade600,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              l.premiumUnlimited,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.amber.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Free tier: show usage
+    // Premium も同じ progress bar を表示する（daily_limit=50 を実適用）。
+    // すでに Premium なのでアップグレードリンクは出さない（isPremium で分岐）。
+    final isPremium = rateLimit!.isPremium;
     final remaining = rateLimit!.remainingCalls;
     final usagePercent = rateLimit!.usagePercentage;
-    final isNearLimit = remaining <= 1;
+    final isNearLimit = !isPremium && remaining <= 1;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -76,11 +53,15 @@ class RateLimitWidget extends StatelessWidget {
                 l.callsRemainingToday(remaining, rateLimit!.dailyLimit),
                 style: TextStyle(
                   fontSize: 12,
-                  color: isNearLimit ? Colors.red[700] : Colors.grey.shade600,
+                  color: isNearLimit
+                      ? Colors.red[700]
+                      : (isPremium
+                          ? Colors.amber.shade700
+                          : Colors.grey.shade600),
                   fontWeight: isNearLimit ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
-              if (onUpgradePressed != null)
+              if (!isPremium && onUpgradePressed != null)
                 InkWell(
                   onTap: onUpgradePressed,
                   child: Text(
@@ -104,7 +85,9 @@ class RateLimitWidget extends StatelessWidget {
               minHeight: 4,
               backgroundColor: Colors.grey.shade300,
               valueColor: AlwaysStoppedAnimation<Color>(
-                isNearLimit ? Colors.red[600]! : Colors.blue[500]!,
+                isNearLimit
+                    ? Colors.red[600]!
+                    : (isPremium ? Colors.amber.shade600 : Colors.blue[500]!),
               ),
             ),
           ),

@@ -15,6 +15,10 @@ const supabaseKey =
 const claudeApiKey =
   process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || '';
 
+// revenuecat-webhook.ts の daily_limit 付与値と一致させること
+const PREMIUM_DAILY_LIMIT = 50;
+const FREE_DAILY_LIMIT = 5;
+
 /**
  * POST /api/chat
  *
@@ -82,22 +86,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('Error checking premium status:', err);
     }
 
-    // 3. サーバー側レート制限
-    if (!isPremium) {
-      const canCall = await checkAndIncrementRateLimit(supabase, userId);
-      if (!canCall) {
-        // 上限到達を分析イベントとして記録（強制はしない・書込み失敗は無視）
-        await logUsage(supabase, {
-          userId,
-          event: 'quota_reached',
-          isPremium: false,
-          metadata: sceneId ? { scene: sceneId } : {},
-        });
-        return res.status(429).json({
-          error: 'Daily limit reached',
-          message: 'Go Premium to unlock unlimited calls',
-        });
-      }
+    // 3. サーバー側レート制限（Premiumも daily_limit=50 を適用。無料は5）
+    const canCall = await checkAndIncrementRateLimit(supabase, userId, isPremium);
+    if (!canCall) {
+      // 上限到達を分析イベントとして記録（強制はしない・書込み失敗は無視）
+      await logUsage(supabase, {
+        userId,
+        event: 'quota_reached',
+        isPremium,
+        metadata: sceneId ? { scene: sceneId } : {},
+      });
+      return res.status(429).json({
+        error: 'Daily limit reached',
+        message: isPremium
+          ? 'Daily limit reached. Resets tomorrow.'
+          : 'Go Premium to unlock more daily conversations',
+      });
     }
 
     // 4. messages 検証
@@ -150,7 +154,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
  */
 async function checkAndIncrementRateLimit(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  isPremium: boolean
 ): Promise<boolean> {
   try {
     const { data: rateLimit, error: fetchError } = await supabase
@@ -163,12 +168,12 @@ async function checkAndIncrementRateLimit(
       if (fetchError) {
         console.error('rate_limits select failed:', fetchError.code, fetchError.message, fetchError.details);
       }
-      // レコードなし → デフォルト作成（5回/日）
+      // レコードなし → デフォルト作成（Premium: 50回/日、無料: 5回/日）
       const { error: insertError } = await supabase.from('rate_limits').insert({
         user_id: userId,
         used_today: 1,
-        daily_limit: 5,
-        is_premium: false,
+        daily_limit: isPremium ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT,
+        is_premium: isPremium,
         last_reset_utc: new Date().toISOString(),
       });
       if (insertError) {

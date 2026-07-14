@@ -4,7 +4,7 @@
   "@appTitle": {
     "description": "Application title"
   },
-  "premiumUnlimited": "Premium - Unlimited",
+  "premiumUnlimited": "Premium - 50/day",
   "@premiumUnlimited": {
     "description": "Label shown to premium users instead of a usage limit"
   },
@@ -203,13 +203,13 @@
   "@premiumDialogTitle": {
     "description": "Upsell dialog title"
   },
-  "premiumDialogBody": "With Premium you can learn without limits.",
+  "premiumDialogBody": "With Premium you can learn up to 50 times a day.",
   "@premiumDialogBody": {
     "description": "Upsell dialog body"
   },
-  "premiumBenefitUnlimited": "✓ Unlimited daily use",
+  "premiumBenefitUnlimited": "✓ Up to 50 conversations/day",
   "@premiumBenefitUnlimited": {
-    "description": "Premium benefit: unlimited"
+    "description": "Premium benefit: 50 calls/day"
   },
   "premiumBenefitAllScenes": "✓ All anime scenes unlocked",
   "@premiumBenefitAllScenes": {
@@ -281,7 +281,11 @@
       }
     }
   },
-  "goPremiumUnlockCta": "✨ Go Premium to unlock unlimited calls!",
+  "dailyLimitReachedBodyPremium": "You have reached today's limit (50/day). It resets tomorrow.",
+  "@dailyLimitReachedBodyPremium": {
+    "description": "Rate limit dialog body shown to Premium users who hit their daily cap"
+  },
+  "goPremiumUnlockCta": "✨ Go Premium for up to 50 calls a day!",
   "@goPremiumUnlockCta": {
     "description": "Rate limit dialog premium CTA"
   },
@@ -289,17 +293,17 @@
   "@premiumSheetTitle": {
     "description": "Premium dialog title"
   },
-  "premiumSheetSubtitle": "Unlock unlimited conversations",
+  "premiumSheetSubtitle": "Unlock up to 50 conversations a day",
   "@premiumSheetSubtitle": {
     "description": "Premium dialog subtitle"
   },
-  "featureUnlimitedTitle": "Unlimited Calls",
+  "featureUnlimitedTitle": "Up to 50 Calls/Day",
   "@featureUnlimitedTitle": {
-    "description": "Premium feature: unlimited title"
+    "description": "Premium feature: 50 calls/day title"
   },
-  "featureUnlimitedDesc": "No daily limits, talk as much as you want",
+  "featureUnlimitedDesc": "10x the free tier, plenty of room to practice",
   "@featureUnlimitedDesc": {
-    "description": "Premium feature: unlimited desc"
+    "description": "Premium feature: 50 calls/day desc"
   },
   "featureAnimeTitle": "Anime Scenes",
   "@featureAnimeTitle": {
@@ -325,7 +329,7 @@
   "@processingPurchase": {
     "description": "Purchase in-progress dialog"
   },
-  "welcomePremium": "✨ Welcome to Premium! Enjoy unlimited conversations!",
+  "welcomePremium": "✨ Welcome to Premium! Enjoy up to 50 conversations a day!",
   "@welcomePremium": {
     "description": "Purchase success message"
   },
@@ -734,7 +738,7 @@
   "@premiumUpsellStage1Message": {
     "description": "Premium upsell stage 1: toast message"
   },
-  "premiumUpsellStage2Message": "With Premium you can learn without limits",
+  "premiumUpsellStage2Message": "With Premium you can learn up to 50 times a day",
   "@premiumUpsellStage2Message": {
     "description": "Premium upsell stage 2: dialog message"
   },
@@ -826,7 +830,7 @@
   "@notifUpsellStage2Body": {
     "description": "Premium upsell notification stage2 body"
   },
-  "notifUpsellStage3Title": "🚀 Unlimited learning with Premium",
+  "notifUpsellStage3Title": "🚀 Learn up to 50 times a day with Premium",
   "@notifUpsellStage3Title": {
     "description": "Premium upsell notification stage3 title"
   },

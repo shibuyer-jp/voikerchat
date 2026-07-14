@@ -104,7 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       dailyLimit: data.daily_limit,
       remainingCalls,
       usagePercentage: Math.min(100, usagePercentage),
-      canMakeCall: data.is_premium === true || usedToday < data.daily_limit,
+      canMakeCall: usedToday < data.daily_limit,
     });
   } catch (error: any) {
     console.error('Rate limit API error:', error);

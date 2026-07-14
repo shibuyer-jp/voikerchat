@@ -1005,7 +1005,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context).dailyLimitReachedBody,
+              _isPremium
+                  ? AppLocalizations.of(context).dailyLimitReachedBodyPremium
+                  : AppLocalizations.of(context).dailyLimitReachedBody,
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 12),
@@ -1014,29 +1016,36 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 AppLocalizations.of(context).dailyLimitDetail(_rateLimit!.dailyLimit),
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context).goPremiumUnlockCta,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.blue,
-                fontWeight: FontWeight.w600,
+            // Premium は既にアップグレード済みのため CTA を出さない
+            if (!_isPremium) ...[
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context).goPremiumUnlockCta,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+            ],
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context).later),
+            child: Text(_isPremium
+                ? AppLocalizations.of(context).close
+                : AppLocalizations.of(context).later),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showPremiumDialog();
-            },
-            child: Text(AppLocalizations.of(context).upgrade),
-          ),
+          // Premium は既にアップグレード済みのためアップグレード導線を出さない
+          if (!_isPremium)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showPremiumDialog();
+              },
+              child: Text(AppLocalizations.of(context).upgrade),
+            ),
         ],
       ),
     );

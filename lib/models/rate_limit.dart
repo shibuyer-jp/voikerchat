@@ -13,14 +13,15 @@ class RateLimit {
     required this.isPremium,
   });
 
-  /// Returns remaining calls for today
-  int get remainingCalls => isPremium ? 999 : (dailyLimit - usedToday).clamp(0, dailyLimit);
+  /// Returns remaining calls for today (Premium も dailyLimit=50 を実際に適用)
+  int get remainingCalls => (dailyLimit - usedToday).clamp(0, dailyLimit);
 
   /// Returns true if user can make another call
-  bool get canMakeCall => isPremium || usedToday < dailyLimit;
+  bool get canMakeCall => usedToday < dailyLimit;
 
   /// Returns percentage of daily limit used (0-100)
-  double get usagePercentage => isPremium ? 0 : (usedToday / dailyLimit * 100).clamp(0, 100);
+  double get usagePercentage =>
+      dailyLimit > 0 ? (usedToday / dailyLimit * 100).clamp(0, 100) : 0;
 
   factory RateLimit.fromJson(Map<String, dynamic> json) {
     return RateLimit(
