@@ -20,9 +20,11 @@
 | T-33 | プレミアム購入フロー(ペイウォール) | docs/tasks/T-33_premium-paywall.md | Claude Code | Sandbox 実機購入テスト |
 | T-34 | プレミアム専門シーン5本 + Kaigotalk データ設計 | docs/tasks/T-34_premium-pro-scenes.md | Claude Code | シーン内容の最終確認 |
 | T-31 | 単語タップ辞書機能 | docs/tasks/T-31_word-lookup.md | Claude Code | なし(UX確認のみ) |
-| T-35 | 高品質TTS(プレミアム限定・ハイブリッド) | docs/tasks/T-35_premium-tts.md | Claude Code | 聴き比べによるプロバイダ選定・APIキー取得 |
+| T-35 | 高品質TTS(3段構成: 端末/広告日/プレミアム) | docs/tasks/T-35_premium-tts.md | Claude Code | OpenAI APIキー設定・実機聴感確認 |
+| T-36 | 学習サポート移植(ふりがな/ヒント/単語まとめ) | docs/tasks/T-36_learner-support-carryover.md | Claude Code | なし(UX確認のみ) |
 
-**推奨実施順**: T-30 → T-33 → T-34 → T-32 → T-31 → T-35
+**推奨実施順**: T-30 → T-33 → T-34 → T-36 → T-31 → T-32 → T-35
+(T-32 は画像アセット(Gemini生成)待ちのため後方へ。Gemini 分担は docs/tasks/GEMINI-DELEGATION.md)
 (T-30 が全画面に影響するため最初。T-35 は外部API契約が絡むため独立して進行可)
 
 ## 2. Phase B: 検証・アセット再作成
@@ -44,10 +46,7 @@
 
 ## 4. スコープ外(Phase 2 / リリース後)
 
-- 言語切替UI(確定済みの後回し方針を維持)
-- ダークモード
-- T-35 の無料ユーザーへの拡大(コスト実績を見てから判断)
-- Kaigotalk 本体の企画(T-34 のデータが溜まってから)
+正式台帳: `docs/tasks/BACKLOG-Phase2.md`(Web版仕様書v1.9との突合済み・出典トレーサビリティ付き)。ダークモード、Kaigotalk本体企画もPhase 2。
 
 ## 5. Claude Code への委任
 
