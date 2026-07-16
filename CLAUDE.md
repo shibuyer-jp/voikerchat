@@ -110,3 +110,6 @@ lib/
 ├── stubs/                 # テスト用スタブ
 └── widgets/               # 共有Widget
 ```
+
+## Phase A 品質ゲート(2026-07-16〜)
+リリース前改善タスクを自走する場合は、まず `docs/tasks/RUNBOOK.md` と `docs/tasks/PROGRESS.md` を読むこと。タスク仕様は `docs/tasks/T-3x_*.md`、全体計画は `docs/Release-Master-Plan-v2.0.md`。
