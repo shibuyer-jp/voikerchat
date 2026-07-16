@@ -1,7 +1,7 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
 > **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。
-> 最終更新: 2026-07-10 夜(PR #2マージ+リポジトリ掃除 `1db8073`+tool/起動スクリプト。運用: shibuyer-ops/skills/ 新設 — 作業前に該当スキル参照)
+> 最終更新: 2026-07-16(App Icon/Launch Image独自素材化 + iOS CI/CDパイプライン再稼働。詳細は下記「完了(直近・2026-07-16)」)
 
 ## 機能ステータス
 | 機能 | 状態 | 備考 |
@@ -33,11 +33,19 @@
 ## 次タスク(優先順・submission最短経路)
 > 主要機能のコードは概ね完了。残りは大半が手動(コンソール/Xcode/実機)。
 1. **AdMob実ID**(submission必須): AdMobコンソールで広告ユニット登録(手動) → `ad_config.dart` の `_prod*` に実ID + `useTestAds=false`
-2. **iOS submission**(Xcode導入済で着手可): Xcodeで署名/capabilities → Archive → App Store Connect(スクショ・メタデータ・特商法) → TestFlight → 審査提出
+2. **iOS submission**: ビルド 1.0.0+4 は CI(`ios-release.yml`)経由で App Store Connect へアップロード済み(2026-07-16、run `29471722651`)。
+   残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
+   **ローカルXcodeでのアーカイブは今後も使わない**(このMacはXcode 26非対応。iOS 26 SDK必須エラーで拒否される)。ビルドを更新する際は必ずCI(`ios-release.yml`をworkflow_dispatchで手動実行)を使う。
 3. **Push Phase2**(submission非必須・機能拡張): iOSで Push/Background Modes capability有効化 + APNsキーをFirebase Consoleにアップロード + 実機テスト
 4. **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)
 5. **fil訳ネイティブレビュー**(妻に依頼) → 本番化
 6. 小タスク: G6ダイアログを権限取得済み時はスキップする改善(任意)。~~l10n.yaml非推奨行~~ ~~.dart_tool混入~~ → `1db8073` で完了
+
+## 完了(直近・2026-07-16)
+- **App Icon/Launch Imageをプレースホルダーから独自素材に置換**(commit `4cd98ad`): `flutter_launcher_icons ^0.14.4` / `flutter_native_splash ^2.4.8` を導入。素材は `assets/icon/app_icon_1024.png`(1024×1024)/ `assets/icon/splash_logo_2048.png`(2048×2048)。スプラッシュ背景色 `#ffffff` は仮置き(ブランドカラー確定時に変更予定)。
+- **ビルド番号を `1.0.0+1` → `1.0.0+4` に更新**: pubspec.yaml上は一度も+1から変わっていなかったが、7/11のCI成功2回分がApp Store Connectへアップロード済みの可能性があるため重複回避で+4に設定。
+- **iOS CI/CDパイプライン(`ios-release.yml`)の存在を再確認・活用**: このパイプラインは実は**2026-07-11に既に構築・main反映・Secrets登録・2回の成功実行(うち1回はApp Store Connectへの実アップロードまで成功)済み**だった。しかし当時このSTATE.mdの更新が漏れたため、2026-07-16の別セッションでは「ゼロから作る」前提の依頼が発生し、既存資産の調査に時間を要した(`gh secret list` / `gh run list` で判明)。**教訓: CI/CD・署名まわりの変更は必ずこのSTATE.mdに記録すること。**
+- 上記を反映し、CI(run `29471722651`)を手動実行 → 全ステップ成功(9m51s)、build 1.0.0+4 を App Store Connect へ自動アップロード完了。
 
 ## 完了(直近・2026-07-10)
 - **リポジトリ掃除+devスクリプト**(`1db8073`): `.dart_tool/`(38ファイル)+`.flutter-plugins-dependencies` をgit管理から除外・ignore追加 / `l10n.yaml` 非推奨 `synthetic-package` 行削除 / `tool/run_ios.sh`・`tool/run_android.bat`・`tool/README.md` 追加(dart-define内蔵)。**各マシンは次回pull時に注意**: `.dart_tool` にローカル変更があるとpullが弾かれる → `git checkout -- .dart_tool .flutter-plugins-dependencies` 後にpull(以後は再発しない)
