@@ -53,7 +53,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const anthropic = new Anthropic({ apiKey: claudeApiKey });
+  // maxRetries: 529 (overloaded) 等の一時エラーはSDKが指数バックオフで自動再試行する
+  // （デフォルト2回 → 4回に増加。x-should-retry対象のみ再試行されるため安全）
+  const anthropic = new Anthropic({ apiKey: claudeApiKey, maxRetries: 4 });
 
   try {
     const { token, messages, sceneId, maxTokens = 500 } = req.body || {};
@@ -141,6 +143,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error('Chat API error:', error);
+
+    // Anthropic側の一時的な混雑/障害（リトライ切れ）→ ユーザー向け文言で503を返す
+    // 注意: クライアントは response body の 'error' フィールドをそのまま表示するため、
+    // ここに分かりやすい文言を入れる。429は使わない（クライアントが日次上限と誤認するため）。
+    const status = error?.status;
+    const isOverloaded =
+      status === 529 ||
+      error?.type === 'overloaded_error' ||
+      error?.error?.error?.type === 'overloaded_error';
+    if (isOverloaded || status === 503) {
+      return res.status(503).json({
+        error: 'The assistant is busy right now. Please try again in a moment.',
+        message: error?.message || 'Upstream overloaded',
+      });
+    }
+
     return res.status(500).json({
       error: 'Internal server error',
       message: error?.message || 'Unknown error',
