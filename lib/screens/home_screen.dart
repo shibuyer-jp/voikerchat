@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import '../models/diagnostic.dart';
+import '../services/revenuecat_service.dart';
 import 'scene_selection_screen.dart';
 import 'badges_screen.dart';
 import 'stats_screen.dart';
@@ -32,16 +33,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  late bool _isPremiumUser = widget.isPremiumUser;
 
-  late final List<Widget> _tabs = [
-    SceneSelectionScreen(
-      userLevel: widget.userLevel,
-      isPremiumUser: widget.isPremiumUser,
-    ),
-    const BadgesScreen(),
-    const StatsScreen(),
-    const NotificationHistoryScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _refreshPremiumStatus();
+  }
+
+  /// RevenueCat の実際のエンタイトルメントで Premium 状態を更新する。
+  /// ペイウォールでの購入/復元成功後にも呼ばれる。
+  Future<void> _refreshPremiumStatus() async {
+    final isPremium = await RevenueCatService().checkPremiumStatus();
+    if (!mounted) return;
+    setState(() => _isPremiumUser = isPremium);
+  }
+
+  List<Widget> get _tabs => [
+        SceneSelectionScreen(
+          userLevel: widget.userLevel,
+          isPremiumUser: _isPremiumUser,
+          onPremiumUnlocked: _refreshPremiumStatus,
+        ),
+        const BadgesScreen(),
+        const StatsScreen(),
+        const NotificationHistoryScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {

@@ -267,8 +267,8 @@ class RevenueCatService {
   Future<bool> restorePurchases() async {
     if (!_configured) return false;
     try {
-      final customerInfo = await Purchases.getCustomerInfo();
-      
+      final customerInfo = await Purchases.restorePurchases();
+
       final entitlements = customerInfo.entitlements;
       _isPremium = entitlements.active.containsKey('Premium') ||
                    entitlements.active.containsKey('voikerchat_premium');

@@ -22,6 +22,7 @@ import '../services/voice/tts_text_cleaner.dart';
 import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
+import 'paywall_screen.dart';
 import 'stats_screen.dart';
 
 /// Chat screen for Voikerchat
@@ -196,7 +197,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               content: PremiumUpsellToast(
                 onDetailsTap: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  _showPremiumDialog();
+                  _openPaywall();
                 },
                 onDismiss: () =>
                     ScaffoldMessenger.of(context).hideCurrentSnackBar(),
@@ -210,7 +211,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             builder: (ctx) => PremiumUpsellDialog(
               onSubscribeTap: () {
                 Navigator.pop(ctx);
-                _purchasePremium();
+                _openPaywall();
               },
               onDismiss: () => Navigator.pop(ctx),
             ),
@@ -582,7 +583,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (response.statusCode == 429) {
         // Rate limit reached - trigger upgrade dialog
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showPremiumDialog();
+          _openPaywall();
         });
         throw Exception('Daily limit reached. Upgrade to Premium!');
       }
@@ -684,7 +685,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: _showPremiumDialog,
+                    onTap: _openPaywall,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -856,7 +857,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         child: PremiumUpsellBanner(
                           onSubscribeTap: () {
                             setState(() => _activeBannerStage = null);
-                            _purchasePremium();
+                            _openPaywall();
                           },
                           onDismiss: () =>
                               setState(() => _activeBannerStage = null),
@@ -865,7 +866,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     // Rate Limit Widget
                     RateLimitWidget(
                       rateLimit: _rateLimit,
-                      onUpgradePressed: _showPremiumDialog,
+                      onUpgradePressed: _openPaywall,
                       showWatchAdButton: _rewardedAdService.isSupported &&
                           _rateLimit != null &&
                           !_rateLimit!.isPremium &&
@@ -1042,7 +1043,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _showPremiumDialog();
+                _openPaywall();
               },
               child: Text(AppLocalizations.of(context).upgrade),
             ),
@@ -1051,179 +1052,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _showPremiumDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).premiumSheetTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppLocalizations.of(context).premiumSheetSubtitle,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            _PremiumFeature(
-              icon: '🚀',
-              title: AppLocalizations.of(context).featureUnlimitedTitle,
-              description: AppLocalizations.of(context).featureUnlimitedDesc,
-            ),
-            const SizedBox(height: 12),
-            _PremiumFeature(
-              icon: '✨',
-              title: AppLocalizations.of(context).featureAnimeTitle,
-              description: AppLocalizations.of(context).featureAnimeDesc,
-            ),
-            const SizedBox(height: 12),
-            _PremiumFeature(
-              icon: '📊',
-              title: AppLocalizations.of(context).featureStatsTitle,
-              description: AppLocalizations.of(context).featureStatsDesc,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.local_offer, color: Colors.amber, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context).pricePerMonth,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context).maybeLater),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              await _purchasePremium();
-            },
-            child: Text(AppLocalizations.of(context).subscribeNow),
-          ),
-        ],
-      ),
+  /// ペイウォールへ遷移。購入/復元成功で戻ってきたら Premium 状態を反映する。
+  Future<void> _openPaywall() async {
+    final unlocked = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const PaywallScreen()),
     );
-  }
-
-  Future<void> _purchasePremium() async {
-    final l = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(AppLocalizations.of(context).processingPurchase),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      final result = await _revenueCatService.purchasePremium();
-      
-      if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
-      
-      if (result['success'] == true) {
-        setState(() => _isPremium = true);
-        _showSuccess(l.welcomePremium);
-      } else {
-        // エラーハンドリング
-        final message = result['message'] as String? ?? l.purchaseFailed;
-        final retryable = result['retryable'] as bool? ?? false;
-        final userInitiated = result['userInitiated'] as bool? ?? false;
-
-        if (userInitiated) {
-          // ユーザーがキャンセルした場合
-          logger.info('Purchase cancelled by user');
-          return;
-        }
-
-        if (retryable) {
-          _showRetryDialog(message, () => _purchasePremium());
-        } else {
-          _showErrorWithAction(
-            message,
-            actionLabel: l.close,
-            onAction: () => Navigator.pop(context),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-      }
-      _showError(l.unexpectedError(e.toString()));
+    if (unlocked == true && mounted) {
+      setState(() => _isPremium = true);
+      _showSuccess(AppLocalizations.of(context).welcomePremium);
     }
-  }
-
-  /// リトライ可能なエラーダイアログ
-  void _showRetryDialog(String message, VoidCallback onRetry) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).purchaseFailedTitle),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context).cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onRetry();
-            },
-            child: Text(AppLocalizations.of(context).retry),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// アクション付きエラーダイアログ
-  void _showErrorWithAction(
-    String message, {
-    String? actionLabel,
-    VoidCallback? onAction,
-  }) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).errorTitle),
-        content: Text(message),
-        actions: [
-          ElevatedButton(
-            onPressed: onAction ?? () => Navigator.pop(context),
-            child: Text(actionLabel ?? AppLocalizations.of(context).ok),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showSuccess(String message) {
@@ -1236,50 +1074,5 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
-}
-
-// Premium 機能表示用ウィジェット
-class _PremiumFeature extends StatelessWidget {
-  final String icon;
-  final String title;
-  final String description;
-
-  const _PremiumFeature({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 18)),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 

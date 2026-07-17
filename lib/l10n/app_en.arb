@@ -68,10 +68,6 @@
   "@sceneSectionPremium": {
     "description": "Section header for premium scenes"
   },
-  "premiumComingSoon": "Premium feature — coming soon",
-  "@premiumComingSoon": {
-    "description": "Snackbar shown when tapping a locked premium scene"
-  },
   "badgesTitle": "Badges",
   "@badgesTitle": {
     "description": "App bar title on the badges screen"
@@ -321,6 +317,22 @@
   "@featureStatsDesc": {
     "description": "Premium feature: stats desc"
   },
+  "featureNoAdsTitle": "No Ads",
+  "@featureNoAdsTitle": {
+    "description": "Premium feature: no ads title"
+  },
+  "featureNoAdsDesc": "Practice without interruptions",
+  "@featureNoAdsDesc": {
+    "description": "Premium feature: no ads desc"
+  },
+  "featureVoiceTitle": "High-Quality Voice",
+  "@featureVoiceTitle": {
+    "description": "Premium feature: high-quality TTS voice title"
+  },
+  "featureVoiceDesc": "Natural, studio-quality Japanese speech",
+  "@featureVoiceDesc": {
+    "description": "Premium feature: high-quality TTS voice desc"
+  },
   "pricePerMonth": "$12.99/month",
   "@pricePerMonth": {
     "description": "Monthly price tag"
@@ -340,6 +352,34 @@
   "purchaseFailedTitle": "⚠️ Purchase Failed",
   "@purchaseFailedTitle": {
     "description": "Retryable purchase error title"
+  },
+  "paywallTitle": "Voikerchat Premium",
+  "@paywallTitle": {
+    "description": "Paywall screen app bar title"
+  },
+  "restorePurchasesButton": "Restore Purchases",
+  "@restorePurchasesButton": {
+    "description": "Paywall screen restore-purchases button"
+  },
+  "restoreSuccess": "Purchases restored!",
+  "@restoreSuccess": {
+    "description": "Shown when restore finds an active Premium subscription"
+  },
+  "restoreNotFound": "No active purchase found.",
+  "@restoreNotFound": {
+    "description": "Shown when restore finds no active Premium subscription"
+  },
+  "termsOfService": "Terms of Service",
+  "@termsOfService": {
+    "description": "Link label to Terms of Service"
+  },
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Link label to Privacy Policy"
+  },
+  "subscribeCta": "Subscribe",
+  "@subscribeCta": {
+    "description": "Paywall primary subscribe button"
   },
   "errorTitle": "❌ Error",
   "@errorTitle": {

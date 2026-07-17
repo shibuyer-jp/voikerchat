@@ -57,6 +57,8 @@ dependencies:
   # 権限拒否時にOSの設定画面を開くため（マイク権限の復帰導線）
   app_settings: ^5.1.1
   flutter_tts: ^4.2.0
+  # ペイウォールからの利用規約/プライバシーポリシー外部リンク用
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

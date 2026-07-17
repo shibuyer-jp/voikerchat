@@ -5,6 +5,7 @@ import '../models/diagnostic.dart';
 import '../services/scene_service.dart';
 import '../widgets/scene_preview_card.dart';
 import 'chat_screen.dart';
+import 'paywall_screen.dart';
 import 'settings_screen.dart';
 
 /// SceneSelectionScreen: シーン選択画面
@@ -17,10 +18,14 @@ class SceneSelectionScreen extends StatelessWidget {
   final UserDiagnosticLevel userLevel;
   final bool isPremiumUser;
 
+  /// ペイウォールでの購入/復元が成功した時に呼ばれる(Premium状態の再取得を促す)。
+  final VoidCallback? onPremiumUnlocked;
+
   const SceneSelectionScreen({
     super.key,
     required this.userLevel,
     this.isPremiumUser = false,
+    this.onPremiumUnlocked,
   });
 
   /// 無料シーンを開いてチャット画面へ遷移
@@ -38,11 +43,16 @@ class SceneSelectionScreen extends StatelessWidget {
     );
   }
 
-  /// ロック済みプレミアムシーンをタップした時の案内
-  void _showLockedMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context).premiumComingSoon)),
+  /// ロック済みプレミアムシーンをタップ → ペイウォールへ遷移。
+  /// 購入/復元成功で戻ってきたら呼び出し元にPremium状態の再取得を促す。
+  Future<void> _openPaywall(BuildContext context) async {
+    final unlocked = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const PaywallScreen()),
     );
+    if (unlocked == true) {
+      onPremiumUnlocked?.call();
+    }
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
@@ -73,7 +83,7 @@ class SceneSelectionScreen extends StatelessWidget {
       isPremium: scene.isPremium,
       isLocked: isLocked,
       onTap: isLocked
-          ? () => _showLockedMessage(context)
+          ? () => _openPaywall(context)
           : () => _openScene(context, scene),
     );
   }
