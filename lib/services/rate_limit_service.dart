@@ -1,9 +1,12 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/rate_limit.dart';
 
 class RateLimitService {
   final logger = Logger('RateLimitService');
+  static const String _baseUrl = 'https://voikerchat.com';
 
   final SupabaseClient _supabase;
 
@@ -56,20 +59,35 @@ class RateLimitService {
   }
 
   /// 広告視聴の報酬として当日の利用上限を +5（最大 10）引き上げる。
-  /// プレミアム/上限到達済みの場合は何もしない。
+  ///
+  /// サーバー(api/ad-reward.ts、service role)経由で更新する。クライアントから
+  /// rate_limits を直接書き換える経路は廃止済み(RLSで禁止、
+  /// docs/migrations/2026-07-17_lock_rate_limits_client_write.sql 参照)。
+  /// これにより usage_logs.ad_reward の記録とセットで、偽装・改ざんを防ぐ。
   Future<void> grantAdBonus(String userId) async {
+    final token = _supabase.auth.currentSession?.accessToken;
+    if (token == null) {
+      logger.info('[RateLimitService] grantAdBonus skipped: no auth token');
+      return;
+    }
+
     try {
-      final rateLimit = await getRateLimit(userId);
-      if (rateLimit.isPremium) return;
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/api/ad-reward'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'token': token}),
+          )
+          .timeout(const Duration(seconds: 10));
 
-      final newLimit = (rateLimit.dailyLimit + 5).clamp(0, 10);
-      if (newLimit == rateLimit.dailyLimit) return;
+      if (response.statusCode != 200) {
+        logger.info(
+          '[RateLimitService] grantAdBonus failed: ${response.statusCode} ${response.body}',
+        );
+        return;
+      }
 
-      await _supabase.from('rate_limits').update({
-        'daily_limit': newLimit,
-      }).eq('user_id', userId);
-
-      logger.info('[RateLimitService] Ad bonus granted: daily_limit=$newLimit');
+      logger.info('[RateLimitService] Ad bonus granted: ${response.body}');
     } catch (e) {
       logger.info('[RateLimitService] grantAdBonus error: $e');
     }

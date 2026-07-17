@@ -13,3 +13,4 @@
 - 2026-07-06 | 特商法ページの氏名は「屋号(Shibuyer)+個人名(安倍隆任)」併記固定、住所・電話番号は「請求があれば遅滞なく開示」で非公開 | 消費者庁ガイドラインで氏名は省略不可、住所等は請求時開示可
 - 2026-07-08 | アカウント削除は `/api/delete-account`(全ユーザーテーブルを明示DELETE→`auth.admin.deleteUser`)、成功後にサインアウト+オンボーディングprefsクリア+匿名再サインイン | ストア(Apple/Google)必須要件。FK cascade有無に依存しない堅牢化。削除後もアプリが継続動作する状態を保つ
 - 2026-07-08 | Flutterのローカルanalyze/test不可な作業環境ではmain直pushせずfeature branch+CI検証→mergeとする | redなmainを避ける。api単体のような検証容易な変更は従来どおり直pushも可
+- 2026-07-17 | 広告視聴ボーナス付与(rate_limits.daily_limit+5)をクライアント直接Supabase書き込みから `api/ad-reward.ts`(service role)経由に変更し、クライアントによる rate_limits 直接UPDATEのRLSを禁止 | T-35(クラウドTTSのサーバー側検証)実装前提として、usage_logs.ad_rewardの偽装・rate_limits改ざんを防ぐため。AdMobのSSV(広告視聴自体の真正性検証)は未対応、BACKLOG-Phase2.md #11 へ

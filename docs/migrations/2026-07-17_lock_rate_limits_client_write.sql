@@ -1,0 +1,22 @@
+-- 2026-07-17: rate_limits へのクライアント直接UPDATEを禁止する。
+--
+-- 背景: 広告視聴ボーナス(grantAdBonus)は従来 Flutter アプリから Supabase へ
+-- 直接 UPDATE していた(RLSポリシー "System can update rate limits" が
+-- auth.uid() = user_id の本人更新を許可していたため)。この経路は
+-- usage_logs.ad_reward の記録を伴わず、悪意あるクライアントが直接
+-- REST リクエストを送れば rate_limits.daily_limit や is_premium を
+-- 任意に書き換えられる状態だった。
+--
+-- 対応: grantAdBonus を api/ad-reward.ts(service role key、RLSをバイパス)
+-- 経由に変更したため、クライアントの直接UPDATE経路は不要になった。
+-- 本SQLは Supabase SQL Editor で人間が実行すること(Claude Code はDBに
+-- 直接アクセスできないため)。
+--
+-- 影響確認: api/chat.ts の checkAndIncrementRateLimit、
+-- api/revenuecat-webhook.ts の is_premium 更新は service role key を使用
+-- しており、RLSの影響を受けないため本変更による影響はない。
+-- lib/services/rate_limit_service.dart の resetDailyLimit() は元々どこからも
+-- 呼ばれていない未使用メソッドのため、実行されても失敗するだけで実害はない
+-- (呼び出し箇所自体が存在しない)。
+
+DROP POLICY IF EXISTS "System can update rate limits" ON public.rate_limits;

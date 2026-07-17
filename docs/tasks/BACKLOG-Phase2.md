@@ -16,6 +16,7 @@
 | 8 | カメラ機能(看板・メニュー撮影学習) | v1.9 §7 優先6 | Geminiマルチモーダル。Kaigotalk(現場の掲示物読解)への転用価値も |
 | 9 | Bluetooth機器(AirPods等)最適化 | v1.9 §7 将来 | 7の後 |
 | 10 | クラウドTTSの無料層拡大判断 | T-35 | コスト実測後 |
+| 11 | 広告視聴のAdMob Server-Side Verification(SSV)統合 | T-35実装時のセキュリティレビュー(2026-07-17) | 現状はVercel API(`api/ad-reward.ts`)がusage_logsのその日のad_rewardの有無で冪等判定するのみで、AdMobの実際の広告視聴完了をサーバー側で検証していない。悪意あるクライアントが直接APIを叩けば広告なしでボーナス相当のAPI呼び出し自体は防げる(rate_limits直接UPDATEはRLSで禁止済み)が、「本当に広告を見たか」はクライアント申告に依存。SSV導入でこの穴を塞ぐ |
 
 ## 廃止確定(旧仕様の資産で使わないもの)
 - Stripe Payment Link / 解除コード方式(v1.6〜1.8) → RevenueCat+ストアIAPに完全移行済み。配布形態の判断ゲート(v1.9 §7 優先3)は「ストア配布」で決着
