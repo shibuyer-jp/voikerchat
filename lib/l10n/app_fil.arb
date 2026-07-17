@@ -116,6 +116,7 @@
   "difficultyHard": "Masyadong mahirap",
   "difficultyThanks": "Salamat! Iaayos ang susunod na pag-uusap.",
   "resumeContinue": "Ipagpatuloy ang huling usapan",
+  "recapShare": "I-share ang progreso ko",
   "errorTitle": "❌ Error",
   "unexpectedError": "Hindi inaasahang error: {error}. Pakisubukan muli mamaya.",
   "failedToSendMessage": "Nabigong ipadala ang mensahe: {error}",

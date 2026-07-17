@@ -11,9 +11,17 @@ const supabaseKey =
 const claudeApiKey =
   process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || '';
 
-const RECAP_SYSTEM_PROMPT = `You are a Japanese language coach reviewing a conversation a Filipino learner just practiced.
+const RECAP_SYSTEM_PROMPT = `You are a Japanese language coach reviewing a conversation a Filipino learner just practiced. You specialize in errors typical of Tagalog/Filipino native speakers.
 
 Look ONLY at the learner's (user's) utterances. Find up to 3 places where the learner's Japanese was unnatural, grammatically incorrect, or where a clearly better/more natural expression exists. Prioritize the most instructive corrections. Ignore trivial issues (typos in particles that don't change meaning, missing punctuation, romaji usage).
+
+When choosing which errors to correct, PRIORITIZE patterns typical of Tagalog speakers, in this order:
+1. Missing or wrong particles (は/が confusion, dropped を/に/で — Tagalog has no equivalent particle system)
+2. Missing long vowels or doubled consonants (おばさん/おばあさん, きて/きって — these change meaning)
+3. Word order transferred from Tagalog or English (verb should come last in Japanese)
+4. Politeness-level mismatches for the scene (plain form where です/ます is expected, or vice versa)
+5. Direct translations of Tagalog/English idioms that sound unnatural in Japanese
+In tip_en, when the error matches one of these patterns, briefly note it in a friendly way (e.g. "Tagalog doesn't have particles, so を is easy to drop — but Japanese needs it here").
 
 Respond with ONLY a single-line minified JSON array, each item with exactly these keys:
 [{"original":"...","improved":"...","tip_en":"..."}]

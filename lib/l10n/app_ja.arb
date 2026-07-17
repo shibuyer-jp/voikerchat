@@ -116,6 +116,7 @@
   "difficultyHard": "むずかしかった",
   "difficultyThanks": "わかりました！次の会話で調整します。",
   "resumeContinue": "続きから再開",
+  "recapShare": "画像でシェア",
   "errorTitle": "❌ エラー",
   "unexpectedError": "予期しないエラー: {error}。時間をおいて再度お試しください。",
   "failedToSendMessage": "メッセージの送信に失敗しました: {error}",

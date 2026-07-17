@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import '../services/learner_preferences_service.dart';
 import '../services/recap_service.dart';
+import '../services/share_card_service.dart';
 import '../services/vocab_summary_service.dart';
 import '../theme/app_colors.dart';
 
@@ -30,6 +31,7 @@ class _VocabSummarySheetState extends State<VocabSummarySheet> {
   final _vocabSummaryService = VocabSummaryService();
   final _recapService = RecapService();
   final _learnerPreferencesService = LearnerPreferencesService();
+  final _shareCardService = ShareCardService();
   late Future<List<Map<String, dynamic>>> _future;
   String? _selectedDifficulty;
 
@@ -243,10 +245,26 @@ class _VocabSummarySheetState extends State<VocabSummarySheet> {
                             style: const TextStyle(color: Colors.grey),
                           ),
                         )
-                      else
+                      else ...[
                         ...corrections.map(
                           (c) => _buildCorrectionRow(c as Map<String, dynamic>),
                         ),
+                        // シェアカード(OS標準共有シート経由。SNS SDK不使用のため
+                        // ストア申告への影響なし)。
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.ios_share, size: 18),
+                            label: Text(l.recapShare),
+                            onPressed: () => _shareCardService.shareRecapCard(
+                              corrections: corrections
+                                  .map((c) => c as Map<String, dynamic>)
+                                  .toList(),
+                              title: l.recapSectionTitle,
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                     ],
 

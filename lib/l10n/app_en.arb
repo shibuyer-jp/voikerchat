@@ -497,6 +497,10 @@
   "@resumeContinue": {
     "description": "Resume banner title on scene selection screen"
   },
+  "recapShare": "Share my progress",
+  "@recapShare": {
+    "description": "Button to share the recap card image via OS share sheet"
+  },
   "errorTitle": "❌ Error",
   "@errorTitle": {
     "description": "Generic error dialog title"
