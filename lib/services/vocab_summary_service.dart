@@ -32,7 +32,8 @@ class VocabSummaryService {
               'sceneId': sceneId,
             }),
           )
-          .timeout(const Duration(seconds: 15));
+          // Vercelコールドスタート+モデル応答を考慮して長め(15秒で失敗報告あり)
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         logger.info(

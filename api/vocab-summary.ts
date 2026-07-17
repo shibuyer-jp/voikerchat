@@ -103,9 +103,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const content = response.content[0];
     const rawText = content.type === 'text' ? content.text : '';
 
+    // モデルが指示に反してコードフェンスや前後の説明文を付けても落ちないよう、
+    // JSON配列本体を抽出してからパースする(堅牢化、2026-07-17)。
+    let jsonText = rawText.trim();
+    const fence = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) jsonText = fence[1].trim();
+    if (!jsonText.startsWith('[')) {
+      const start = jsonText.indexOf('[');
+      const end = jsonText.lastIndexOf(']');
+      if (start !== -1 && end > start) jsonText = jsonText.slice(start, end + 1);
+    }
+
     let parsed: Array<{ word?: string; reading?: string; meaning_en?: string }>;
     try {
-      parsed = JSON.parse(rawText.trim());
+      parsed = JSON.parse(jsonText);
       if (!Array.isArray(parsed)) throw new Error('not an array');
     } catch (parseErr) {
       console.error('vocab-summary: failed to parse model output:', rawText);
