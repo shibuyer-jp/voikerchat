@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/material.dart' show Color;
 import '../models/diagnostic.dart';
 
 /// Scene定義
@@ -20,6 +21,10 @@ class Scene {
     required this.color,
     this.isPremium = false,
   });
+
+  /// [color]("#RRGGBB")を Color へ変換(ScenePreviewCard のアクセント色・
+  /// キャラクター画像未生成時のプレースホルダー背景に使用、T-32)。
+  Color get accentColor => Color(int.parse(color.substring(1), radix: 16) + 0xFF000000);
 
   /// ChatScreen に渡す sceneData マップへ変換
   Map<String, dynamic> toSceneData() {

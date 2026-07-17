@@ -84,6 +84,7 @@ class SceneSelectionScreen extends StatelessWidget {
       recommendedLevel: scene.recommendedLevel,
       isPremium: scene.isPremium,
       isLocked: isLocked,
+      accentColor: scene.accentColor,
       onTap: isLocked
           ? () => _openPaywall(context)
           : () => _openScene(context, scene),

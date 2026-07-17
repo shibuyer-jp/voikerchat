@@ -5,7 +5,7 @@ import '../models/diagnostic.dart';
 import '../theme/app_colors.dart';
 
 /// ScenePreviewCard: シーン選択用のカード
-/// 
+///
 /// 表示内容:
 /// - シーン名
 /// - キャラクター名
@@ -20,6 +20,11 @@ class ScenePreviewCard extends StatefulWidget {
   final bool isFavorite;
   final bool isPremium;
   final bool isLocked;
+
+  /// シーンごとのアクセント色(未指定時は推奨レベル色にフォールバック)。
+  /// キャラクター画像未生成時のプレースホルダー背景にも使う(T-32)。
+  final Color? accentColor;
+
   final VoidCallback? onTap;
   final ValueChanged<bool>? onFavoriteToggle;
 
@@ -33,6 +38,7 @@ class ScenePreviewCard extends StatefulWidget {
     this.isFavorite = false,
     this.isPremium = false,
     this.isLocked = false,
+    this.accentColor,
     this.onTap,
     this.onFavoriteToggle,
   });
@@ -43,6 +49,8 @@ class ScenePreviewCard extends StatefulWidget {
 
 class _ScenePreviewCardState extends State<ScenePreviewCard>
     with SingleTickerProviderStateMixin {
+  static const double _thumbnailSize = 88;
+
   late AnimationController _animationController;
 
   @override
@@ -74,11 +82,71 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
     }
   }
 
+  /// `assets/characters/scene_01.webp` 〜 `scene_18.webp`(T-32)。
+  /// 未生成のシーンはファイルが存在せず、Image.asset の errorBuilder で
+  /// プレースホルダーにフォールバックする。
+  String get _assetPath =>
+      'assets/characters/scene_${widget.sceneId.toString().padLeft(2, '0')}.webp';
+
+  Widget _buildPlaceholder(Color accentColor) {
+    final initial = widget.characterName.isNotEmpty
+        ? widget.characterName[0].toUpperCase()
+        : '?';
+    return Container(
+      width: _thumbnailSize,
+      height: _thumbnailSize,
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: accentColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 32,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnail(Color accentColor) {
+    final thumbnail = ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.asset(
+        _assetPath,
+        width: _thumbnailSize,
+        height: _thumbnailSize,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            _buildPlaceholder(accentColor),
+      ),
+    );
+
+    if (!widget.isLocked) return thumbnail;
+
+    // ロック中: 画像を半透明化しロックアイコンを重ねる(見せて欲しがらせる)
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Opacity(opacity: 0.4, child: thumbnail),
+        const Icon(
+          Icons.lock,
+          color: Colors.white,
+          size: 28,
+          shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final levelColor = _getLevelColor(widget.recommendedLevel);
     final levelLabel = levelName(l10n, widget.recommendedLevel);
+    final accentColor = widget.accentColor ?? levelColor;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -87,124 +155,137 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
         margin: const EdgeInsets.only(bottom: 12),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ヘッダー: シーン名 + お気に入りボタン
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ヘッダー: シーン名 + お気に入りボタン
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                widget.sceneName,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            if (widget.isPremium) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.premiumBackground
-                                      .withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.star,
-                                      size: 12,
-                                      color: AppColors.premiumText,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      widget.sceneName,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
-                                    SizedBox(width: 2),
-                                    Text(
-                                      'PREMIUM',
-                                      style: TextStyle(
-                                        color: AppColors.premiumText,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 10,
+                                  ),
+                                  if (widget.isPremium) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.premiumBackground
+                                            .withValues(alpha: 0.25),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.star,
+                                            size: 12,
+                                            color: AppColors.premiumText,
+                                          ),
+                                          SizedBox(width: 2),
+                                          Text(
+                                            'PREMIUM',
+                                            style: TextStyle(
+                                              color: AppColors.premiumText,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
-                                ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                l10n.sceneCharacterLabel(widget.characterName),
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.sceneCharacterLabel(widget.characterName),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+                        if (widget.isLocked)
+                          const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Icon(Icons.lock, color: Colors.grey),
+                          )
+                        else
+                          ScaleTransition(
+                            scale: Tween<double>(
+                              begin: 1,
+                              end: 1.2,
+                            ).animate(_animationController),
+                            child: IconButton(
+                              onPressed: _toggleFavorite,
+                              icon: Icon(
+                                widget.isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
-                  ),
-                  if (widget.isLocked)
-                    const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(Icons.lock, color: Colors.grey),
-                    )
-                  else
-                    ScaleTransition(
-                      scale: Tween<double>(begin: 1, end: 1.2)
-                          .animate(_animationController),
-                      child: IconButton(
-                        onPressed: _toggleFavorite,
-                        icon: Icon(
-                          widget.isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: Colors.red,
+
+                    const SizedBox(height: 12),
+
+                    // 説明文
+                    Text(
+                      widget.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // 推奨レベルタグ
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: levelColor.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        l10n.sceneRecommendedLabel(levelLabel),
+                        style: TextStyle(
+                          color: levelColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // 説明文
-              Text(
-                widget.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-
-              const SizedBox(height: 12),
-
-              // 推奨レベルタグ
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: levelColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  l10n.sceneRecommendedLabel(levelLabel),
-                  style: TextStyle(
-                    color: levelColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 12),
+              _buildThumbnail(accentColor),
             ],
           ),
         ),
