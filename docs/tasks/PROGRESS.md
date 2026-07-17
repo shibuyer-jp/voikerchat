@@ -12,8 +12,11 @@
 - [x] T-35 高品質TTS(3段構成: 端末/広告日解放/プレミアム常時) 完了 2026-07-17 commit ca80ee2 / CI緑(29549450659, 29549450661)
 
 ## 人間へのお願い(未処理)
-- Gemini でキャラ画像18枚生成(docs/tasks/GEMINI-DELEGATION.md ①。scene_01.webp〜scene_18.webp
-  として assets/characters/ に配置すれば自動的にカードへ反映される。未配置分は現状プレースホルダー表示)
+- [x] ~~Gemini でキャラ画像18枚生成~~ **完了 2026-07-17**: Google Drive
+  (`Voikerchat_Development/Character_icon/`)の18枚を512×512 WebP(quality=80)に変換して
+  `assets/characters/` に配置済み(commit `7fa44e2`)。**残作業(人間)**: シーン選択画面で
+  各カードの画質・構図を目視確認(元がAI生成2048×2048 PNGをリサイズ・再圧縮したもの、
+  自動変換のため画質チェック未実施)
 - クローズドテスト(Android)のトラック開始 — 14日の時計を先に回す(Master Plan 方針)
 - T-33: Sandbox/ライセンステスターでの実機購入・復元テスト
 - T-34: 新シーン14〜18(介護のしごと/医療スタッフ/面接/役所・手続き/職場の敬語)を各3往復以上
@@ -56,6 +59,16 @@
 - T-35 usage_logs.event の再利用により、T-31(`feature:'define'`)・T-35(`feature:'cloud_tts'`)ともに
   `message_sent` として記録される。docs/Kaigotalk-Data-Queries.md の集計クエリに
   `metadata->>'feature' is null` フィルタを追加し、会話ターン数を誤集計しないよう修正済み。
+- T-32 キャラ画像18枚: Google Driveに置かれていた元ファイルは拡張子が`.webp`でも中身は
+  全て2048×2048のPNG(1枚3〜5MB、18枚合計約65MB)で、仕様書の目標(512×512 WebP、
+  合計~1MB)から大きく乖離していた。ユーザー確認の上、Pillow(ローカルにWebP保存対応
+  環境あり)で512×512・quality=80のWebPへリサイズ・再変換して配置(元PNGはDrive上に
+  残置、不可逆変換ではない)。変換後サイズ(KB):
+  scene_01=31.0, scene_02=17.1, scene_03=21.1, scene_04=17.1, scene_05=19.3,
+  scene_06=15.3, scene_07=16.1, scene_08=22.2, scene_09=27.9, scene_10=28.6,
+  scene_11=22.7, scene_12=18.0, scene_13=27.3, scene_14=23.5, scene_15=20.4,
+  scene_16=14.6, scene_17=17.2, scene_18=17.4。**合計 376.6KB**(目標~1MB以内を達成)。
+  画質の目視確認(自動変換のため)は人間の残作業として上記に記載。
 
 ## セッションログ
 - 2026-07-16: 計画策定(claude.ai 側)。仕様書 T-30〜T-35 / Master Plan v2.0 / RUNBOOK 作成。
@@ -68,6 +81,9 @@
 - 2026-07-17: セキュリティ強化(T-35前提)完了。commit `0314669`、CI緑(29548757025, 29548757041)。
   grantAdBonusをapi/ad-reward.ts経由化、rate_limits直接UPDATE禁止のRLS変更SQLを用意(人間の実行待ち)。
 - 2026-07-17: T-35 完了。commit `ca80ee2`、CI緑(CI/CD - Voikerchat run 29549450659, Flutter CI run 29549450661)。
+- 2026-07-17: T-32のキャラ画像18枚を配置。commit `7fa44e2`、CI緑(CI/CD - Voikerchat run 29550291285,
+  Flutter CI run 29550291281)。Google Drive上のPNG(拡張子偽装)を512×512 WebPへ変換して配置
+  (詳細は「人間へのお願い」「判断記録」参照)。
 
 **ユーザー指示の T-30→T-33→T-34→T-32→T-31→T-35 は全て完了(CI緑)。**
 
