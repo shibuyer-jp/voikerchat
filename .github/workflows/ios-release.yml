@@ -11,6 +11,14 @@ name: iOS Release (Archive & Upload to App Store Connect)
 # 事前準備は不要。
 on:
   workflow_dispatch:
+    inputs:
+      use_test_ads:
+        description: 'Google公式テスト広告に切替(TestFlight検証用。ストア提出ビルドではfalse固定)'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+        default: 'false'
 
 jobs:
   archive-and-upload:
@@ -46,7 +54,8 @@ jobs:
           flutter build ios --release --no-codesign \
             --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" \
-            --dart-define=REVENUECAT_IOS_KEY="${{ secrets.REVENUECAT_IOS_KEY }}"
+            --dart-define=REVENUECAT_IOS_KEY="${{ secrets.REVENUECAT_IOS_KEY }}" \
+            --dart-define=USE_TEST_ADS="${{ inputs.use_test_ads }}"
 
       - name: Install App Store Connect API key
         env:

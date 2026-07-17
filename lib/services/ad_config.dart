@@ -6,7 +6,11 @@ import 'package:flutter/foundation.dart';
 /// 発行した実 ID を設定するだけで本番広告に切り替わる（差し替えはここだけ）。
 class AdConfig {
   /// true の間は Google 公式テスト広告を配信する（登録不要・課金リスクなし）。
-  static const bool useTestAds = false;
+  ///
+  /// `--dart-define=USE_TEST_ADS=true` で Google 公式テスト広告に切替。
+  /// デフォルト false = 本番。ストア提出ビルドでは絶対に true にしないこと。
+  static const bool useTestAds =
+      bool.fromEnvironment('USE_TEST_ADS', defaultValue: false);
 
   /// 非パーソナライズ広告のみ配信する（npa=1）。
   ///
