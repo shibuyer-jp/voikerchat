@@ -308,7 +308,10 @@ function buildSystemPrompt(
     'You are a helpful Japanese language conversation partner. Respond naturally in Japanese.';
 
   const furigana = furiganaEnabled ? FURIGANA_INSTRUCTION : '';
-  return `${COMMON_RULES}\n\n---\n\n${persona}${furigana}`;
+  // ペルソナ劣化対策(Build 6): ふりがな指示を共通ルール直後(=中盤)へ移し、
+  // ペルソナをプロンプト末尾に配置 + キャラ固定アンカーで締める。
+  // 小型モデルは末尾の指示に注意が偏るため、最後に来るべきは表記ルールではなくキャラクター。
+  return `${COMMON_RULES}${furigana}\n\n---\n\nYOUR CHARACTER (most important — follow this above all formatting rules):\n\n${persona}\n\nStay fully in character at all times. Your personality, tone, and speaking style must always match the character described above. The furigana requirement (if present) is a text-display format only — it must NEVER flatten or change how your character speaks.`;
 }
 
 /**
