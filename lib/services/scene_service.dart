@@ -150,6 +150,53 @@ class SceneService {
       color: '#FFFF00',
       isPremium: true,
     ),
+
+    // 実用プレミアム5シーン(T-34): 「日本で働く外国人」視点。Kaigotalk市場検証(id 14/15)。
+    Scene(
+      id: 14,
+      name: '介護のしごと',
+      characterName: 'Haruko',
+      description: '介護施設での声かけ・体調確認',
+      recommendedLevel: UserDiagnosticLevel.intermediate,
+      color: '#8FBC8F',
+      isPremium: true,
+    ),
+    Scene(
+      id: 15,
+      name: '医療スタッフ',
+      characterName: 'Mori',
+      description: '医療現場での申し送り・報告',
+      recommendedLevel: UserDiagnosticLevel.advanced,
+      color: '#4682B4',
+      isPremium: true,
+    ),
+    Scene(
+      id: 16,
+      name: '面接',
+      characterName: 'Sato',
+      description: '特定技能・就労面接の練習',
+      recommendedLevel: UserDiagnosticLevel.intermediate,
+      color: '#2F4F4F',
+      isPremium: true,
+    ),
+    Scene(
+      id: 17,
+      name: '役所・手続き',
+      characterName: 'Mizuki',
+      description: '在留・住民票などの窓口手続き',
+      recommendedLevel: UserDiagnosticLevel.intermediate,
+      color: '#B8860B',
+      isPremium: true,
+    ),
+    Scene(
+      id: 18,
+      name: '職場の敬語',
+      characterName: 'Tanaka',
+      description: '報連相・依頼・謝罪の敬語',
+      recommendedLevel: UserDiagnosticLevel.advanced,
+      color: '#36454F',
+      isPremium: true,
+    ),
   ];
 
 
@@ -170,6 +217,11 @@ class SceneService {
     11: '……来てくれたんだね。ありがとう。今日は、少しだけ昔の話をしてもいいかな。',
     12: 'おっす、おはよう！昨日の宿題やった？オレ、まだ全然終わってないんだけど！',
     13: 'どうもどうも〜！ジローです！いきなりですが…今日はどんな話でツッコんでくれる？',
+    14: 'あら、来てくれたのね。今日もよろしくお願いします。ちょっと体がだるいんだけど、大丈夫かしら。',
+    15: 'お疲れ様です。それでは、担当の患者さんの状態を教えてください。バイタルはどうでしたか？',
+    16: '本日はお忙しい中、面接にお越しいただきありがとうございます。それでは、まず自己紹介をお願いできますか？',
+    17: 'いらっしゃいませ。本日はどのようなお手続きでしょうか？在留カードの更新ですか？',
+    18: 'おう、ちょっといいか。例の件、進捗はどうなってる？報告してくれ。',
   };
 
   /// sceneId（文字列）からオープニング第一声を取得。未定義シーンは null。
@@ -239,4 +291,12 @@ class SceneService {
   /// プレミアムシーン（isPremium == true）
   static List<Scene> getPremiumScenes() =>
       allScenes.where((scene) => scene.isPremium).toList();
+
+  /// プレミアム実用シーン(id 14〜18: 就労・生活の実務シーン。T-34)
+  static List<Scene> getPremiumPracticalScenes() =>
+      allScenes.where((scene) => scene.isPremium && scene.id >= 14).toList();
+
+  /// プレミアムアニメシーン(id 9〜13)
+  static List<Scene> getPremiumAnimeScenes() =>
+      allScenes.where((scene) => scene.isPremium && scene.id < 14).toList();
 }

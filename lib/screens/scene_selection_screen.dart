@@ -11,9 +11,11 @@ import 'settings_screen.dart';
 /// SceneSelectionScreen: シーン選択画面
 ///
 /// セクション構成:
-/// 1. おすすめ   — ユーザーレベルに合った無料シーン
-/// 2. 全無料     — すべての無料シーン
-/// 3. プレミアム — 有料シーン（非premiumユーザーはロック表示）
+/// 1. おすすめ         — ユーザーレベルに合った無料シーン
+/// 2. 全無料           — すべての無料シーン
+/// 3. 実用シーン(プレミアム) — 就労・生活シーン(T-34、id 14〜18)
+/// 4. アニメシーン(プレミアム) — id 9〜13
+/// (非premiumユーザーは3・4ともロック表示)
 class SceneSelectionScreen extends StatelessWidget {
   final UserDiagnosticLevel userLevel;
   final bool isPremiumUser;
@@ -98,8 +100,9 @@ class SceneSelectionScreen extends StatelessWidget {
     // (2) 全無料シーン
     final freeScenes = SceneService.getFreeScenes();
 
-    // (3) プレミアムシーン
-    final premiumScenes = SceneService.getPremiumScenes();
+    // (3) プレミアム実用シーン(T-34、上に配置) / (4) プレミアムアニメシーン
+    final premiumPracticalScenes = SceneService.getPremiumPracticalScenes();
+    final premiumAnimeScenes = SceneService.getPremiumAnimeScenes();
 
     final l = AppLocalizations.of(context);
     return Scaffold(
@@ -130,8 +133,13 @@ class SceneSelectionScreen extends StatelessWidget {
           ...freeScenes
               .map((scene) => _buildCard(context, scene, isLocked: false)),
 
-          _buildSectionHeader(context, l.sceneSectionPremium),
-          ...premiumScenes.map(
+          _buildSectionHeader(context, l.sceneSectionPremiumPractical),
+          ...premiumPracticalScenes.map(
+            (scene) => _buildCard(context, scene, isLocked: !isPremiumUser),
+          ),
+
+          _buildSectionHeader(context, l.sceneSectionPremiumAnime),
+          ...premiumAnimeScenes.map(
             (scene) => _buildCard(context, scene, isLocked: !isPremiumUser),
           ),
 

@@ -85,6 +85,11 @@ String sceneName(AppLocalizations l10n, int id) {
     case 11: return l10n.scene11Name;
     case 12: return l10n.scene12Name;
     case 13: return l10n.scene13Name;
+    case 14: return l10n.scene14Name;
+    case 15: return l10n.scene15Name;
+    case 16: return l10n.scene16Name;
+    case 17: return l10n.scene17Name;
+    case 18: return l10n.scene18Name;
     default: return '';
   }
 }
@@ -105,6 +110,11 @@ String sceneDesc(AppLocalizations l10n, int id) {
     case 11: return l10n.scene11Desc;
     case 12: return l10n.scene12Desc;
     case 13: return l10n.scene13Desc;
+    case 14: return l10n.scene14Desc;
+    case 15: return l10n.scene15Desc;
+    case 16: return l10n.scene16Desc;
+    case 17: return l10n.scene17Desc;
+    case 18: return l10n.scene18Desc;
     default: return '';
   }
 }

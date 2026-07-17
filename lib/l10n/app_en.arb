@@ -68,6 +68,14 @@
   "@sceneSectionPremium": {
     "description": "Section header for premium scenes"
   },
+  "sceneSectionPremiumPractical": "Practical scenes (Premium)",
+  "@sceneSectionPremiumPractical": {
+    "description": "Section header for premium practical/work scenes (T-34)"
+  },
+  "sceneSectionPremiumAnime": "Anime scenes (Premium)",
+  "@sceneSectionPremiumAnime": {
+    "description": "Section header for premium anime scenes"
+  },
   "badgesTitle": "Badges",
   "@badgesTitle": {
     "description": "App bar title on the badges screen"
@@ -773,6 +781,46 @@
   "scene13Desc": "Understanding humor & natural reactions",
   "@scene13Desc": {
     "description": "Scene 13: description (anime)"
+  },
+  "scene14Name": "Care Work",
+  "@scene14Name": {
+    "description": "Scene 14: name (premium practical, T-34)"
+  },
+  "scene14Desc": "Caregiving talk & health checks",
+  "@scene14Desc": {
+    "description": "Scene 14: description (premium practical, T-34)"
+  },
+  "scene15Name": "Medical Staff",
+  "@scene15Name": {
+    "description": "Scene 15: name (premium practical, T-34)"
+  },
+  "scene15Desc": "Hospital shift handover reports",
+  "@scene15Desc": {
+    "description": "Scene 15: description (premium practical, T-34)"
+  },
+  "scene16Name": "Job Interview",
+  "@scene16Name": {
+    "description": "Scene 16: name (premium practical, T-34)"
+  },
+  "scene16Desc": "Practice a work-visa job interview",
+  "@scene16Desc": {
+    "description": "Scene 16: description (premium practical, T-34)"
+  },
+  "scene17Name": "City Hall",
+  "@scene17Name": {
+    "description": "Scene 17: name (premium practical, T-34)"
+  },
+  "scene17Desc": "Residence card & insurance procedures",
+  "@scene17Desc": {
+    "description": "Scene 17: description (premium practical, T-34)"
+  },
+  "scene18Name": "Workplace Keigo",
+  "@scene18Name": {
+    "description": "Scene 18: name (premium practical, T-34)"
+  },
+  "scene18Desc": "Reports, requests & apologies",
+  "@scene18Desc": {
+    "description": "Scene 18: description (premium practical, T-34)"
   },
   "premiumUpsellStage1Message": "Premium is worth it if you use it a lot every day",
   "@premiumUpsellStage1Message": {
