@@ -317,14 +317,27 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (!_rewardedAdService.isReady) {
         // 広告在庫切れフォールバック: ユーザーに理不尽を与えないよう、
         // +5回は付与しないがクラウドTTSはその日いっぱい無償解放する。
-        await _cloudTtsUnlockService.markUnlockedToday();
+        // サーバー(api/tts.ts)は usage_logs.ad_reward の有無で許可判定するため、
+        // ローカルフラグだけでなくサーバー記録も必須(記録失敗時は解放を諦める)。
+        final recorded = await _rateLimitService.recordTtsFallbackUnlock();
+        if (recorded) {
+          await _cloudTtsUnlockService.markUnlockedToday();
+        }
         if (mounted) {
-          setState(() => _cloudTtsUnlockedToday = true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context).adLoadFailedTtsUnlocked),
-            ),
-          );
+          if (recorded) {
+            setState(() => _cloudTtsUnlockedToday = true);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context).adLoadFailedTtsUnlocked),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context).adLoadFailed),
+              ),
+            );
+          }
         }
         return;
       }
@@ -1012,8 +1025,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             ),
                           ),
                           // T-36: 次に言えそうな例文+英訳のヒント。会話クォータは消費しない。
+                          // 「ひらめき」の定番色=黄色の塗りつぶし電球で視認性を上げる
+                          // (TestFlight目視フィードバック: 気づかれにくい)。
                           IconButton(
-                            icon: const Icon(Icons.lightbulb_outline),
+                            icon: Icon(
+                              Icons.lightbulb,
+                              color: Colors.amber.shade600,
+                            ),
                             tooltip: l.hintButtonTooltip,
                             onPressed: _isSending ? null : _showHint,
                           ),
