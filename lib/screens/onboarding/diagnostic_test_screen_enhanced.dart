@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import '../../models/diagnostic.dart';
 import '../../services/onboarding_service.dart';
+import '../../theme/app_colors.dart';
 
 /// DiagnosticTestScreenEnhanced: 改善版診断テスト画面
 /// 
@@ -227,13 +228,13 @@ class _DiagnosticTestScreenEnhancedState
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0099FF).withValues(alpha: 0.1),
+                        color: AppColors.brand.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         l10n.diagScoreCount(currentScore, questions.length),
                         style: const TextStyle(
-                          color: Color(0xFF0099FF),
+                          color: AppColors.brand,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -247,8 +248,9 @@ class _DiagnosticTestScreenEnhancedState
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: Chip(
                   label: Text(question.difficulty),
-                  backgroundColor: const Color(0xFFFF9900).withValues(alpha: 0.2),
-                  labelStyle: const TextStyle(color: Color(0xFFFF9900)),
+                  backgroundColor:
+                      AppColors.levelIntermediate.withValues(alpha: 0.2),
+                  labelStyle: const TextStyle(color: AppColors.levelIntermediate),
                 ),
               ),
 
@@ -284,12 +286,11 @@ class _DiagnosticTestScreenEnhancedState
                           });
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isSelected
-                              ? const Color(0xFF0099FF)
-                              : Colors.white,
+                          backgroundColor:
+                              isSelected ? AppColors.brand : Colors.white,
                           foregroundColor:
                               isSelected ? Colors.white : Colors.black,
-                          side: const BorderSide(color: Color(0xFF0099FF)),
+                          side: const BorderSide(color: AppColors.brand),
                           alignment: Alignment.centerLeft,
                           padding: const EdgeInsets.all(16),
                         ),

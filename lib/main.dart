@@ -17,6 +17,7 @@ import 'services/local_notification_service.dart';
 import 'services/notification_scheduler.dart';
 import 'services/remote_notification_service.dart';
 import 'models/notification_data_model.dart';
+import 'theme/app_theme.dart';
 
 final logger = Logger('main');
 
@@ -170,14 +171,7 @@ class VoikerchatApp extends StatelessWidget {
       title: 'Voikerchat',
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
-        fontFamily: 'Roboto',
-      ),
+      theme: AppTheme.light,
       home: const RootScreen(),
     );
   }

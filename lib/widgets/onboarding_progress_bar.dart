@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import '../theme/app_colors.dart';
 
 /// OnboardingProgressBar: Onboarding フロー全体のプログレスバー
 /// 
@@ -17,7 +18,7 @@ class OnboardingProgressBar extends StatefulWidget {
   /// プログレスバー高さ
   final double height;
 
-  /// カラースキーム（デフォルト: Voikerchat ブルー）
+  /// カラースキーム（デフォルト: Voikerchat ブランドカラー）
   final Color activeColor;
   final Color inactiveColor;
 
@@ -26,8 +27,8 @@ class OnboardingProgressBar extends StatefulWidget {
     required this.currentStep,
     this.completedSteps = const [false, false, false, false, false],
     this.height = 8.0,
-    this.activeColor = const Color(0xFF0099FF),
-    this.inactiveColor = const Color(0xFFE0E0E0),
+    this.activeColor = AppColors.brand,
+    this.inactiveColor = AppColors.progressInactive,
   });
 
   @override
@@ -99,7 +100,7 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
                 l10n.progressStep(widget.currentStep),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF0099FF),
+                      color: AppColors.brand,
                     ),
               ),
               _buildStepIndicators(),
@@ -147,11 +148,11 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
   }) {
     Color dotColor;
     if (isCompleted) {
-      dotColor = const Color(0xFF00CC00); // グリーン: 完了
+      dotColor = AppColors.progressComplete; // 完了
     } else if (isCurrent) {
-      dotColor = const Color(0xFF0099FF); // ブルー: 現在
+      dotColor = AppColors.brand; // 現在
     } else {
-      dotColor = const Color(0xFFCCCCCC); // グレー: 未完了
+      dotColor = AppColors.progressIncomplete; // 未完了
     }
 
     return AnimatedContainer(

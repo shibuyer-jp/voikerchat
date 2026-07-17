@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/l10n/label_helpers.dart';
 import '../models/diagnostic.dart';
+import '../theme/app_colors.dart';
 
 /// ScenePreviewCard: シーン選択用のカード
 /// 
@@ -65,11 +66,11 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
   Color _getLevelColor(UserDiagnosticLevel level) {
     switch (level) {
       case UserDiagnosticLevel.beginner:
-        return const Color(0xFF66BB6A);
+        return AppColors.levelBeginner;
       case UserDiagnosticLevel.intermediate:
-        return const Color(0xFFFF9800);
+        return AppColors.levelIntermediate;
       case UserDiagnosticLevel.advanced:
-        return const Color(0xFFEF5350);
+        return AppColors.levelAdvanced;
     }
   }
 
@@ -116,7 +117,7 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFD700)
+                                  color: AppColors.premiumBackground
                                       .withValues(alpha: 0.25),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -126,13 +127,13 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                                     Icon(
                                       Icons.star,
                                       size: 12,
-                                      color: Color(0xFFB8860B),
+                                      color: AppColors.premiumText,
                                     ),
                                     SizedBox(width: 2),
                                     Text(
                                       'PREMIUM',
                                       style: TextStyle(
-                                        color: Color(0xFFB8860B),
+                                        color: AppColors.premiumText,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 10,
                                       ),

@@ -76,7 +76,7 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 flutter_native_splash:
-  color: "#ffffff"
+  color: "#FAF7F0"
   image: "assets/icon/splash_logo_2048.png"
   android: true
   ios: true
