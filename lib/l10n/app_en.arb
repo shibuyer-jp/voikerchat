@@ -389,6 +389,38 @@
   "@subscribeCta": {
     "description": "Paywall primary subscribe button"
   },
+  "lookUpMeaning": "Look up meaning",
+  "@lookUpMeaning": {
+    "description": "Text selection context menu item (T-31 word lookup)"
+  },
+  "wordLookupReading": "Reading",
+  "@wordLookupReading": {
+    "description": "Word lookup sheet: reading (furigana) label"
+  },
+  "wordLookupMeaningEn": "Meaning (English)",
+  "@wordLookupMeaningEn": {
+    "description": "Word lookup sheet: English meaning label"
+  },
+  "wordLookupMeaningFil": "Meaning (Tagalog)",
+  "@wordLookupMeaningFil": {
+    "description": "Word lookup sheet: Tagalog meaning label"
+  },
+  "wordLookupExample": "Example",
+  "@wordLookupExample": {
+    "description": "Word lookup sheet: example sentence label"
+  },
+  "wordLookupLoading": "Looking up...",
+  "@wordLookupLoading": {
+    "description": "Word lookup sheet: loading indicator text"
+  },
+  "wordLookupError": "Couldn't look up this word. Please try again.",
+  "@wordLookupError": {
+    "description": "Word lookup sheet: generic error (network/server) message"
+  },
+  "wordLookupQuotaReached": "You've reached today's dictionary lookup limit.",
+  "@wordLookupQuotaReached": {
+    "description": "Word lookup sheet: daily quota exceeded message"
+  },
   "errorTitle": "❌ Error",
   "@errorTitle": {
     "description": "Generic error dialog title"

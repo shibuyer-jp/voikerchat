@@ -22,6 +22,7 @@ import '../services/voice/tts_text_cleaner.dart';
 import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
+import '../widgets/word_lookup_sheet.dart';
 import 'paywall_screen.dart';
 import 'stats_screen.dart';
 
@@ -819,14 +820,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      message.content,
-                                      style: TextStyle(
-                                        color: isUser
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
-                                    ),
+                                    isUser
+                                        ? Text(
+                                            message.content,
+                                            style: const TextStyle(color: Colors.white),
+                                          )
+                                        : _buildAssistantMessageText(message.content),
                                     const SizedBox(height: 4),
                                     Text(
                                       message.formattedTime,
@@ -1070,6 +1069,51 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         content: Text(message),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  /// AIメッセージ本文(T-31): 範囲選択 + コンテキストメニューに
+  /// 「意味を調べる」を追加する。会話状態(入力欄・TTS再生)には触れない。
+  Widget _buildAssistantMessageText(String content) {
+    return SelectableText(
+      content,
+      style: const TextStyle(color: Colors.black),
+      contextMenuBuilder: (context, editableTextState) {
+        final buttonItems = editableTextState.contextMenuButtonItems.toList();
+        final selection = editableTextState.textEditingValue.selection;
+        final selectedText = selection.textInside(editableTextState.textEditingValue.text);
+
+        if (selectedText.trim().isNotEmpty) {
+          buttonItems.insert(
+            0,
+            ContextMenuButtonItem(
+              label: AppLocalizations.of(context).lookUpMeaning,
+              onPressed: () {
+                ContextMenuController.removeAny();
+                editableTextState.hideToolbar();
+                _showWordLookup(selectedText.trim(), content);
+              },
+            ),
+          );
+        }
+
+        return AdaptiveTextSelectionToolbar.buttonItems(
+          anchors: editableTextState.contextMenuAnchors,
+          buttonItems: buttonItems,
+        );
+      },
+    );
+  }
+
+  void _showWordLookup(String term, String messageContent) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => WordLookupSheet(
+        term: term,
+        context: messageContent,
+        sceneId: widget.sceneId,
       ),
     );
   }
