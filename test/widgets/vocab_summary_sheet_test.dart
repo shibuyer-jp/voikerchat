@@ -33,6 +33,34 @@ void main() {
 
       expect(find.text('今日の単語'), findsOneWidget);
       expect(find.text('今回は単語をまとめられませんでした。'), findsOneWidget);
+      // recap は取得失敗時にセクションごと非表示になる。
+      expect(find.text('今日の言い直し'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    // 競合分析B案: 難易度フィードバックの3択チップが表示され、
+    // 選択すると確認メッセージが出ること。
+    testWidgets('Shows difficulty feedback chips and confirms selection',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const VocabSummarySheet(
+            conversation: 'user: こんにちは\nassistant: こんにちは、元気ですか?',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('今日の会話はどうでしたか？'), findsOneWidget);
+      expect(find.text('かんたんすぎた'), findsOneWidget);
+      expect(find.text('ちょうどよかった'), findsOneWidget);
+      expect(find.text('むずかしかった'), findsOneWidget);
+      expect(find.text('わかりました！次の会話で調整します。'), findsNothing);
+
+      await tester.tap(find.text('むずかしかった'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('わかりました！次の会話で調整します。'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

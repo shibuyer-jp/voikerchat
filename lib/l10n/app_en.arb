@@ -461,9 +461,41 @@
   "@vocabSummaryError": {
     "description": "Vocab summary sheet generic error (network/server) message"
   },
-  "vocabSummaryEmpty": "No notable words to review from this conversation.",
+  "vocabSummaryEmpty": "No notable words from this conversation.",
   "@vocabSummaryEmpty": {
-    "description": "Vocab summary sheet empty-result message"
+    "description": "Shown when vocab summary returned no words"
+  },
+  "recapSectionTitle": "Today's rephrasing",
+  "@recapSectionTitle": {
+    "description": "Section title for session-end correction review"
+  },
+  "recapNoCorrections": "Great job — your Japanese was natural throughout!",
+  "@recapNoCorrections": {
+    "description": "Shown when recap found nothing to correct"
+  },
+  "difficultyQuestion": "How was today's conversation?",
+  "@difficultyQuestion": {
+    "description": "Difficulty feedback question after a session"
+  },
+  "difficultyEasy": "Too easy",
+  "@difficultyEasy": {
+    "description": "Difficulty feedback option: too easy"
+  },
+  "difficultyGood": "Just right",
+  "@difficultyGood": {
+    "description": "Difficulty feedback option: just right"
+  },
+  "difficultyHard": "Too hard",
+  "@difficultyHard": {
+    "description": "Difficulty feedback option: too hard"
+  },
+  "difficultyThanks": "Got it! The next conversation will be adjusted.",
+  "@difficultyThanks": {
+    "description": "Confirmation after selecting difficulty feedback"
+  },
+  "resumeContinue": "Continue where you left off",
+  "@resumeContinue": {
+    "description": "Resume banner title on scene selection screen"
   },
   "errorTitle": "❌ Error",
   "@errorTitle": {
