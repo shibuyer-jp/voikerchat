@@ -25,8 +25,12 @@
   一度確認(受け入れ基準「2秒以内表示」「入力欄・TTS再生が壊れない」の体感確認)
 - **T-35: `docs/migrations/2026-07-17_lock_rate_limits_client_write.sql` をSupabase SQL Editorで実行**
   (クライアントによるrate_limits直接UPDATEを禁止するRLS変更。Claude CodeはDBに直接アクセスできないため人間の実行が必須)
-- **T-35: OpenAI APIキー取得 → Vercel環境変数 `OPENAI_API_KEY` に設定**(Drive `00_Project_Credentials`へ保管)。
-  未設定の間は `api/tts.ts` が「Server misconfiguration」を返し、自動的に端末TTSへフォールバックする(会話は壊れない)
+- [x] ~~T-35: OpenAI APIキー取得 → Vercel環境変数 `OPENAI_API_KEY` に設定~~ **完了 2026-07-17**:
+  Vercel CLI(`vercel env add`)で `voikerchat-x621` の Production/Preview/Development 全環境に設定し、
+  最新デプロイをredeploy(dpl_2ioDzc97gYFEGfcZLjmZ89vy7Gcz → voikerchat.comへエイリアス済み)。
+  `curl https://voikerchat.com/api/tts` に不正トークンで実行し、「Server misconfiguration」ではなく
+  「Invalid or expired token」が返ることを確認(=環境変数は正しく読み込まれている)。キー自体はDrive
+  `00_Project_Credentials` への保管が未実施(人間の残作業)。
 - T-35: 実機での聴感・レイテンシ確認、3段切替(端末→広告視聴→即日クラウド→日付変更で端末に戻る)の動作確認、
   機内モードでのフォールバック確認、`curl`でのAPI直叩き拒否確認(仕様書の受け入れ基準)
 - 広告視聴のAdMob SSV(真正性検証)は今回未対応。docs/tasks/BACKLOG-Phase2.md #11 参照(Phase2で検討)
@@ -84,6 +88,8 @@
 - 2026-07-17: T-32のキャラ画像18枚を配置。commit `7fa44e2`、CI緑(CI/CD - Voikerchat run 29550291285,
   Flutter CI run 29550291281)。Google Drive上のPNG(拡張子偽装)を512×512 WebPへ変換して配置
   (詳細は「人間へのお願い」「判断記録」参照)。
+- 2026-07-17: OpenAI APIキーをVercel(voikerchat-x621)のProduction/Preview/Developmentに設定し
+  最新デプロイをredeploy。api/tts.tsがServer misconfigurationを返さないことをcurlで確認。
 
 **ユーザー指示の T-30→T-33→T-34→T-32→T-31→T-35 は全て完了(CI緑)。**
 

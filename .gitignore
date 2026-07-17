@@ -41,3 +41,5 @@ credentials.json
 
 # Generated localizations (flutter gen-l10n). Regenerated on pub get / CI.
 lib/l10n/app_localizations*.dart
+.vercel
+.env*
