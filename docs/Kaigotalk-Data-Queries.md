@@ -12,6 +12,10 @@
   **同一ユーザー×同一シーン×同一日の `message_sent` 件数**で近似する。
   より正確な計測が必要になった場合は、クライアントから `session_id`(UUID)を
   `api/chat.ts` の request body に追加送信し、`logUsage` へ引き渡す変更が別途必要。
+- T-31(辞書機能)/T-35(クラウドTTS)も `event='message_sent'` を再利用し
+  `metadata.feature`(`'define'`/`'cloud_tts'`)で識別している。会話ターン数
+  ではないため、以下のクエリはすべて `metadata->>'feature' is null` で
+  これらを除外し、実際の会話(チャット送信)のみを対象にする。
 
 ## 1. シーン選択率(介護/医療 vs 他プレミアムシーン)
 
@@ -23,6 +27,7 @@ select
 from usage_logs
 where created_at >= now() - interval '30 days'
   and metadata->>'scene' in ('9','10','11','12','13','14','15','16','17','18')
+  and metadata->>'feature' is null
 group by metadata->>'scene'
 order by messages desc;
 ```
@@ -38,6 +43,7 @@ select
 from usage_logs
 where event = 'message_sent'
   and metadata->>'scene' in ('14', '15')
+  and metadata->>'feature' is null
   and created_at >= now() - interval '30 days'
 group by 1, 2
 order by 1, 2;
@@ -55,6 +61,7 @@ with per_session as (
   from usage_logs
   where event = 'message_sent'
     and metadata->>'scene' in ('14', '15')
+    and metadata->>'feature' is null
   group by 1, 2, 3
 )
 select scene_id, avg(turns) as avg_turns_per_day, count(*) as day_sessions
@@ -73,6 +80,7 @@ with days_used as (
   from usage_logs
   where event = 'message_sent'
     and metadata->>'scene' in ('14', '15')
+    and metadata->>'feature' is null
     and created_at >= now() - interval '30 days'
   group by 1, 2
 )

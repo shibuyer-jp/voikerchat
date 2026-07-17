@@ -19,10 +19,15 @@ import '../services/rewarded_ad_service.dart';
 import '../services/voice/speech_recognition_service.dart';
 import '../services/voice/text_to_speech_service.dart';
 import '../services/voice/tts_text_cleaner.dart';
+import '../services/voice/tts_engine.dart';
+import '../services/voice/device_tts_engine.dart';
+import '../services/voice/cloud_tts_engine.dart';
+import '../services/voice/cloud_tts_unlock_service.dart';
 import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import '../widgets/word_lookup_sheet.dart';
+import '../theme/app_colors.dart';
 import 'paywall_screen.dart';
 import 'stats_screen.dart';
 
@@ -60,6 +65,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   // 音声（会話）: STT/TTS
   final SpeechRecognitionService _speechService = SpeechRecognitionService();
   final TextToSpeechService _ttsService = TextToSpeechService();
+  // T-35: 3段構成TTS(端末/広告日解放クラウド/プレミアム常時クラウド)
+  late final DeviceTtsEngine _deviceTtsEngine = DeviceTtsEngine(_ttsService);
+  final CloudTtsEngine _cloudTtsEngine = CloudTtsEngine();
+  final CloudTtsUnlockService _cloudTtsUnlockService = CloudTtsUnlockService();
+  bool _cloudTtsUnlockedToday = false;
   bool _voiceReady = false;
   bool _ttsReady = false;
   bool _isListening = false;
@@ -144,6 +154,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       
       // Premium ステータス確認
       await _checkPremiumStatus();
+      await _checkCloudTtsUnlock();
 
       // ストリーク読み込み
       await _loadStreak();
@@ -164,6 +175,42 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     } catch (e) {
       logger.info('Error checking premium status: $e');
     }
+  }
+
+  /// T-35: 本日クラウドTTSが解放済みか(表示・呼び分け用のローカルヒント)。
+  /// 実際の許可判定はサーバー(api/tts.ts)が行う。
+  Future<void> _checkCloudTtsUnlock() async {
+    final unlocked = await _cloudTtsUnlockService.isUnlockedToday();
+    if (!mounted) return;
+    setState(() => _cloudTtsUnlockedToday = unlocked);
+  }
+
+  /// T-35: Premium/本日広告解放時はクラウドTTS(OpenAI)、それ以外は端末TTS。
+  /// クラウド取得・再生に失敗した場合は会話を止めず端末TTSへフォールバックする。
+  Future<TtsEngine> _resolveTtsEngine() {
+    if (_isPremium || _cloudTtsUnlockedToday) {
+      return Future.value(_cloudTtsEngine);
+    }
+    return Future.value(_deviceTtsEngine);
+  }
+
+  Future<void> _speak(String text) async {
+    final engine = await _resolveTtsEngine();
+    if (engine is CloudTtsEngine) {
+      try {
+        await engine.speak(text, sceneId: widget.sceneId);
+        return;
+      } catch (e) {
+        logger.info('Cloud TTS failed, falling back to device TTS: $e');
+      }
+    }
+    await _deviceTtsEngine.speak(text, sceneId: widget.sceneId);
+  }
+
+  /// 現在再生中かもしれない両エンジンをまとめて停止する(呼び分けの追跡コストを避ける)。
+  Future<void> _stopSpeaking() async {
+    await _deviceTtsEngine.stop();
+    await _cloudTtsEngine.stop();
   }
 
   Future<void> _loadStreak() async {
@@ -241,7 +288,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  /// 「広告を見て +5回」: 広告を表示し、視聴完了したら当日上限を +5 する。
+  /// 「広告を見て +5回」: 広告を表示し、視聴完了したら当日上限を +5 し、
+  /// 本日いっぱいクラウドTTS(高品質ボイス)も解放する(T-35)。
+  /// 広告在庫切れ時は「穴対策」としてクラウドTTSのみ無償解放する(+5回は付与しない)。
   Future<void> _watchAdForBonus() async {
     if (_userId == null || _isAdLoading) return;
     setState(() => _isAdLoading = true);
@@ -251,10 +300,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         await _rewardedAdService.loadAd();
       }
       if (!_rewardedAdService.isReady) {
+        // 広告在庫切れフォールバック: ユーザーに理不尽を与えないよう、
+        // +5回は付与しないがクラウドTTSはその日いっぱい無償解放する。
+        await _cloudTtsUnlockService.markUnlockedToday();
         if (mounted) {
+          setState(() => _cloudTtsUnlockedToday = true);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).adLoadFailed),
+              content: Text(AppLocalizations.of(context).adLoadFailedTtsUnlocked),
             ),
           );
         }
@@ -264,8 +317,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final earned = await _rewardedAdService.showAd();
       if (earned) {
         await _rateLimitService.grantAdBonus(_userId!);
+        await _cloudTtsUnlockService.markUnlockedToday();
         await _loadRateLimit(); // 残数表示を更新
         if (mounted) {
+          setState(() => _cloudTtsUnlockedToday = true);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocalizations.of(context).adBonusGranted)),
           );
@@ -342,7 +397,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       return;
     }
 
-    await _ttsService.stop(); // 進行中の読み上げを止めてから録音
+    await _stopSpeaking(); // 進行中の読み上げを止めてから録音
     // 入力欄に残っているテキスト（無音自動停止で保持された前回の発話や、
     // 手入力の途中文）は破棄せず接頭辞として保持し、新しい認識結果を後ろに連結する。
     // これにより「考え込み→無音自動停止→マイク再タップ」で発話の続きを追記できる。
@@ -462,7 +517,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _inputController.clear();
 
     // 進行中のAI読み上げを止める(ユーザーが次の発話をした=前の読み上げは不要)。
-    await _ttsService.stop();
+    await _stopSpeaking();
 
     // 録音中に手動送信された場合、マイクを確実に止める。
     // 止めないと、この後のTTS読み上げ(スピーカー出力)をマイクが拾い、
@@ -503,7 +558,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (_autoRead && _ttsReady) {
         final reply = assistantResponse['content'] as String? ?? '';
         if (reply.isNotEmpty) {
-          await _ttsService.speak(cleanForSpeech(reply));
+          await _speak(cleanForSpeech(reply));
         }
       }
 
@@ -660,6 +715,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _rewardedAdService.dispose();
     _speechService.dispose();
     _ttsService.dispose();
+    _cloudTtsEngine.dispose();
     super.dispose();
   }
 
@@ -753,6 +809,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               icon: Icon(_autoRead ? Icons.volume_up : Icons.volume_off),
               tooltip: l.voiceAutoRead,
               onPressed: () => setState(() => _autoRead = !_autoRead),
+            ),
+          if (_ttsReady)
+            IconButton(
+              // T-35: 高品質ボイス(クラウドTTS)の状態を常設で示す小さな導線。
+              // 未解放時にタップすると広告視聴フローへ(ペイウォールへの押し付けはしない)。
+              icon: Icon(
+                Icons.headset_mic,
+                color: (_isPremium || _cloudTtsUnlockedToday)
+                    ? AppColors.brand
+                    : Colors.grey,
+              ),
+              tooltip: (_isPremium || _cloudTtsUnlockedToday)
+                  ? l.cloudVoiceActiveTooltip
+                  : l.cloudVoiceLockedTooltip,
+              onPressed: (_isPremium || _cloudTtsUnlockedToday)
+                  ? null
+                  : _watchAdForBonus,
             ),
           IconButton(
             icon: const Icon(Icons.more_vert),
@@ -866,11 +939,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     RateLimitWidget(
                       rateLimit: _rateLimit,
                       onUpgradePressed: _openPaywall,
+                      // T-35: 「枯渇後のみ」から「1日1回、常時表示」に変更
+                      // (+5回だけでなく高品質ボイスも解放するため開幕視聴を可能にする)。
                       showWatchAdButton: _rewardedAdService.isSupported &&
                           _rateLimit != null &&
                           !_rateLimit!.isPremium &&
-                          _rateLimit!.dailyLimit < 10 &&
-                          _rateLimit!.remainingCalls <= 1,
+                          !_cloudTtsUnlockedToday,
                       isAdLoading: _isAdLoading,
                       onWatchAd: _watchAdForBonus,
                     ),

@@ -59,6 +59,9 @@ dependencies:
   flutter_tts: ^4.2.0
   # ペイウォールからの利用規約/プライバシーポリシー外部リンク用
   url_launcher: ^6.3.0
+  # T-35: クラウドTTS(OpenAI)のmp3再生・一時ファイル保存用
+  just_audio: ^0.9.36
+  path_provider: ^2.1.1
 
 dev_dependencies:
   flutter_test:

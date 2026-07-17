@@ -28,13 +28,17 @@
   "@watchAdForBonus": {
     "description": "Button to watch a rewarded ad and gain 5 extra messages"
   },
-  "adBonusGranted": "+5 messages added!",
+  "adBonusGranted": "+5 messages added! Enjoy high-quality voice for the rest of today 🎧",
   "@adBonusGranted": {
-    "description": "Confirmation after a rewarded ad grants bonus messages"
+    "description": "Confirmation after a rewarded ad grants bonus messages + cloud TTS for today (T-35)"
   },
   "adLoadFailed": "Could not load the ad. Please try again later.",
   "@adLoadFailed": {
     "description": "Shown when a rewarded ad fails to load"
+  },
+  "adLoadFailedTtsUnlocked": "Could not load the ad. Enjoy high-quality voice for free today instead 🎧",
+  "@adLoadFailedTtsUnlocked": {
+    "description": "Shown when a rewarded ad fails to load; cloud TTS is unlocked for free as a fallback (T-35)"
   },
   "navScenes": "Scenes",
   "@navScenes": {
@@ -1018,6 +1022,14 @@
   "voiceAutoRead": "Auto-read",
   "@voiceAutoRead": {
     "description": "Tooltip for toggling auto read-aloud of assistant replies"
+  },
+  "cloudVoiceActiveTooltip": "High-quality voice active today",
+  "@cloudVoiceActiveTooltip": {
+    "description": "Tooltip shown when cloud TTS is unlocked (Premium or today's ad watch), T-35"
+  },
+  "cloudVoiceLockedTooltip": "🎧 High-quality voice — watch an ad to unlock today (daily for Premium)",
+  "@cloudVoiceLockedTooltip": {
+    "description": "Tooltip/CTA shown when cloud TTS is locked, tapping starts the rewarded ad flow (T-35)"
   },
   "micRationaleMessage": "We need microphone access to check your pronunciation during Japanese practice.",
   "@micRationaleMessage": {
