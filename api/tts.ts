@@ -6,28 +6,42 @@ const supabaseKey =
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || '';
 const openaiApiKey = process.env.OPENAI_API_KEY || '';
 
-// キャラクター(sceneId)ごとのOpenAI音声ID割当(lib/constants/character_voice_map.dart と同一)。
-const CHARACTER_VOICE_MAP: { [sceneId: string]: string } = {
-  '1': 'nova',
-  '2': 'echo',
-  '3': 'shimmer',
-  '4': 'onyx',
-  '5': 'nova',
-  '6': 'onyx',
-  '7': 'echo',
-  '8': 'shimmer',
-  '9': 'onyx',
-  '10': 'nova',
-  '11': 'shimmer',
-  '12': 'echo',
-  '13': 'fable',
-  '14': 'shimmer',
-  '15': 'onyx',
-  '16': 'echo',
-  '17': 'nova',
-  '18': 'onyx',
+// キャラクター(sceneId)ごとの音声プロファイル(gpt-4o-mini-tts)。
+// voice: 13声(alloy/ash/ballad/coral/echo/fable/nova/onyx/sage/shimmer/verse/marin/cedar)から選択。
+// instructions: 話し方の指示。キャラの年齢・性別・トーンを反映し「シーンキャラと声の
+// イメージ不一致」(Build 6検証NG)を解消する。すべて "native Japanese speaker" を明示し
+// 外国語訛りを抑制する。出典: docs/Persona-Design-v1.0.md / T-34_premium-pro-scenes.md
+type VoiceProfile = { voice: string; instructions: string };
+
+const JP = 'You are a native Japanese speaker with natural, fluent Japanese pronunciation and pitch accent. ';
+
+const CHARACTER_VOICE_MAP: { [sceneId: string]: VoiceProfile } = {
+  // 基本8シーン
+  '1': { voice: 'nova', instructions: JP + 'Speak as Sakura, a cheerful friendly 22-year-old woman chatting with a friend at a cafe. Bright, warm, casual tone.' },
+  '2': { voice: 'echo', instructions: JP + 'Speak as Takuya, a polite 28-year-old restaurant waiter. Courteous, clear, professional service tone at a moderate pace.' },
+  '3': { voice: 'shimmer', instructions: JP + 'Speak as Yumi, an enthusiastic 25-year-old fashion shop assistant. Upbeat, helpful, friendly retail tone.' },
+  '4': { voice: 'ash', instructions: JP + 'Speak as Kouki, a relaxed 30-year-old commuter on a train. Natural, casual, helpful everyday tone.' },
+  '5': { voice: 'sage', instructions: JP + 'Speak as Akari, a calm 35-year-old hospital receptionist. Gentle, careful, reassuring formal tone at a measured pace.' },
+  '6': { voice: 'onyx', instructions: JP + 'Speak as Kenji, a confident 32-year-old businessman in a formal setting. Polished, articulate, professional business tone.' },
+  '7': { voice: 'ballad', instructions: JP + 'Speak as Minato, a laid-back 26-year-old at a cafe. Soft, relaxed, unhurried conversational tone.' },
+  '8': { voice: 'shimmer', instructions: JP + 'Speak as Eiko, a warm 29-year-old friend in open conversation. Genuine, curious, comfortable friendly tone.' },
+  // アニメ5シーン
+  '9': { voice: 'verse', instructions: JP + 'Speak as Raiki, a passionate 19-year-old fighter. Energetic, dynamic, youthful voice full of fighting spirit — but keep speech clear.' },
+  '10': { voice: 'nova', instructions: JP + 'Speak as Hana, a bright 18-year-old girl who loves helping friends. Sweet, encouraging, youthful cheerful tone.' },
+  '11': { voice: 'coral', instructions: JP + 'Speak as Luna, a thoughtful 21-year-old with deep emotional awareness. Soft, sincere, gently expressive tone with tender pacing.' },
+  '12': { voice: 'echo', instructions: JP + 'Speak as Taro, a lively 17-year-old high school boy. Light, youthful, casual energetic tone — clearly a teenager, not an adult.' },
+  '13': { voice: 'fable', instructions: JP + 'Speak as Jiro, a funny 24-year-old who loves making people laugh. Playful, animated, comedic timing with lively intonation.' },
+  // 実用プレミアム5シーン(T-34)
+  '14': { voice: 'marin', instructions: JP + 'Speak as Haruko, an 82-year-old woman at a care facility. Slow, slightly frail but warm elderly voice, kind and appreciative, with natural pauses.' },
+  '15': { voice: 'onyx', instructions: JP + 'Speak as Dr. Mori, a 45-year-old physician. Composed, authoritative, precise professional medical tone.' },
+  '16': { voice: 'cedar', instructions: JP + 'Speak as Sato, a 40-year-old hiring manager conducting a job interview. Professional, courteous, encouraging formal tone.' },
+  '17': { voice: 'sage', instructions: JP + 'Speak as Mizuki, a 34-year-old city hall counter clerk. Clear, precise, formal but approachable public-service tone.' },
+  '18': { voice: 'onyx', instructions: JP + 'Speak as Tanaka, a 50-year-old department manager. Firm, dignified, busy-but-fair senior manager tone with mature gravitas.' },
 };
-const DEFAULT_VOICE = 'alloy';
+const DEFAULT_VOICE: VoiceProfile = {
+  voice: 'alloy',
+  instructions: JP + 'Speak in a clear, friendly, natural conversational tone.',
+};
 
 const MAX_TEXT_LENGTH = 1000;
 
@@ -125,8 +139,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const voice = CHARACTER_VOICE_MAP[String(sceneId)] || DEFAULT_VOICE;
+    const profile = CHARACTER_VOICE_MAP[String(sceneId)] || DEFAULT_VOICE;
 
+    // gpt-4o-mini-tts: tts-1と同水準の料金($0.60/1M入力トークン + $12/1M音声トークン
+    // ≒ $0.015/分)で、instructionsにより年齢・性別・トーンを制御できる。
+    // レスポンス形式(音声バイナリ)はtts-1と同一のため、クライアント変更は不要。
     const openaiResponse = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -134,8 +151,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'tts-1',
-        voice,
+        model: 'gpt-4o-mini-tts',
+        voice: profile.voice,
+        instructions: profile.instructions,
         input: text,
         response_format: 'mp3',
       }),
