@@ -20,7 +20,13 @@ const supabaseKey =
  * 1日1回の判定: 本日分の usage_logs.ad_reward が既にあれば、
  * daily_limit は変更せず success:true(冪等) を返す。
  *
- * Request body: { "token": "supabase access token (JWT)" }
+ * mode="tts_fallback"(広告在庫切れフォールバック): +5回は付与せず、
+ * usage_logs.ad_reward(metadata.fallback=true)のみ記録する。
+ * api/tts.ts は「本日の ad_reward イベント有無」でクラウドTTSを許可するため、
+ * この記録がないとクライアントのローカル解放フラグと食い違い、
+ * 「高品質ボイス解放」と表示しながら実際は端末TTSに落ちるバグになる。
+ *
+ * Request body: { "token": "supabase access token (JWT)", "mode"?: "tts_fallback" }
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -42,7 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   try {
-    const { token } = req.body || {};
+    const { token, mode } = req.body || {};
+    const isTtsFallback = mode === 'tts_fallback';
     if (!token) {
       return res.status(401).json({ error: 'Missing authentication token' });
     }
@@ -93,6 +100,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success: true,
         dailyLimit: rateLimit.daily_limit,
         alreadyGranted: true,
+      });
+    }
+
+    // 広告在庫切れフォールバック: クォータは増やさず、クラウドTTS許可の
+    // 根拠となる ad_reward イベントだけを記録する(1日1回・上の冪等判定を共有)。
+    if (isTtsFallback) {
+      const { error: fallbackLogError } = await supabase.from('usage_logs').insert({
+        user_id: userId,
+        event: 'ad_reward',
+        is_premium: false,
+        metadata: { fallback: true },
+      });
+      if (fallbackLogError) {
+        console.error(
+          'usage_logs ad_reward(fallback) insert failed:',
+          fallbackLogError.code,
+          fallbackLogError.message,
+        );
+        return res.status(500).json({ error: 'Failed to record fallback unlock' });
+      }
+      return res.status(200).json({
+        success: true,
+        dailyLimit: rateLimit.daily_limit,
+        alreadyGranted: false,
+        fallback: true,
       });
     }
 

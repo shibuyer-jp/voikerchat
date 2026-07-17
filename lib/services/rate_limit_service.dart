@@ -92,4 +92,40 @@ class RateLimitService {
       logger.info('[RateLimitService] grantAdBonus error: $e');
     }
   }
+
+  /// 広告在庫切れフォールバック時のクラウドTTS解放をサーバーに記録する(T-35バグ修正)。
+  ///
+  /// api/tts.ts は「本日の usage_logs.ad_reward イベント有無」でクラウドTTSを
+  /// 許可するため、ローカルフラグだけではサーバーに拒否され端末TTSに落ちる。
+  /// mode=tts_fallback は +5回を付与せず ad_reward イベントのみ記録する。
+  /// 戻り値: サーバー記録に成功したか(失敗時はクラウドTTSは使えない)。
+  Future<bool> recordTtsFallbackUnlock() async {
+    final token = _supabase.auth.currentSession?.accessToken;
+    if (token == null) {
+      logger.info('[RateLimitService] recordTtsFallbackUnlock skipped: no auth token');
+      return false;
+    }
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/api/ad-reward'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'token': token, 'mode': 'tts_fallback'}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        logger.info(
+          '[RateLimitService] recordTtsFallbackUnlock failed: ${response.statusCode} ${response.body}',
+        );
+        return false;
+      }
+      logger.info('[RateLimitService] TTS fallback unlock recorded: ${response.body}');
+      return true;
+    } catch (e) {
+      logger.info('[RateLimitService] recordTtsFallbackUnlock error: $e');
+      return false;
+    }
+  }
 }
