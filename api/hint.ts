@@ -11,37 +11,32 @@ const supabaseKey =
 const claudeApiKey =
   process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || '';
 
-// 辞書機能専用の軽い日次上限(会話回数の rate_limits とは別枠、T-31)。
-// T-36のヒント機能と合算(仕様書: 「辞書(T-31)と合算の軽い日次上限」)。
-// Premium は無制限。usage_logs(event='message_sent',
-// metadata.feature in ('define','hint'))の本日合計件数で判定する
-// (rate_limits のスキーマ変更はしない)。
+// 辞書(T-31)と合算の軽い日次上限。カウント自体は api/define.ts 側で
+// metadata.feature in ('define','hint') として判定するため、ここでは
+// 上限値の重複定義を避け、同じ値のみ持つ(判定ロジックはdefine.tsに集約)。
 const FREE_DAILY_DEFINE_HINT_LIMIT = 30;
 
-const DEFINE_SYSTEM_PROMPT = `You are a Japanese dictionary assistant helping a Filipino learner understand a word or phrase from a conversation.
+const HINT_SYSTEM_PROMPT = `You are a Japanese conversation coach helping a Filipino learner figure out what to say next in an ongoing roleplay conversation.
 
-Given a Japanese term (possibly inflected/conjugated) and the full sentence it appeared in, respond with ONLY a single-line minified JSON object with exactly these keys:
-{"reading":"...","meaning_en":"...","meaning_fil":"...","example_ja":"...","example_en":"..."}
+Given the recent conversation context, suggest ONE short, natural Japanese sentence the learner could say next, matching their apparent level. Respond with ONLY a single-line minified JSON object with exactly these keys:
+{"example_ja":"...","example_en":"..."}
 
-- reading: hiragana reading of the term (empty string if the term has no kanji)
-- meaning_en: short, simple English meaning of the term AS USED in the given sentence
-- meaning_fil: short, simple Tagalog meaning of the term AS USED in the given sentence
-- example_ja: one short, natural Japanese example sentence using the term (different from the given sentence)
+- example_ja: one short, natural Japanese sentence appropriate as the learner's next line
 - example_en: English translation of example_ja
 
 Output ONLY the JSON object. No markdown, no code fences, no explanation, no extra text.`;
 
 /**
- * POST /api/define
+ * POST /api/hint
  *
- * AIメッセージ内で選択した語句の意味を調べる(T-31)。
- * 会話回数(rate_limits)は消費しない。
+ * 会話の続き方に迷った時のヒント(次に言えそうな例文+英訳)を1つ返す(T-36)。
+ * 会話回数(rate_limits)は消費しない。T-31の辞書機能と合算の軽い日次上限を
+ * usage_logs(event='message_sent', metadata.feature in ('define','hint'))で判定。
  *
  * Request body:
  * {
  *   "token": "supabase access token (JWT)",
- *   "term": "選択された語句",
- *   "context": "その語句が含まれるメッセージ全文",
+ *   "context": "直近の会話(役割と発話を含む短いテキスト)",
  *   "sceneId": "1" (optional)
  * }
  */
@@ -67,15 +62,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const anthropic = new Anthropic({ apiKey: claudeApiKey, maxRetries: 4 });
 
   try {
-    const { token, term, context, sceneId } = req.body || {};
+    const { token, context, sceneId } = req.body || {};
 
     if (!token) {
       return res.status(401).json({ error: 'Missing authentication token' });
     }
-    if (typeof term !== 'string' || !term.trim() || term.length > 50) {
-      return res.status(400).json({ error: 'Invalid term' });
-    }
-    if (typeof context !== 'string' || context.length > 2000) {
+    if (typeof context !== 'string' || !context.trim() || context.length > 3000) {
       return res.status(400).json({ error: 'Invalid context' });
     }
 
@@ -100,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('Error checking premium status:', err);
     }
 
-    // 辞書専用の軽い日次上限(Premiumは無制限)
+    // 辞書(T-31)と合算の軽い日次上限(Premiumは無制限)
     if (!isPremium) {
       const startOfDayUtc = new Date();
       startOfDayUtc.setUTCHours(0, 0, 0, 0);
@@ -116,19 +108,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('usage_logs count failed:', countError.code, countError.message);
       } else if ((count ?? 0) >= FREE_DAILY_DEFINE_HINT_LIMIT) {
         return res.status(429).json({
-          error: 'Daily dictionary lookup limit reached',
+          error: 'Daily hint/lookup limit reached',
         });
       }
     }
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 200,
-      system: DEFINE_SYSTEM_PROMPT,
+      max_tokens: 150,
+      system: HINT_SYSTEM_PROMPT,
       messages: [
         {
           role: 'user',
-          content: `Term: ${term}\nContext sentence: ${context}`,
+          content: `Recent conversation:\n${context}`,
         },
       ],
     });
@@ -140,12 +132,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       parsed = JSON.parse(rawText.trim());
     } catch (parseErr) {
-      console.error('define: failed to parse model output:', rawText);
-      return res.status(502).json({ error: 'Failed to parse dictionary response' });
+      console.error('hint: failed to parse model output:', rawText);
+      return res.status(502).json({ error: 'Failed to parse hint response' });
     }
 
     // 使用ログ(失敗しても本処理は止めない)。既存の event 種別のみ使用し、
-    // metadata.feature で辞書機能を識別する(usage_logs のスキーマ変更はしない)。
+    // metadata.feature で識別する(usage_logs のスキーマ変更はしない)。
+    // 命名注意: オンボーディングの recordHintUsage とは別物(仕様書指摘通り)。
     try {
       const { error: logError } = await supabase.from('usage_logs').insert({
         user_id: userId,
@@ -154,24 +147,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         is_premium: isPremium,
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,
-        metadata: { feature: 'define', scene: sceneId ?? null, term },
+        metadata: { feature: 'hint', scene: sceneId ?? null },
       });
       if (logError) {
         console.error('usage_logs insert failed:', logError.code, logError.message);
       }
     } catch (err) {
-      console.error('Failed to log define usage:', err);
+      console.error('Failed to log hint usage:', err);
     }
 
     return res.status(200).json({
-      reading: parsed.reading ?? '',
-      meaning_en: parsed.meaning_en ?? '',
-      meaning_fil: parsed.meaning_fil ?? '',
       example_ja: parsed.example_ja ?? '',
       example_en: parsed.example_en ?? '',
     });
   } catch (error: any) {
-    console.error('Define API error:', error);
+    console.error('Hint API error:', error);
 
     const status = error?.status;
     const isOverloaded =
@@ -180,7 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error?.error?.error?.type === 'overloaded_error';
     if (isOverloaded || status === 503) {
       return res.status(503).json({
-        error: 'The dictionary lookup is busy right now. Please try again in a moment.',
+        error: 'The hint service is busy right now. Please try again in a moment.',
       });
     }
 

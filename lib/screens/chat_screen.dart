@@ -23,10 +23,13 @@ import '../services/voice/tts_engine.dart';
 import '../services/voice/device_tts_engine.dart';
 import '../services/voice/cloud_tts_engine.dart';
 import '../services/voice/cloud_tts_unlock_service.dart';
+import '../services/learner_preferences_service.dart';
 import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import '../widgets/word_lookup_sheet.dart';
+import '../widgets/hint_sheet.dart';
+import '../widgets/vocab_summary_sheet.dart';
 import '../theme/app_colors.dart';
 import 'paywall_screen.dart';
 import 'stats_screen.dart';
@@ -70,6 +73,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final CloudTtsEngine _cloudTtsEngine = CloudTtsEngine();
   final CloudTtsUnlockService _cloudTtsUnlockService = CloudTtsUnlockService();
   bool _cloudTtsUnlockedToday = false;
+  // T-36: ふりがな表示設定(設定画面のトグルと同期、デフォルトON)
+  final LearnerPreferencesService _learnerPreferencesService =
+      LearnerPreferencesService();
+  bool _furiganaEnabled = true;
   bool _voiceReady = false;
   bool _ttsReady = false;
   bool _isListening = false;
@@ -155,6 +162,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       // Premium ステータス確認
       await _checkPremiumStatus();
       await _checkCloudTtsUnlock();
+      await _loadFuriganaPreference();
 
       // ストリーク読み込み
       await _loadStreak();
@@ -183,6 +191,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     final unlocked = await _cloudTtsUnlockService.isUnlockedToday();
     if (!mounted) return;
     setState(() => _cloudTtsUnlockedToday = unlocked);
+  }
+
+  /// T-36: 設定画面のふりがなトグルを読み込む(会話開始時点のスナップショット)。
+  Future<void> _loadFuriganaPreference() async {
+    final enabled = await _learnerPreferencesService.isFuriganaEnabled();
+    if (!mounted) return;
+    setState(() => _furiganaEnabled = enabled);
   }
 
   /// T-35: Premium/本日広告解放時はクラウドTTS(OpenAI)、それ以外は端末TTS。
@@ -633,6 +648,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           'messages': messages,
           'sceneId': widget.sceneId,
           'maxTokens': 500,
+          'furiganaEnabled': _furiganaEnabled,
         }),
       );
 
@@ -977,6 +993,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               onSubmitted: (_) => _isSending ? null : _sendMessage(),
                             ),
                           ),
+                          // T-36: 次に言えそうな例文+英訳のヒント。会話クォータは消費しない。
+                          IconButton(
+                            icon: const Icon(Icons.lightbulb_outline),
+                            tooltip: l.hintButtonTooltip,
+                            onPressed: _isSending ? null : _showHint,
+                          ),
                           // 起動時はSTT未初期化でも表示（初回タップで説明→権限へ）。
                           // 未対応/拒否が確定した場合のみ隠し、テキスト入力へフォールバック。
                           // マイクボタンは常時表示（拒否時はタップで設定誘導ダイアログを出す）
@@ -1046,6 +1068,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 );
 
                 if (confirm == true && _userId != null) {
+                  // T-36: 消去前(3往復以上なら)に「今日の単語」を表示する。
+                  await _maybeShowVocabSummary();
                   await _messageService.clearSessionMessages(
                     userId: _userId!,
                     sceneId: widget.sceneId,
@@ -1058,9 +1082,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             ListTile(
               title: Text(AppLocalizations.of(context).exitConversation),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
+              onTap: () async {
+                // Navigator参照を先に確保しておく(_maybeShowVocabSummaryの
+                // await中にこのシートのcontextが破棄されるため、取得済みの
+                // NavigatorStateを使い回す)。
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                // T-36: 退出前(3往復以上なら)に「今日の単語」を表示する。
+                await _maybeShowVocabSummary();
+                if (!mounted) return;
+                navigator.pop();
               },
             ),
           ],
@@ -1187,6 +1218,49 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       builder: (context) => WordLookupSheet(
         term: term,
         context: messageContent,
+        sceneId: widget.sceneId,
+      ),
+    );
+  }
+
+  /// T-36: 直近の会話を要約テキスト化してヒントAPIへ渡す。
+  String _buildRecentContext() {
+    final recent = _messages.length > 6
+        ? _messages.sublist(_messages.length - 6)
+        : _messages;
+    return recent.map((m) => '${m.role}: ${m.content}').join('\n');
+  }
+
+  Future<void> _showHint() async {
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => HintSheet(
+        context: _buildRecentContext(),
+        sceneId: widget.sceneId,
+      ),
+    );
+    if (chosen != null && chosen.isNotEmpty && mounted) {
+      _inputController.text = chosen;
+    }
+  }
+
+  /// T-36: 会話終了/リセット時、3往復以上あれば「今日の単語」ボトムシートを表示する
+  /// (0〜2往復ならスキップ)。
+  static const int _vocabSummaryMinUserTurns = 3;
+
+  Future<void> _maybeShowVocabSummary() async {
+    final userTurns = _messages.where((m) => m.role == 'user').length;
+    if (userTurns < _vocabSummaryMinUserTurns || !mounted) return;
+
+    final conversation =
+        _messages.map((m) => '${m.role}: ${m.content}').join('\n');
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => VocabSummarySheet(
+        conversation: conversation,
         sceneId: widget.sceneId,
       ),
     );

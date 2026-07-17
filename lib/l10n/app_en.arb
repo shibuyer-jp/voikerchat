@@ -425,6 +425,46 @@
   "@wordLookupQuotaReached": {
     "description": "Word lookup sheet: daily quota exceeded message"
   },
+  "hintButtonTooltip": "Hint: what could I say next?",
+  "@hintButtonTooltip": {
+    "description": "Tooltip for the lightbulb hint button near the chat input (T-36)"
+  },
+  "hintTitle": "Hint",
+  "@hintTitle": {
+    "description": "Hint sheet title (T-36)"
+  },
+  "hintLoading": "Thinking...",
+  "@hintLoading": {
+    "description": "Hint sheet loading indicator text"
+  },
+  "hintError": "Couldn't get a hint. Please try again.",
+  "@hintError": {
+    "description": "Hint sheet generic error (network/server) message"
+  },
+  "hintQuotaReached": "You've reached today's hint/lookup limit.",
+  "@hintQuotaReached": {
+    "description": "Hint sheet daily quota exceeded message (shared with T-31 dictionary)"
+  },
+  "hintUseThis": "Use this sentence",
+  "@hintUseThis": {
+    "description": "Hint sheet button to fill the chat input with the suggested sentence"
+  },
+  "vocabSummaryTitle": "Today's words",
+  "@vocabSummaryTitle": {
+    "description": "Vocab summary sheet title, shown at session end (T-36)"
+  },
+  "vocabSummaryLoading": "Gathering your words...",
+  "@vocabSummaryLoading": {
+    "description": "Vocab summary sheet loading indicator text"
+  },
+  "vocabSummaryError": "Couldn't gather today's words this time.",
+  "@vocabSummaryError": {
+    "description": "Vocab summary sheet generic error (network/server) message"
+  },
+  "vocabSummaryEmpty": "No notable words to review from this conversation.",
+  "@vocabSummaryEmpty": {
+    "description": "Vocab summary sheet empty-result message"
+  },
   "errorTitle": "❌ Error",
   "@errorTitle": {
     "description": "Generic error dialog title"
@@ -978,6 +1018,18 @@
   "settingsAccountSectionTitle": "Account",
   "@settingsAccountSectionTitle": {
     "description": "Section header for account-related settings"
+  },
+  "settingsLearningSectionTitle": "Learning support",
+  "@settingsLearningSectionTitle": {
+    "description": "Section header for learning-support settings (T-36)"
+  },
+  "furiganaToggleTitle": "Show furigana",
+  "@furiganaToggleTitle": {
+    "description": "Toggle: show furigana readings on kanji in AI replies (T-36)"
+  },
+  "furiganaToggleSubtitle": "Show hiragana readings next to kanji, like 漢字(かんじ)",
+  "@furiganaToggleSubtitle": {
+    "description": "Subtitle explaining the furigana toggle"
   },
   "deleteAccountTitle": "Delete account",
   "@deleteAccountTitle": {

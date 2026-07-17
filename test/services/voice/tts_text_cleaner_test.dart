@@ -34,5 +34,14 @@ void main() {
     test('インラインコードの記号を外す', () {
       expect(cleanForSpeech('use `flutter` here'), 'use flutter here');
     });
+    test('ふりがな(T-36、半角括弧)を除去し二重読み上げを防ぐ', () {
+      expect(cleanForSpeech('漢字(かんじ)を勉強(べんきょう)する'), '漢字を勉強する');
+    });
+    test('ふりがな(T-36、全角括弧)を除去する', () {
+      expect(cleanForSpeech('漢字（かんじ）は全角でも除去される'), '漢字は全角でも除去される');
+    });
+    test('かな単独の括弧はふりがなではないため残す', () {
+      expect(cleanForSpeech('これは(れい)です'), 'これは(れい)です');
+    });
   });
 }

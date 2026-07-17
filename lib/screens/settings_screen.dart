@@ -3,8 +3,9 @@ import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/main.dart' show RootScreen;
 
 import '../services/account_service.dart';
+import '../services/learner_preferences_service.dart';
 
-/// 設定画面。現状はストア必須の「アカウント削除」導線を提供する。
+/// 設定画面。ストア必須の「アカウント削除」導線と、学習サポート設定を提供する。
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -14,7 +15,27 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final AccountService _accountService = AccountService();
+  final LearnerPreferencesService _learnerPreferencesService =
+      LearnerPreferencesService();
   bool _deleting = false;
+  bool _furiganaEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFuriganaPreference();
+  }
+
+  Future<void> _loadFuriganaPreference() async {
+    final enabled = await _learnerPreferencesService.isFuriganaEnabled();
+    if (!mounted) return;
+    setState(() => _furiganaEnabled = enabled);
+  }
+
+  Future<void> _toggleFurigana(bool value) async {
+    setState(() => _furiganaEnabled = value);
+    await _learnerPreferencesService.setFuriganaEnabled(value);
+  }
 
   Future<void> _confirmAndDelete() async {
     final l = AppLocalizations.of(context);
@@ -75,6 +96,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           ListView(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  l.settingsLearningSectionTitle,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+              SwitchListTile(
+                secondary: const Icon(Icons.text_fields),
+                title: Text(l.furiganaToggleTitle),
+                subtitle: Text(l.furiganaToggleSubtitle),
+                value: _furiganaEnabled,
+                onChanged: _toggleFurigana,
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(

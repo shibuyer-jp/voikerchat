@@ -11,6 +11,14 @@ String cleanForSpeech(String raw) {
     '',
   );
 
+  // ふりがな（例: '漢字(かんじ)' → '漢字'）を除去。T-36でシステムプロンプトが
+  // 全漢字に「漢字(かんじ)」形式のふりがなを付与するため、TTSでは読みが
+  // 二重にならないよう括弧内を取り除く（Web版と同様の対応）。
+  text = text.replaceAllMapped(
+    RegExp(r'([一-鿿]+)[（(]([぀-ゟ]+)[）)]'),
+    (m) => m[1]!,
+  );
+
   // 太字 **x** / 斜体 *x*
   text = text.replaceAllMapped(RegExp(r'\*\*(.+?)\*\*'), (m) => m[1]!);
   text = text.replaceAllMapped(RegExp(r'\*(.+?)\*'), (m) => m[1]!);

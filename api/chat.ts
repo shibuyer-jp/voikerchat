@@ -58,7 +58,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const anthropic = new Anthropic({ apiKey: claudeApiKey, maxRetries: 4 });
 
   try {
-    const { token, messages, sceneId, maxTokens = 500 } = req.body || {};
+    const {
+      token,
+      messages,
+      sceneId,
+      maxTokens = 500,
+      furiganaEnabled = true,
+    } = req.body || {};
 
     // 1. トークン検証（getUser はHS256/非対称鍵いずれの署名でも検証可能）
     if (!token) {
@@ -115,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: Math.min(maxTokens, 500),
-      system: buildSystemPrompt(sceneId),
+      system: buildSystemPrompt(sceneId, furiganaEnabled === true),
       messages: sanitizeMessages(messages),
     });
 
@@ -264,7 +270,16 @@ Do not:
 - Generate hateful, explicit, or inappropriate content
 - Use copyrighted materials or characters`;
 
-function buildSystemPrompt(sceneId: string | number): string {
+// T-36: 全漢字にふりがなを「漢字(かんじ)」形式で付与する指示(Web版と同方式)。
+// 設定画面のトグル(デフォルトON)でクライアントが furiganaEnabled を送る。
+const FURIGANA_INSTRUCTION = `
+
+Furigana requirement: For EVERY word containing kanji in your reply, immediately follow it with its hiragana reading in parentheses, like 漢字(かんじ). Apply this to all kanji compounds and single kanji, including names. Do not add furigana to hiragana/katakana-only words or to text already in parentheses.`;
+
+function buildSystemPrompt(
+  sceneId: string | number,
+  furiganaEnabled: boolean,
+): string {
   const scenePrompts: { [key: string]: string } = {
     '1': 'You are Sakura, a friendly 22-year-old woman meeting a friend at a cafe. You speak cheerfully and naturally. Topics include: weekend plans, school/work, favorite foods, music, recent experiences. Use simple, conversational Japanese (Beginner level acceptable). Ask questions to keep the conversation flowing. Encourage your friend to share their thoughts.',
     '2': 'You are Takuya, a 28-year-old restaurant waiter. You help customers order food, answer questions about dishes, and provide recommendations. Speak politely with appropriate honorific language (敬語). Topics: menu items, ingredients, dietary preferences, recommendations, payment. Use clear, moderate-speed Japanese suitable for Intermediate learners. Be attentive and friendly.',
@@ -292,7 +307,8 @@ function buildSystemPrompt(sceneId: string | number): string {
     scenePrompts[String(sceneId)] ||
     'You are a helpful Japanese language conversation partner. Respond naturally in Japanese.';
 
-  return `${COMMON_RULES}\n\n---\n\n${persona}`;
+  const furigana = furiganaEnabled ? FURIGANA_INSTRUCTION : '';
+  return `${COMMON_RULES}\n\n---\n\n${persona}${furigana}`;
 }
 
 /**
