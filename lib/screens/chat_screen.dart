@@ -739,6 +739,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
+      // 背景と吹き出しの対比で視認性を出す(AppColors.chatBackground 参照)
+      backgroundColor: AppColors.chatBackground,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -902,9 +904,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: isUser
-                                      ? Theme.of(context).primaryColor
-                                      : Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(12),
+                                      ? AppColors.brand
+                                      : AppColors.bubbleAssistant,
+                                  // 発話者側の上角だけ小さくして「吹き出し」らしさを出す
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(isUser ? 16 : 4),
+                                    topRight: Radius.circular(isUser ? 4 : 16),
+                                    bottomLeft: const Radius.circular(16),
+                                    bottomRight: const Radius.circular(16),
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: AppColors.bubbleShadow,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -934,7 +949,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 ),
 
                 // Rate limit status + Message input
-                Column(
+                // (青グレー背景と対比する白い下部バーとしてまとめる)
+                Container(
+                  color: AppColors.chatInputSurface,
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // 段階的勧導 Stage 3: インラインバナー（Premium 未加入時のみ）
@@ -1029,6 +1047,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       ),
                     ),
                   ],
+                  ),
                 ),
               ],
             ),

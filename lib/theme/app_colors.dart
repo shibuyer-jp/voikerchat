@@ -22,4 +22,13 @@ class AppColors {
   /// Premium バッジ(シーンカード上の "PREMIUM" タグ)
   static const Color premiumBackground = Color(0xFFFFD700);
   static const Color premiumText = Color(0xFFB8860B);
+
+  /// チャット画面のコントラスト配色(TestFlight目視フィードバック対応)。
+  ///
+  /// LINE等の定番チャットUIに倣い「背景=クールトーン / 吹き出し=白・ブランド色」
+  /// の対比で視認性(メリハリ)を出す。ブランド赤(暖色)の補色方向の青グレーを採用。
+  static const Color chatBackground = Color(0xFFDCE5EE);
+  static const Color bubbleAssistant = Color(0xFFFFFFFF);
+  static const Color chatInputSurface = Color(0xFFFFFFFF);
+  static const Color bubbleShadow = Color(0x14000000); // black 8%
 }
