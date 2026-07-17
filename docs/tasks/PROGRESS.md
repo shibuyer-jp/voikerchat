@@ -23,8 +23,10 @@
   実機/シミュレータで会話し、口調・語彙レベルが仕様通りか確認(受け入れ基準の手動確認項目)
 - T-31: AIメッセージのテキスト選択→「意味を調べる」→ボトムシート表示のUXを実機/シミュレータで
   一度確認(受け入れ基準「2秒以内表示」「入力欄・TTS再生が壊れない」の体感確認)
-- **T-35: `docs/migrations/2026-07-17_lock_rate_limits_client_write.sql` をSupabase SQL Editorで実行**
-  (クライアントによるrate_limits直接UPDATEを禁止するRLS変更。Claude CodeはDBに直接アクセスできないため人間の実行が必須)
+- [x] ~~T-35: `docs/migrations/2026-07-17_lock_rate_limits_client_write.sql` をSupabase SQL Editorで実行~~
+  **完了 2026-07-17**(ユーザーがSQL Editorで手動実行、"Success. No rows returned"を確認)。
+  `rate_limits` へのクライアント直接UPDATEを許可していたRLSポリシー("System can update rate limits")を削除。
+  以後、広告視聴ボーナス付与は `api/ad-reward.ts`(service role)経由のみで可能。
 - [x] ~~T-35: OpenAI APIキー取得 → Vercel環境変数 `OPENAI_API_KEY` に設定~~ **完了 2026-07-17**:
   Vercel CLI(`vercel env add`)で `voikerchat-x621` の Production/Preview/Development 全環境に設定し、
   最新デプロイをredeploy(dpl_2ioDzc97gYFEGfcZLjmZ89vy7Gcz → voikerchat.comへエイリアス済み)。
@@ -90,11 +92,15 @@
   (詳細は「人間へのお願い」「判断記録」参照)。
 - 2026-07-17: OpenAI APIキーをVercel(voikerchat-x621)のProduction/Preview/Developmentに設定し
   最新デプロイをredeploy。api/tts.tsがServer misconfigurationを返さないことをcurlで確認。
+- 2026-07-17: ユーザーがSupabase SQL Editorで `docs/migrations/2026-07-17_lock_rate_limits_client_write.sql`
+  を実行完了("Success. No rows returned")。T-35の前提となるセキュリティ強化(サーバー経由化+RLS制限)が
+  コード・DB両面で完了。
 
-**ユーザー指示の T-30→T-33→T-34→T-32→T-31→T-35 は全て完了(CI緑)。**
+**ユーザー指示の T-30→T-33→T-34→T-32→T-31→T-35 は全て完了(CI緑)。T-35を実際に動かすための人間側の
+前提作業(OpenAIキー設定・RLS変更)も両方完了。**
 
 ## 次アクション(次回セッション)
-- 上記「人間へのお願い」を先に処理(特にRLS変更SQLとOpenAIキー設定はT-35が実際に動くための前提)
+- 残る「人間へのお願い」(実機確認・目視確認・ストア作業系)は上記リスト参照。コード側のブロッカーはなし。
 - ユーザー指示の6タスクの範囲外だが、docs/tasks/PROGRESS.md冒頭のタスク一覧・Master Plan双方に
   記載が残っている **T-36(学習サポート移植: ふりがな/ヒント/単語まとめ)** が唯一の未着手タスク。
   RUNBOOKのキックオフプロンプトには含まれていなかったため今回は着手していない。次回、T-36から
