@@ -1,15 +1,42 @@
-# Voikerchat GitHub Auto-Push Script (PowerShell)
-# 
+###############################################################################
+# 【非推奨・使用しないこと / DEPRECATED — DO NOT USE】
+#
+# この方式は GitHub PAT を git remote set-url 経由で .git/config に平文で
+# 埋め込み、かつ push 後のスクラブ処理が未実装のため、トークンが
+# .git/config に残留し続けます(2026-07-23 に実インシデントで確認)。
+#
+# 標準の運用は Git Credential Manager(GCM)経由の素の `git push origin main`
+# です(credential.helper=manager が有効な環境では push 時に自動的に
+# 認証され、.git/config にトークンは一切書き込まれません)。
+# 詳細: docs/GitHub-Push-Automation.md
+#
+# このスクリプトは GCM 未セットアップの環境(例: Desktop機で未確認の場合)
+# 向けのフォールバックとして削除せず残していますが、通常は使用しないこと。
+###############################################################################
+#
+# Voikerchat GitHub Auto-Push Script (PowerShell / レガシー・PAT直埋め込み方式)
+#
 # Location: %USERPROFILE%\Documents\Voikerchat\scripts\push-commits.ps1
 # Usage: powershell -ExecutionPolicy Bypass -File push-commits.ps1
 #
 # This script retrieves the GitHub PAT from Google Drive (via environment)
 # and automatically pushes commits to GitHub.
+# WARNING: leaves the PAT embedded in .git/config (no scrub step).
 
 param(
     [Parameter(Mandatory=$false)]
     [string]$PAT = $env:GITHUB_TOKEN
 )
+
+Write-Host "WARNING: This script is deprecated. The PAT will remain in .git/config." -ForegroundColor Yellow
+Write-Host "Standard workflow: run 'git push origin main' directly (Git Credential Manager handles auth)." -ForegroundColor Yellow
+Write-Host ""
+$confirm = Read-Host "Use this legacy method anyway? [y/N]"
+if ($confirm -notmatch '^[Yy]$') {
+    Write-Host "Aborted. Use 'git push origin main' instead."
+    exit 1
+}
+Write-Host ""
 
 function Write-Status {
     param([string]$Message, [string]$Status = "INFO")
