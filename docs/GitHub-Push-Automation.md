@@ -2,308 +2,89 @@
 
 ## 概要
 
-このドキュメントでは、commit 19fc020（T-13 Supabase メッセージ履歴実装）を GitHub にプッシュするための複数の方法を説明します。
+このリポジトリを GitHub に push する際の標準手順と、非推奨の旧手順をまとめる。
 
-**目標：** 全自動で `ghp_...` PAT を Google Drive から取得し、GitHub に push する
-
----
-
-## 方法 1：Windows PowerShell（推奨）
-
-### 前提条件
-- Windows 10/11
-- PowerShell 5.0 以上
-- Git がインストール済み
-- 本リポジトリがクローン済み
-
-### 実行手順
-
-#### A. 環境変数で PAT を設定（最も自動化された方法）
-
-```powershell
-# 1. PowerShell を開く（Windows + R → powershell.exe）
-
-# 2. Google Drive から PAT を取得
-#    場所: https://drive.google.com
-#    パス: 00_Project_Credentials/API_Keys/Github_API_Key.txt
-#    （ファイルを開いて ghp_... をコピー）
-
-# 3. 環境変数を設定
-$env:GITHUB_TOKEN = 'ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-
-# 4. Push スクリプトを実行
-cd "$env:USERPROFILE\Documents\Voikerchat"
-powershell -ExecutionPolicy Bypass -File scripts/push-commits.ps1
-```
-
-#### B. 対話的に PAT を入力（セキュア）
-
-```powershell
-# 1. PowerShell を開く
-
-# 2. Push スクリプトを実行
-cd "$env:USERPROFILE\Documents\Voikerchat"
-powershell -ExecutionPolicy Bypass -File scripts/push-commits.ps1
-
-# 3. プロンプトで PAT を入力
-#    Enter GitHub PAT: [非表示で入力]
-```
-
-### 実行結果例
-
-```
-==========================================
-Voikerchat GitHub Auto-Push
-==========================================
-
-[INFO] Project directory: C:\Users\User01\Documents\Voikerchat
-[INFO] Retrieving GitHub PAT...
-[OK] PAT received (ghp_XXXXXXX...)
-[INFO] Updating git remote URL...
-[OK] Remote URL updated
-[INFO] Testing GitHub connectivity...
-[OK] GitHub connection verified
-
-[INFO] Current branch: main
-[INFO] Commits to push: 1
-[INFO] Pushing commits to GitHub...
-[OK] Push successful!
-
-[INFO] Verifying push...
-[OK] All commits successfully pushed
-
-Latest commits:
-19fc020 feat: T-13 Supabase message history - add models, service, and chat screen
-efbc3ba fix: rename DiagnosticLevel to UserDiagnosticLevel to avoid Flutter naming conflict
-7ab47c8 feat: implement Onboarding UI (diagnostic test & level result screens)
-
-==========================================
-✓ Voikerchat Push Complete
-==========================================
-
-Repository: https://github.com/shibuyer-jp/voikerchat
-Branch: main
-```
+**2026-07-23 改訂**: PAT を `git remote set-url` で `.git/config` に直接埋め込む方式(旧・方法1/2)は、
+push後のスクラブ処理が実装されておらずトークンが残留し続ける実インシデントが発生したため、**使用禁止**とした。
+標準は **Git Credential Manager(GCM)経由の素の `git push`** に一本化する。
 
 ---
 
-## 方法 2：Bash/Shell（Linux/macOS）
+## 標準：Git Credential Manager 経由の `git push`
+
+Windows 版 Git には Git Credential Manager(GCM)が標準同梱されており(`credential.helper = manager`)、
+初回のみブラウザでの認証が必要だが、以後は自動的に認証情報が使われる。**`.git/config` にトークンは一切書き込まれない**(Windows Credential Manager に暗号化保存される)。
+
+### 使い方
 
 ```bash
-# 1. リポジトリディレクトリへ移動
-cd ~/voikerchat
+git push origin main
+```
 
-# 2. Google Drive から PAT を取得
-#    場所: https://drive.google.com
-#    パス: 00_Project_Credentials/API_Keys/Github_API_Key.txt
+これだけでよい。初回のみブラウザでのGitHub認証を求められる場合がある。
 
-# 3. 環境変数を設定
-export GITHUB_TOKEN='ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+### セットアップ状態の確認方法
 
-# 4. Push スクリプトを実行
+```bash
+# credential.helper が manager になっているか確認
+git config --get credential.helper
+
+# 認証情報が既にあるか確認（プロンプトなしで応答が返れば設定済み）
+git ls-remote origin HEAD
+```
+
+`git ls-remote origin HEAD` がエラーなく応答すれば、そのマシンでは追加セットアップ不要で `git push` がそのまま使える。
+
+### GitHub CLI(`gh`)について
+
+`gh auth login` でも認証情報を保存できるが、このリポジトリでは GCM が既に機能している場合、
+`gh` を別途 git の credential helper として二重に設定する必要はない。`gh` 自体は Issue/PR操作等の
+補助ツールとしてそのまま使ってよい。
+
+---
+
+## ⚠️ 非推奨(使用禁止): PAT 直埋め込み方式
+
+以下の `scripts/push-commits.sh` / `scripts/push-commits.ps1` による方式は、
+Google Drive から取得した PAT を `git remote set-url origin https://<PAT>@github.com/...` の形で
+**`.git/config` に平文で書き込み、push後にスクラブ(削除)する処理が実装されていない**。
+そのためトークンが `.git/config` に残留し続けるリスクがある。**新規に使用しないこと。**
+
+GCM が未セットアップの環境(例: このリポジトリのDesktop機は2026-07-23時点で未確認)でどうしても
+一時的な代替が必要な場合のみ、スクリプト側の確認プロンプトに `y` と答えて実行できるが、
+**実行後は必ず `git remote set-url origin https://github.com/shibuyer-jp/voikerchat.git` で
+リモートURLを埋め込みなしの状態に戻すこと**。恒久対応は GCM のセットアップ(初回ブラウザ認証)。
+
+<details>
+<summary>旧手順(参考・非推奨)</summary>
+
+```bash
+# Bash
+export GITHUB_TOKEN='ghp_...'
 bash scripts/push-commits.sh
-```
 
----
-
-## 方法 3：GitHub CLI（最も簡潔）
-
-GitHub CLI をインストール済みの場合：
-
-```bash
-# 1. GitHub にログイン
-gh auth login
-
-# 2. Push を実行
-git push origin main
-
-# GitHub CLI が自動的に認証を処理します
-```
-
----
-
-## 方法 4：Git Credential Manager
-
-Windows/macOS/Linux で認証情報を安全に管理：
-
-```bash
-# 1. Git Credential Manager をインストール
-#    https://github.com/git-ecosystem/git-credential-manager
-
-# 2. 初回実行時に認証ダイアログが表示されます
-git push origin main
-
-# 以降、認証情報がキャッシュされます
-```
-
----
-
-## PAT 取得方法の詳細
-
-### Google Drive から直接取得
-
-1. **Google Drive にアクセス**
-   - https://drive.google.com
-
-2. **フォルダを辿る**
-   ```
-   マイドライブ
-   └─ Shibuyer_Management (または 0AJPURde9GjEYUk9PVA)
-      └─ 00_Project_Credentials
-         └─ API_Keys
-            └─ Github_API_Key.txt
-   ```
-
-3. **ファイルを開く**
-   - ダブルクリック → Google ドキュメントで開く
-
-4. **PAT をコピー**
-   - ファイル内容：`ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
-   - 全文を選択・コピー
-
-### GitHub から新規発行（代替案）
-
-1. https://github.com/settings/tokens を開く
-
-2. **Personal access tokens (classic)** → **Generate new token (classic)**
-
-3. **設定**
-   - Scopes: `repo` を選択
-   - Expiration: No expiration（或いは 90 days）
-
-4. **Generate token** → トークンをコピー
-
-5. **Google Drive に保存**（今後の参照用）
-
----
-
-## トラブルシューティング
-
-### エラー：`Invalid PAT format`
-
-**原因：** PAT が `ghp_` で始まっていない、または形式が不正
-
-**対応：**
-1. PAT を再度確認（全文をコピーしたか）
-2. 改行や空白が含まれていないか確認
-3. Google Drive のファイルをテキストエディタで開き直す
-
-### エラー：`GitHub connection failed`
-
-**原因：** PAT が正しくない、または権限不足
-
-**対応：**
-1. PAT を再度 Google Drive から取得
-2. GitHub でトークンが有効か確認（Settings → Tokens）
-3. 別の PAT を発行して試す
-
-### エラー：`No commits to push`
-
-**原因：** すでに最新の状態
-
-**対応：** 正常です。以下を確認してください：
-```bash
-git log --oneline -3
-# 19fc020 が表示されていれば OK
-```
-
-### エラー：`Permission denied`
-
-**原因：** PAT に権限がない
-
-**対応：**
-1. GitHub Settings → Developer settings → Personal access tokens
-2. トークンをクリック → **Regenerate token**
-3. **Scopes:** `repo` を確認
-
----
-
-## 完全自動化（上級）
-
-### 毎日自動でリモートをチェック
-
-**Windows タスクスケジューラで定期実行：**
-
-```powershell
-# push-auto.ps1
-$PAT = $env:GITHUB_TOKEN  # 環境変数から取得
-cd C:\Users\User01\Documents\Voikerchat
+# PowerShell
+$env:GITHUB_TOKEN = 'ghp_...'
 powershell -ExecutionPolicy Bypass -File scripts/push-commits.ps1
 ```
 
-**タスクスケジューラの設定：**
-1. `Win + X` → `タスク スケジューラ`
-2. **タスクの作成**
-3. **トリガー：** 毎日 9:00 AM
-4. **アクション：** PowerShell スクリプト実行
-5. **条件：** ネットワーク接続時のみ
+PAT の取得元: Google Drive `00_Project_Credentials/API_Keys/Github_API_Key.txt`
+
+</details>
 
 ---
 
 ## GitHub Actions による自動 CI/CD
 
-Push 後、自動的に以下が実行されます：
+Push 後、自動的に以下が実行される:
 
-- ✅ Flutter analysis & tests
-- ✅ Windows ビルド
-- ✅ Android APK ビルド
-- ✅ iOS ビルド
-- ✅ Web の Vercel デプロイ
-- ✅ GitHub Release 作成
+- ✅ Flutter analysis & tests(`flutter-ci.yml` / `ci-cd.yml`)
+- ✅ Android APK ビルド(debug)
+- ✅ iOS TestFlight ビルド(`ios-release.yml`、手動トリガー)
 
-詳細は `.github/workflows/ci-cd.yml` を参照
+詳細は `.github/workflows/` 配下を参照。push後は `gh run watch` でCIの緑/赤を確認する。
 
 ---
 
-## セキュリティに関する注意
-
-⚠️ **PAT の扱い**
-
-- PAT は secrets のように扱う（他人と共有しない）
-- PowerShell コマンド履歴には記録されない（`Read-Host -AsSecureString` 使用）
-- `.env` ファイルには保存しない
-- Git リポジトリにコミットしない
-
-✓ **推奨される方法**
-
-1. **Google Drive に保存**（このプロジェクトの仕様）
-2. **環境変数で使用**（セッションスコープ）
-3. **Git Credential Manager**（OS-level 暗号化）
-
----
-
-## 次のステップ
-
-✅ commit 19fc020 を push 後：
-
-1. **GitHub リポジトリを確認**
-   ```
-   https://github.com/shibuyer-jp/voikerchat/commits/main
-   ```
-
-2. **Actions を確認**
-   ```
-   https://github.com/shibuyer-jp/voikerchat/actions
-   ```
-   - CI/CD パイプラインが自動実行されます
-
-3. **T-14 開始**
-   - iOS/Android ビルド調整
-
----
-
-## Quick Reference
-
-| 方法 | コマンド | 難易度 |
-|-----|--------|--------|
-| PowerShell | `pwsh scripts/push-commits.ps1` | ⭐ 簡単 |
-| Bash | `bash scripts/push-commits.sh` | ⭐ 簡単 |
-| GitHub CLI | `gh auth login && git push` | ⭐ 最簡単 |
-| Credential Manager | `git push origin main` | ⭐⭐ 初期セットアップ後は簡単 |
-| Manual | `git push https://[PAT]@github.com/...` | ⭐⭐⭐ 複雑 |
-
----
-
-**作成日：** 2026-06-23  
-**対象コミット：** 19fc020 (T-13 Supabase メッセージ履歴)  
+**改訂日：** 2026-07-23(PAT直埋め込み方式を非推奨化、GCM方式を標準化)
 **リポジトリ：** https://github.com/shibuyer-jp/voikerchat

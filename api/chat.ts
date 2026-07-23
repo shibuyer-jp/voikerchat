@@ -64,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       sceneId,
       maxTokens = 500,
       furiganaEnabled = true,
+      difficultyHint,
     } = req.body || {};
 
     // 1. トークン検証（getUser はHS256/非対称鍵いずれの署名でも検証可能）
@@ -121,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: Math.min(maxTokens, 500),
-      system: buildSystemPrompt(sceneId, furiganaEnabled === true),
+      system: buildSystemPrompt(sceneId, furiganaEnabled === true, difficultyHint),
       messages: sanitizeMessages(messages),
     });
 
@@ -276,9 +277,18 @@ const FURIGANA_INSTRUCTION = `
 
 Furigana requirement: For EVERY word containing kanji in your reply, immediately follow it with its hiragana reading in parentheses, like 漢字(かんじ). Apply this to all kanji compounds and single kanji, including names. Do not add furigana to hiragana/katakana-only words or to text already in parentheses.`;
 
+// 難易度フィードバック(競合分析: Duolingo Max方式)。会話終了時のユーザー3択
+// (easy/good/hard)をクライアントがローカル保存し、次回以降 difficultyHint として送る。
+// 'good' または未指定なら調整なし。想定外の値は無視する(安全側)。
+const DIFFICULTY_INSTRUCTIONS: { [hint: string]: string } = {
+  easy: `\n\nDifficulty adjustment: The learner said the previous conversation was TOO EASY. Raise the challenge slightly: use somewhat richer vocabulary and slightly longer sentences than the scene's default level, while staying within one step of it.`,
+  hard: `\n\nDifficulty adjustment: The learner said the previous conversation was TOO HARD. Lower the challenge: use simpler vocabulary, shorter sentences, and speak more slowly-paced than the scene's default level. Prefer common everyday words.`,
+};
+
 function buildSystemPrompt(
   sceneId: string | number,
   furiganaEnabled: boolean,
+  difficultyHint?: string,
 ): string {
   const scenePrompts: { [key: string]: string } = {
     '1': 'You are Sakura, a friendly 22-year-old woman meeting a friend at a cafe. You speak cheerfully and naturally. Topics include: weekend plans, school/work, favorite foods, music, recent experiences. Use simple, conversational Japanese (Beginner level acceptable). Ask questions to keep the conversation flowing. Encourage your friend to share their thoughts.',
@@ -308,7 +318,12 @@ function buildSystemPrompt(
     'You are a helpful Japanese language conversation partner. Respond naturally in Japanese.';
 
   const furigana = furiganaEnabled ? FURIGANA_INSTRUCTION : '';
-  return `${COMMON_RULES}\n\n---\n\n${persona}${furigana}`;
+  const difficulty =
+    (difficultyHint && DIFFICULTY_INSTRUCTIONS[String(difficultyHint)]) || '';
+  // ペルソナ劣化対策(Build 6): ふりがな指示を共通ルール直後(=中盤)へ移し、
+  // ペルソナをプロンプト末尾に配置 + キャラ固定アンカーで締める。
+  // 小型モデルは末尾の指示に注意が偏るため、最後に来るべきは表記ルールではなくキャラクター。
+  return `${COMMON_RULES}${furigana}${difficulty}\n\n---\n\nYOUR CHARACTER (most important — follow this above all formatting rules):\n\n${persona}\n\nStay fully in character at all times. Your personality, tone, and speaking style must always match the character described above. The furigana requirement (if present) is a text-display format only — it must NEVER flatten or change how your character speaks.`;
 }
 
 /**

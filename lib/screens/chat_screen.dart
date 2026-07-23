@@ -77,6 +77,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final LearnerPreferencesService _learnerPreferencesService =
       LearnerPreferencesService();
   bool _furiganaEnabled = true;
+  // 難易度フィードバック('easy'|'good'|'hard'|null)。会話開始時点のスナップショット。
+  String? _difficultyFeedback;
   bool _voiceReady = false;
   bool _ttsReady = false;
   bool _isListening = false;
@@ -118,6 +120,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     // WidgetsBinding オブザーバー登録（通知タップ処理）
     WidgetsBinding.instance.addObserver(this);
+
+    // D案: 前回シーンとして記録(シーン一覧の「続きから」バナーで使用)。
+    _learnerPreferencesService.setLastSceneId(widget.sceneId);
 
     _initializeChat();
   }
@@ -194,10 +199,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   /// T-36: 設定画面のふりがなトグルを読み込む(会話開始時点のスナップショット)。
+  /// B案: 直近の難易度フィードバックも同時に読み込む。
   Future<void> _loadFuriganaPreference() async {
     final enabled = await _learnerPreferencesService.isFuriganaEnabled();
+    final difficulty = await _learnerPreferencesService.getDifficultyFeedback();
     if (!mounted) return;
-    setState(() => _furiganaEnabled = enabled);
+    setState(() {
+      _furiganaEnabled = enabled;
+      _difficultyFeedback = difficulty;
+    });
   }
 
   /// T-35: Premium/本日広告解放時はクラウドTTS(OpenAI)、それ以外は端末TTS。
@@ -662,6 +672,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           'sceneId': widget.sceneId,
           'maxTokens': 500,
           'furiganaEnabled': _furiganaEnabled,
+          // 'good'/null は調整不要のため送らない(サーバー側でも無視されるが通信量節約)。
+          if (_difficultyFeedback == 'easy' || _difficultyFeedback == 'hard')
+            'difficultyHint': _difficultyFeedback,
         }),
       );
 

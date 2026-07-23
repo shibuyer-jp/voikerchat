@@ -35,7 +35,10 @@ class PremiumUpsellToast extends StatelessWidget {
               children: [
                 Text(
                   premiumUpsellStageMessage(l, PremiumUpsellStage.stage1),
-                  style: const TextStyle(fontSize: 13),
+                  // SnackBar内で表示されるため、SnackBarのデフォルト文字色(白)を
+                  // 継承しないよう明示的に濃色を指定する(白×薄青背景で不可視になる
+                  // 不具合の修正、2026-07-18 実機確認)。
+                  style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
                 ),
               ],
             ),

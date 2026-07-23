@@ -1,8 +1,24 @@
 #!/bin/bash
 
 ###############################################################################
-# Voikerchat GitHub Push Script
-# 
+# 【非推奨・使用しないこと / DEPRECATED — DO NOT USE】
+#
+# この方式は GitHub PAT を `git remote set-url` 経由で .git/config に平文で
+# 埋め込み、かつ push 後のスクラブ処理が未実装のため、トークンが
+# .git/config に残留し続けます(2026-07-23 に実インシデントで確認)。
+#
+# 標準の運用は Git Credential Manager(GCM)経由の素の `git push origin main`
+# です(このマシンでは credential.helper=manager が既に有効で、push時に
+# 自動的に認証されます。.git/config にトークンは一切書き込まれません)。
+# 詳細: docs/GitHub-Push-Automation.md
+#
+# このスクリプトは Desktop 機など GCM 未セットアップの環境向けの
+# フォールバックとして削除せず残していますが、通常は使用しないこと。
+#
+###############################################################################
+#
+# Voikerchat GitHub Push Script (レガシー / PAT直埋め込み方式)
+#
 # Usage:
 #   ./scripts/push-commits.sh              # Interactive (prompts for PAT)
 #   ./scripts/push-commits.sh YOUR_PAT     # Non-interactive (pass PAT as arg)
@@ -10,13 +26,24 @@
 #
 # This script automatically:
 # 1. Extracts GitHub PAT from environment or prompts user
-# 2. Updates git remote URL with authenticated HTTPS
+# 2. Updates git remote URL with authenticated HTTPS (WARNING: leaves PAT in .git/config)
 # 3. Pushes all commits to main branch
 # 4. Verifies push success
 #
 ###############################################################################
 
 set -e
+
+echo "⚠️  警告: このスクリプトは非推奨です。PATが .git/config に残留します。"
+echo "   標準の運用は 'git push origin main' を直接実行することです"
+echo "   (Git Credential Manager が認証を自動処理します)。"
+echo ""
+read -p "それでもこのレガシー方式を使用しますか？ [y/N]: " CONFIRM
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    echo "中止しました。'git push origin main' を使用してください。"
+    exit 1
+fi
+echo ""
 
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 cd "$PROJECT_DIR"
