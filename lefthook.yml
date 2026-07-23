@@ -10,3 +10,13 @@ pre-push:
     test:
       priority: 3
       run: flutter test
+
+post-checkout:
+  commands:
+    gen_l10n:
+      run: flutter gen-l10n
+
+post-merge:
+  commands:
+    gen_l10n:
+      run: flutter gen-l10n
