@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/l10n/label_helpers.dart';
 import '../models/diagnostic.dart';
+import '../services/learner_preferences_service.dart';
 import '../services/scene_service.dart';
 import '../widgets/scene_preview_card.dart';
 import 'chat_screen.dart';
@@ -55,6 +56,80 @@ class SceneSelectionScreen extends StatelessWidget {
     if (unlocked == true) {
       onPremiumUnlocked?.call();
     }
+  }
+
+  /// D案(競合分析): 前回シーンの「続きから」バナー。1タップで会話再開できるようにし、
+  /// 起動→会話開始の手数を最小化する。前回記録がない/プレミアム未解放シーンの場合は
+  /// 何も表示しない。
+  Widget _buildResumeBanner(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return FutureBuilder<String?>(
+      future: LearnerPreferencesService().getLastSceneId(),
+      builder: (context, snapshot) {
+        final lastSceneId = snapshot.data;
+        if (lastSceneId == null) return const SizedBox.shrink();
+
+        final id = int.tryParse(lastSceneId);
+        if (id == null) return const SizedBox.shrink();
+
+        Scene? scene;
+        for (final candidate in SceneService.allScenes) {
+          if (candidate.id == id) {
+            scene = candidate;
+            break;
+          }
+        }
+        if (scene == null) return const SizedBox.shrink();
+        // プレミアム未解放シーンはバナーを出さない(タップ即会話の期待を裏切らないため)。
+        if (scene.isPremium && !isPremiumUser) return const SizedBox.shrink();
+
+        final resumeScene = scene;
+        return Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Material(
+            color: resumeScene.accentColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _openScene(context, resumeScene),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.play_circle_fill,
+                        color: resumeScene.accentColor, size: 28),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l.resumeContinue,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            '${sceneName(l, resumeScene.id)} · ${resumeScene.characterName}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
@@ -124,6 +199,8 @@ class SceneSelectionScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
+          _buildResumeBanner(context),
+
           if (recommended.isNotEmpty) ...[
             _buildSectionHeader(context, l.sceneSectionRecommended),
             ...recommended
