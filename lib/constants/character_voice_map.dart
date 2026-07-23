@@ -5,8 +5,10 @@
 /// キャラクター性別・トーンに合わせて割り当てる。声の数よりキャラクターが
 /// 多いため一部重複するが、キャラごとの明確な描写に影響はない。
 ///
-/// api/tts.ts 側にも同じ割当を持つ(サーバーが音声IDを決定するため、
-/// クライアントは characterId=sceneId を送るだけでよい)。
+/// 【注意】音声の正(source of truth)は api/tts.ts の CHARACTER_VOICE_MAP。
+/// gpt-4o-mini-tts 移行後、サーバー側は voice + instructions(話し方指示)の
+/// プロファイルを持ち、一部キャラの voice はこの表と異なる(ash/sage/ballad等)。
+/// クライアントは sceneId を送るだけでよく、この表は参照用に残している。
 const Map<String, String> characterVoiceMap = {
   '1': 'nova', // Sakura
   '2': 'echo', // Takuya
