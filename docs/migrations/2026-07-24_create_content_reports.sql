@@ -28,12 +28,12 @@ CREATE INDEX idx_content_reports_created_at ON public.content_reports(created_at
 ALTER TABLE public.content_reports ENABLE ROW LEVEL SECURITY;
 
 -- insert: 本人の報告のみ許可
-CREATE POLICY "Users can insert own content reports"
+CREATE POLICY content_reports_insert_own
   ON public.content_reports
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- select: 自分の報告のみ閲覧可能
-CREATE POLICY "Users can view own content reports"
+CREATE POLICY content_reports_select_own
   ON public.content_reports
   FOR SELECT USING (auth.uid() = user_id);
 
