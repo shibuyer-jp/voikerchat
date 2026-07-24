@@ -180,6 +180,25 @@ CREATE TABLE public.usage_logs (
 --       scene_id を NULL とし、文字列シーン名を metadata.scene に格納している。
 ```
 
+### 8. content_reports
+AI生成コンテンツの報告(2026-07-24、Google Play ポリシー必須要件対応)。詳細: `docs/migrations/2026-07-24_create_content_reports.sql`
+
+```sql
+CREATE TABLE public.content_reports (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL REFERENCES public.user_profiles ON DELETE CASCADE,
+  message_id    UUID REFERENCES public.messages ON DELETE SET NULL,
+  scene_id      TEXT,
+  reason        TEXT NOT NULL CHECK (reason IN ('inappropriate', 'incorrect', 'other')),
+  detail        TEXT,
+  reported_text TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- RLS: owner-scoped（insert / select は自分の行のみ。update/delete 不可＝改ざん防止の監査ログ）。
+-- Index: user_id、created_at。
+```
+
 ---
 
 ## Deployment Instructions

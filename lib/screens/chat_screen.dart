@@ -28,6 +28,7 @@ import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import '../widgets/word_lookup_sheet.dart';
+import '../widgets/content_report_sheet.dart';
 import '../widgets/hint_sheet.dart';
 import '../widgets/vocab_summary_sheet.dart';
 import '../theme/app_colors.dart';
@@ -955,7 +956,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                             message.content,
                                             style: const TextStyle(color: Colors.white),
                                           )
-                                        : _buildAssistantMessageText(message.content),
+                                        : _buildAssistantMessageText(message),
                                     const SizedBox(height: 4),
                                     Text(
                                       message.formattedTime,
@@ -1230,9 +1231,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   /// AIメッセージ本文(T-31): 範囲選択 + コンテキストメニューに
   /// 「意味を調べる」を追加する。会話状態(入力欄・TTS再生)には触れない。
-  Widget _buildAssistantMessageText(String content) {
+  Widget _buildAssistantMessageText(Message message) {
     return SelectableText(
-      content,
+      message.content,
       style: const TextStyle(color: Colors.black),
       contextMenuBuilder: (context, editableTextState) {
         final buttonItems = editableTextState.contextMenuButtonItems.toList();
@@ -1247,11 +1248,24 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               onPressed: () {
                 ContextMenuController.removeAny();
                 editableTextState.hideToolbar();
-                _showWordLookup(selectedText.trim(), content);
+                _showWordLookup(selectedText.trim(), message.content);
               },
             ),
           );
         }
+
+        // Google Play ポリシー必須要件: AI応答をアプリを離れずに報告できる
+        // 導線(長押し→コンテキストメニュー→報告シート)。
+        buttonItems.add(
+          ContextMenuButtonItem(
+            label: AppLocalizations.of(context).reportContent,
+            onPressed: () {
+              ContextMenuController.removeAny();
+              editableTextState.hideToolbar();
+              _showReportSheet(message);
+            },
+          ),
+        );
 
         return AdaptiveTextSelectionToolbar.buttonItems(
           anchors: editableTextState.contextMenuAnchors,
@@ -1271,6 +1285,25 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         sceneId: widget.sceneId,
       ),
     );
+  }
+
+  Future<void> _showReportSheet(Message message) async {
+    if (_userId == null) return;
+    final reported = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => ContentReportSheet(
+        userId: _userId!,
+        messageId: message.id,
+        sceneId: widget.sceneId,
+        reportedText: message.content,
+      ),
+    );
+    if (reported == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).reportSubmitSuccess)),
+      );
+    }
   }
 
   /// T-36: 直近の会話を要約テキスト化してヒントAPIへ渡す。
