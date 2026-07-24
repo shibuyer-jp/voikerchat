@@ -258,6 +258,8 @@
   "settingsLearningSectionTitle": "学習サポート",
   "furiganaToggleTitle": "ふりがな表示",
   "furiganaToggleSubtitle": "AIの返答の漢字にふりがなを表示します(例: 漢字(かんじ))",
+  "languageSettingTitle": "言語",
+  "languageFollowSystem": "端末設定に従う",
   "settingsAccountSectionTitle": "アカウント",
   "deleteAccountTitle": "アカウントを削除",
   "deleteAccountSubtitle": "アカウントとデータを完全に削除します",

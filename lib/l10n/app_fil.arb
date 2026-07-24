@@ -258,6 +258,8 @@
   "settingsLearningSectionTitle": "Suporta sa Pag-aaral",
   "furiganaToggleTitle": "Ipakita ang furigana",
   "furiganaToggleSubtitle": "Ipakita ang pagbasa sa hiragana sa tabi ng kanji, tulad ng 漢字(かんじ)",
+  "languageSettingTitle": "Wika",
+  "languageFollowSystem": "Sundin ang setting ng device",
   "settingsAccountSectionTitle": "Account",
   "deleteAccountTitle": "Tanggalin ang account",
   "deleteAccountSubtitle": "Permanenteng tanggalin ang iyong account at data",
