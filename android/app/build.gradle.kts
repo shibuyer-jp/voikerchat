@@ -54,13 +54,40 @@ android {
     buildTypes {
         release {
             // key.properties(gitignore対象)経由でuploadキーストアを参照する。
-            // ファイルが存在しない環境(CI未設定時等)ではdebug鍵にフォールバック。
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            // 以前は未検出時にdebug鍵へ暗黙フォールバックしていたが、debug署名済みの
+            // AABをPlay Consoleにアップロードして初めて気づく事故を招くため廃止した。
+            // key.properties が無い場合は下の taskGraph チェックでビルドを停止する。
+            signingConfig = signingConfigs.getByName("release")
         }
+    }
+}
+
+// release成果物を作るタスクが要求された場合に限り、key.properties の存在を検証する。
+// 設定フェーズで無条件に例外を投げると debug ビルドや flutter analyze まで巻き込むため、
+// タスクグラフ確定後に判定する。
+gradle.taskGraph.whenReady {
+    val wantsRelease = allTasks.any { task ->
+        val n = task.name
+        n.endsWith("Release") &&
+            (n.startsWith("assemble") || n.startsWith("bundle") || n.startsWith("package"))
+    }
+    if (wantsRelease && !keystorePropertiesFile.exists()) {
+        throw GradleException(
+            buildString {
+                appendLine("release ビルドに必要な android/key.properties が見つかりません。")
+                appendLine("期待パス: ${keystorePropertiesFile.absolutePath}")
+                appendLine()
+                appendLine("upload keystore は %USERPROFILE%\\Voikerchat-Release-Keys\\ に保管しています。")
+                appendLine("android/key.properties を以下の形式で作成してください（このファイルはコミット禁止）:")
+                appendLine("  storeFile=<キーストアの絶対パス>")
+                appendLine("  storePassword=<ストアパスワード>")
+                appendLine("  keyAlias=<エイリアス>")
+                appendLine("  keyPassword=<キーパスワード>")
+                appendLine()
+                append("※ 以前は debug 鍵へ自動フォールバックしていましたが、")
+                append("debug署名のAABはPlayが受理しないため、明示的に失敗させる方針に変更しました。")
+            }
+        )
     }
 }
 
