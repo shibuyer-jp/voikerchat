@@ -8,13 +8,18 @@
 -- 本SQLは Supabase SQL Editor で人間が実行すること(Claude Code はDBに
 -- 直接アクセスできないため)。
 
+-- user_id は必ず存在する auth.users を直接参照する(public.user_profiles等の
+-- カスタムテーブルは環境によって有無・名称が異なるため、Supabase標準の
+-- auth.users に対する参照のみを前提にする)。
+--
+-- message_id は外部キー制約を付けない(単なるUUID列)。content_reports は
+-- 監査ログであり、messagesテーブルの実名・存在有無に依存させたくないため。
+-- reported_text に本文スナップショットを保持するので、message_id はあくまで
+-- 補助的な手がかりとして扱う。
 CREATE TABLE public.content_reports (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID NOT NULL REFERENCES public.user_profiles ON DELETE CASCADE,
-  -- 報告後にユーザーが会話をクリア(messages削除)しても報告自体(監査ログ)は
-  -- 残す必要があるため、参照先削除時は SET NULL(reported_text が監査用の
-  -- スナップショットとして本文を保持し続ける)。
-  message_id    UUID REFERENCES public.messages ON DELETE SET NULL,
+  user_id       UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE,
+  message_id    UUID,
   scene_id      TEXT,
   reason        TEXT NOT NULL CHECK (reason IN ('inappropriate', 'incorrect', 'other')),
   detail        TEXT,
