@@ -31,6 +31,7 @@ import '../widgets/word_lookup_sheet.dart';
 import '../widgets/content_report_sheet.dart';
 import '../widgets/hint_sheet.dart';
 import '../widgets/vocab_summary_sheet.dart';
+import '../widgets/shrink_to_fit_text.dart';
 import '../theme/app_colors.dart';
 import 'paywall_screen.dart';
 import 'stats_screen.dart';
@@ -769,20 +770,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       // 背景と吹き出しの対比で視認性を出す(AppColors.chatBackground 参照)
       backgroundColor: AppColors.chatBackground,
       appBar: AppBar(
+        titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.sceneName),
-            Text(
+            ShrinkToFitText(widget.sceneName, minScale: 0.85),
+            ShrinkToFitText(
               l.levelLabel(levelNameFromToken(l, widget.sceneData['level'] as String?)),
               style: Theme.of(context).textTheme.bodySmall,
+              minScale: 0.85,
             ),
           ],
         ),
         actions: [
           if (!_isPremium)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Center(
                 child: Material(
                   color: Colors.transparent,
@@ -820,10 +823,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
           // ストリークバッジ
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(12),
@@ -855,23 +858,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               tooltip: l.voiceAutoRead,
               onPressed: () => setState(() => _autoRead = !_autoRead),
             ),
-          if (_ttsReady)
-            IconButton(
-              // T-35: 高品質ボイス(クラウドTTS)の状態を常設で示す小さな導線。
-              // 未解放時にタップすると広告視聴フローへ(ペイウォールへの押し付けはしない)。
-              icon: Icon(
-                Icons.headset_mic,
-                color: (_isPremium || _cloudTtsUnlockedToday)
-                    ? AppColors.brand
-                    : Colors.grey,
-              ),
-              tooltip: (_isPremium || _cloudTtsUnlockedToday)
-                  ? l.cloudVoiceActiveTooltip
-                  : l.cloudVoiceLockedTooltip,
-              onPressed: (_isPremium || _cloudTtsUnlockedToday)
-                  ? null
-                  : _watchAdForBonus,
-            ),
+          // T-35: 高品質ボイス(クラウドTTS)の状態表示は⋮メニュー内へ移動
+          // (AppBar省略修正: 会話中に頻繁に使う音量トグルとは異なり
+          // 1日1回程度の低頻度操作のため、常設actionsから外してもよい)。
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: _showSessionOptions,
@@ -1095,6 +1084,29 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_ttsReady)
+              ListTile(
+                leading: Icon(
+                  Icons.headset_mic,
+                  color: (_isPremium || _cloudTtsUnlockedToday)
+                      ? AppColors.brand
+                      : Colors.grey,
+                ),
+                title: Text(
+                  (_isPremium || _cloudTtsUnlockedToday)
+                      ? AppLocalizations.of(context).cloudVoiceActiveTooltip
+                      : AppLocalizations.of(context).cloudVoiceLockedTooltip,
+                ),
+                trailing: (_isPremium || _cloudTtsUnlockedToday)
+                    ? const Icon(Icons.check, color: AppColors.brand)
+                    : null,
+                onTap: (_isPremium || _cloudTtsUnlockedToday)
+                    ? () => Navigator.pop(context)
+                    : () {
+                        Navigator.pop(context);
+                        _watchAdForBonus();
+                      },
+              ),
             ListTile(
               title: Text(AppLocalizations.of(context).clearConversation),
               onTap: () async {
