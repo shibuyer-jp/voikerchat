@@ -42,12 +42,37 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // logging パッケージの Logger は、リスナーを登録しない限りどこにも
+  // 出力されない(これまでアプリ内の Logger.warning/info 呼び出しが
+  // 実質すべて握りつぶされていた)。コンソールへ出すリスナーを登録する。
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    // ignore: avoid_print
+    print('${record.level.name}: ${record.loggerName}: ${record.message}');
+  });
+
   // 保存済みのUI言語設定をロード(runApp前に確定させ、起動時のちらつきを防ぐ)。
   await LocaleService().loadSavedLocale();
 
   // AdMob 初期化（できるだけ早期に呼ぶ）。Web は stub で no-op。
+  // DIAG(一時): 広告no-fill調査用。initialize()の完了有無・結果を可視化する。
+  // 挙動は変えない(await はしない。既存どおり非ブロッキングのまま)。
   try {
-    MobileAds.instance.initialize();
+    // ignore: avoid_print
+    print('[DIAG] MobileAds.initialize() calling at ${DateTime.now()}');
+    MobileAds.instance.initialize().then((status) {
+      final report = status.adapterStatuses.map(
+        (key, value) => MapEntry(
+          key,
+          '${value.state}/${value.description}',
+        ),
+      );
+      // ignore: avoid_print
+      print('[DIAG] MobileAds.initialize() completed at ${DateTime.now()}: $report');
+    }).catchError((Object e) {
+      // ignore: avoid_print
+      print('[DIAG] MobileAds.initialize() errored: $e');
+    });
   } catch (e) {
     logger.info('[main] AdMob init skipped: $e');
   }

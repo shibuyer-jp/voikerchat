@@ -323,11 +323,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (_userId == null || _isAdLoading) return;
     setState(() => _isAdLoading = true);
     try {
+      // DIAG(一時): 広告no-fill調査用。ボタンタップがこの関数まで
+      // 到達しているか、その時点のisReady状態を可視化する。
+      // ignore: avoid_print
+      print('[DIAG] _watchAdForBonus() start: isReady=${_rewardedAdService.isReady}');
+
       // 未ロードなら表示前にロードを試みる。
       if (!_rewardedAdService.isReady) {
         await _rewardedAdService.loadAd();
       }
       if (!_rewardedAdService.isReady) {
+        // ignore: avoid_print
+        print('[DIAG] _watchAdForBonus(): still not ready after loadAd(), falling back');
         // 広告在庫切れフォールバック: ユーザーに理不尽を与えないよう、
         // +5回は付与しないがクラウドTTSはその日いっぱい無償解放する。
         // サーバー(api/tts.ts)は usage_logs.ad_reward の有無で許可判定するため、
