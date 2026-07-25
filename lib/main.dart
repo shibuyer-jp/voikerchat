@@ -54,6 +54,17 @@ void main() async {
   // 保存済みのUI言語設定をロード(runApp前に確定させ、起動時のちらつきを防ぐ)。
   await LocaleService().loadSavedLocale();
 
+  // アプリ内言語切替(LocaleService)でも、OS言語変更時(didChangeLocales,
+  // 下記RootScreen参照)と同様に予約通知を現在の言語で貼り直す。
+  // NotificationScheduler側からLocaleServiceを参照しているため、循環import
+  // を避けるためLocaleService側にこの呼び出しは置かず、ここで結線する。
+  // 未初期化(Phase2未着手)の間はno-op。awaitはしない(UI操作をブロックしない)。
+  LocaleService.currentLocale.addListener(() {
+    if (NotificationScheduler().isInitialized) {
+      NotificationScheduler().rescheduleForLocaleChange();
+    }
+  });
+
   // AdMob 初期化（できるだけ早期に呼ぶ）。Web は stub で no-op。
   try {
     MobileAds.instance.initialize();
