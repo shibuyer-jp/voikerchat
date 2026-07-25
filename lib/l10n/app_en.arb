@@ -1103,6 +1103,14 @@
   "@furiganaToggleSubtitle": {
     "description": "Subtitle explaining the furigana toggle"
   },
+  "languageSettingTitle": "Language",
+  "@languageSettingTitle": {
+    "description": "Settings list tile / dialog title: UI language picker"
+  },
+  "languageFollowSystem": "Follow system setting",
+  "@languageFollowSystem": {
+    "description": "Language picker option: use the device's system locale instead of a fixed app language"
+  },
   "deleteAccountTitle": "Delete account",
   "@deleteAccountTitle": {
     "description": "List tile: open delete-account confirmation"

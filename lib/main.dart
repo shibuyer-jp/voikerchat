@@ -14,6 +14,7 @@ import 'screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/revenuecat_service.dart';
 import 'services/local_notification_service.dart';
+import 'services/locale_service.dart';
 import 'services/notification_scheduler.dart';
 import 'services/remote_notification_service.dart';
 import 'models/notification_data_model.dart';
@@ -40,6 +41,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 保存済みのUI言語設定をロード(runApp前に確定させ、起動時のちらつきを防ぐ)。
+  await LocaleService().loadSavedLocale();
 
   // AdMob 初期化（できるだけ早期に呼ぶ）。Web は stub で no-op。
   try {
@@ -162,8 +166,31 @@ void main() async {
   runApp(const VoikerchatApp());
 }
 
-class VoikerchatApp extends StatelessWidget {
+class VoikerchatApp extends StatefulWidget {
   const VoikerchatApp({super.key});
+
+  @override
+  State<VoikerchatApp> createState() => _VoikerchatAppState();
+}
+
+class _VoikerchatAppState extends State<VoikerchatApp> {
+  Locale? _locale = LocaleService.currentLocale.value;
+
+  @override
+  void initState() {
+    super.initState();
+    LocaleService.currentLocale.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    LocaleService.currentLocale.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    setState(() => _locale = LocaleService.currentLocale.value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +198,7 @@ class VoikerchatApp extends StatelessWidget {
       title: 'Voikerchat',
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      locale: _locale,
       theme: AppTheme.light,
       home: const RootScreen(),
     );
