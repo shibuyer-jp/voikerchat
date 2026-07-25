@@ -152,10 +152,12 @@ class RevenueCatService {
 
       // 購入処理
       try {
-        final customerInfo = await Purchases.purchasePackage(monthlyPackage);
-        
+        final purchaseResult = await Purchases.purchase(
+          PurchaseParams.package(monthlyPackage),
+        );
+
         // 購入成功 → Premium ステータス更新
-        final entitlements = customerInfo.entitlements;
+        final entitlements = purchaseResult.customerInfo.entitlements;
         _isPremium = entitlements.active.containsKey('Premium') ||
                      entitlements.active.containsKey('voikerchat_premium');
         
