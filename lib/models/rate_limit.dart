@@ -1,3 +1,5 @@
+import '../constants/rate_limit_constants.dart';
+
 class RateLimit {
   final String userId;
   final int dailyLimit;
@@ -26,7 +28,7 @@ class RateLimit {
   factory RateLimit.fromJson(Map<String, dynamic> json) {
     return RateLimit(
       userId: json['user_id'] as String,
-      dailyLimit: json['daily_limit'] as int? ?? 5,
+      dailyLimit: json['daily_limit'] as int? ?? RateLimitConstants.freeDailyLimit,
       usedToday: json['used_today'] as int? ?? 0,
       lastResetUtc: DateTime.parse(json['last_reset_utc'] as String? ?? DateTime.now().toIso8601String()),
       isPremium: json['is_premium'] as bool? ?? false,

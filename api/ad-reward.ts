@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { AD_BONUS, FREE_DAILY_CAP } from './_constants';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey =
@@ -128,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const newLimit = Math.min(rateLimit.daily_limit + 5, 10);
+    const newLimit = Math.min(rateLimit.daily_limit + AD_BONUS, FREE_DAILY_CAP);
 
     const { error: updateError } = await supabase
       .from('rate_limits')

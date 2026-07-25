@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { FREE_DAILY_LIMIT, baseDailyLimit } from './_constants';
 
 /**
  * 環境変数（chat.ts と同方式に統一）
@@ -65,8 +66,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         userId,
         isPremium: false,
         usedToday: 0,
-        dailyLimit: 5,
-        remainingCalls: 5,
+        dailyLimit: FREE_DAILY_LIMIT,
+        remainingCalls: FREE_DAILY_LIMIT,
         usagePercentage: 0,
         canMakeCall: true,
       });
@@ -80,11 +81,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     let usedToday = data.used_today;
+    let dailyLimit = data.daily_limit;
     if (daysPassed >= 1) {
+      // 日次リセット: used_today だけでなく daily_limit も基礎値へ戻す。
+      // 広告視聴ボーナス(当日限り)を翌日以降に持ち越さないため。
+      // (api/chat.ts の checkAndIncrementRateLimit() と同一ロジック。
+      //  会話送信前にこのエンドポイントが先に呼ばれるケースもあるため、
+      //  同じリセットをここでも行う)
+      dailyLimit = baseDailyLimit(data.is_premium === true);
       const { error: resetError } = await supabase
         .from('rate_limits')
         .update({
           used_today: 0,
+          daily_limit: dailyLimit,
           last_reset_utc: today.toISOString(),
         })
         .eq('user_id', userId);
@@ -94,17 +103,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       usedToday = 0;
     }
 
-    const remainingCalls = Math.max(0, data.daily_limit - usedToday);
-    const usagePercentage = (usedToday / data.daily_limit) * 100;
+    const remainingCalls = Math.max(0, dailyLimit - usedToday);
+    const usagePercentage = (usedToday / dailyLimit) * 100;
 
     return res.status(200).json({
       userId,
       isPremium: data.is_premium === true,
       usedToday,
-      dailyLimit: data.daily_limit,
+      dailyLimit,
       remainingCalls,
       usagePercentage: Math.min(100, usagePercentage),
-      canMakeCall: usedToday < data.daily_limit,
+      canMakeCall: usedToday < dailyLimit,
     });
   } catch (error: any) {
     console.error('Rate limit API error:', error);
