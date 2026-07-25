@@ -176,7 +176,9 @@ class LocalNotificationService {
   /// [id] 通知ID, [title] タイトル, [body] 本文
   /// [time] 毎日の実行時刻 (例: TimeOfDay(hour: 8, minute: 0))
   /// [payload] 追加データ
-  Future<void> scheduleDailyNotification({
+  /// 戻り値: 実際にスケジュールした次回発火予定時刻（履歴書き込み用に
+  /// 呼び出し側へ返す。計算ロジックをここ1箇所に閉じるため）。
+  Future<DateTime> scheduleDailyNotification({
     required int id,
     required String title,
     required String body,
@@ -231,6 +233,8 @@ class LocalNotificationService {
       matchDateTimeComponents: DateTimeComponents.time,
       payload: payload,
     );
+
+    return scheduledDate.toUtc();
   }
 
   /// 通知をキャンセル

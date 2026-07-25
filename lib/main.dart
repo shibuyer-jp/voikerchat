@@ -73,6 +73,10 @@ void main() async {
     // NotificationScheduler 初期化 + 毎日リマインダー(8/12/19)を予約。
     // zonedScheduleは同一IDへの再予約で上書きされるため、毎起動時に
     // 呼んでも安全（ロケール変更時の rescheduleForLocaleChange と同様）。
+    // この時点ではSupabase(下記)がまだ未初期化のため、内部の履歴書き込み
+    // (auth.uid()前提)は失敗して無視される。OS側の通知登録自体は
+    // Supabase有無に関わらず確実に行われるよう、ここで一度呼んでおく。
+    // 履歴書き込みは Supabase 初期化後に再度呼ぶことで確定させる。
     await NotificationScheduler().initialize(localNotificationService);
     await NotificationScheduler().scheduleDailyReminders();
 
@@ -147,6 +151,16 @@ void main() async {
       if (auth.currentSession == null) {
         await auth.signInAnonymously();
         logger.info('[main] Signed in anonymously');
+      }
+
+      // 毎日リマインダー(8/12/19)を予約 + 起動時リコンサイル
+      // (予定を過ぎたscheduled履歴をdeliveredへ確定)。
+      // zonedScheduleは同一IDへの再予約で上書きされるため、毎起動時に
+      // 呼んでも安全（ロケール変更時の rescheduleForLocaleChange と同様）。
+      // auth.uid() が必要な履歴書き込みを含むため、認証完了後に行う。
+      if (NotificationScheduler().isInitialized) {
+        await NotificationScheduler().reconcileHistoryOnLaunch();
+        await NotificationScheduler().scheduleDailyReminders();
       }
 
       // RevenueCat の app_user_id を Supabase の user_id に紐付ける。
