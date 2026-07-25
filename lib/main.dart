@@ -55,24 +55,8 @@ void main() async {
   await LocaleService().loadSavedLocale();
 
   // AdMob 初期化（できるだけ早期に呼ぶ）。Web は stub で no-op。
-  // DIAG(一時): 広告no-fill調査用。initialize()の完了有無・結果を可視化する。
-  // 挙動は変えない(await はしない。既存どおり非ブロッキングのまま)。
   try {
-    // ignore: avoid_print
-    print('[DIAG] MobileAds.initialize() calling at ${DateTime.now()}');
-    MobileAds.instance.initialize().then((status) {
-      final report = status.adapterStatuses.map(
-        (key, value) => MapEntry(
-          key,
-          '${value.state}/${value.description}',
-        ),
-      );
-      // ignore: avoid_print
-      print('[DIAG] MobileAds.initialize() completed at ${DateTime.now()}: $report');
-    }).catchError((Object e) {
-      // ignore: avoid_print
-      print('[DIAG] MobileAds.initialize() errored: $e');
-    });
+    MobileAds.instance.initialize();
   } catch (e) {
     logger.info('[main] AdMob init skipped: $e');
   }

@@ -25,21 +25,8 @@ class RewardedAdService {
   /// 広告を事前ロードする。表示前に呼んでおくと待ち時間が減る。
   /// 既にロード済み/ロード中なら何もしない。
   Future<void> loadAd() async {
-    // DIAG(一時): 広告no-fill調査用。呼び出し自体が発生しているか、
-    // ガードで早期returnしていないかを可視化する。
-    // ignore: avoid_print
-    print('[DIAG] loadAd() called: _ad=${_ad != null}, _isLoading=$_isLoading, '
-        'unitId=${AdConfig.rewardedUnitId}, useTestAds=${AdConfig.useTestAds}');
-
-    if (_ad != null || _isLoading) {
-      // ignore: avoid_print
-      print('[DIAG] loadAd() early-return (already loaded or loading)');
-      return;
-    }
+    if (_ad != null || _isLoading) return;
     _isLoading = true;
-
-    // ignore: avoid_print
-    print('[DIAG] RewardedAd.load() invoking at ${DateTime.now()}');
 
     await RewardedAd.load(
       adUnitId: AdConfig.rewardedUnitId,
@@ -50,24 +37,14 @@ class RewardedAdService {
           _ad = ad;
           _isLoading = false;
           _logger.info('Rewarded ad loaded');
-          // ignore: avoid_print
-          print('[DIAG] onAdLoaded fired at ${DateTime.now()}');
         },
         onAdFailedToLoad: (error) {
           _ad = null;
           _isLoading = false;
           _logger.warning('Rewarded ad failed to load: $error');
-          // ignore: avoid_print
-          print('[DIAG] onAdFailedToLoad at ${DateTime.now()}: '
-              'code=${error.code}, domain=${error.domain}, message=${error.message}, '
-              'responseInfo=${error.responseInfo}');
         },
       ),
     );
-
-    // ignore: avoid_print
-    print('[DIAG] RewardedAd.load() call returned (this is just the platform '
-        'channel call completing, not necessarily the ad result) at ${DateTime.now()}');
   }
 
   /// 広告を表示する。視聴完了で報酬を得たら true。
