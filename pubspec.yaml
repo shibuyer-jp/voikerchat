@@ -63,6 +63,7 @@ dependencies:
   just_audio: ^0.9.36
   path_provider: ^2.1.1
   share_plus: ^13.2.1
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:
