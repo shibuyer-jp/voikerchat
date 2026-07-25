@@ -1,7 +1,8 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
 > **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。
-> 最終更新: 2026-07-16(App Icon/Launch Image独自素材化 + iOS CI/CDパイプライン再稼働。詳細は下記「完了(直近・2026-07-16)」)
+> 最終更新: 2026-07-25(プッシュ通知欄・Push Phase2手順を「道2」決定に合わせて更新。※このセッションでmainにマージされた他の変更(通知機能PR-1〜3/ストリーク修正/AppBar修正等)はこのSTATE.mdの「完了」セクションには未反映。次回セッションで要フル更新)
+> 旧: 2026-07-16(App Icon/Launch Image独自素材化 + iOS CI/CDパイプライン再稼働。詳細は下記「完了(直近・2026-07-16)」)
 
 ## 機能ステータス
 | 機能 | 状態 | 備考 |
@@ -18,7 +19,7 @@
 | badges | ✅ 実装済 | service/model/screen あり |
 | **音声会話(PTT+TTS)** | ✅ 完了・main反映 | PR #2 squash merge `17ee53e`(2026-07-10)。STT `speech_to_text ^7.4.0` / TTS `flutter_tts ^4.2.2`。G6事前説明→OS権限、silent-stop途中送信防止、Android rate2倍換算修正(`defaultRate=0.45`)。テスト: Androidエミュレーター+iOS実機(iOS 26.5.2)全項目合格。iOS 26は約1分自動停止が発生しない(端末内認識化と推測)が保護コードは旧iOS/Android用に有効 |
 | lefthook pre-push | ✅ 稼働 | analyze/test(`371b1ea`) |
-| プッシュ通知 | 🚧 Phase2(コード実装済/設定待ち) | `remote_notification_service.dart`(285行)実装 + main.dart配線(initialize/setMessageHandler/subscribeToDefaultTopics/premium同期) + FCM設定(google-services.json / GoogleService-Info.plist = 実物・Firebaseプロジェクト`voikerchat`/`446972546346`) + Android google-services plugin(`.kts`済) = **全て済**。残(手動): ①iOS Xcodeで Push Notifications + Background Modes(remote-notification) capability有効化 ②APNsキー(`26PUZTM353`, .p8)を Firebase Console → Cloud Messaging にアップロード ③実機テスト。※submission非必須(機能拡張) |
+| プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
 | AdMob リワード広告 | ✅ コード完了 / 📋 実ID待ち | 実装フル完了: `rewarded_ad_service`(io/web facade) → `chat_screen` 配線(loadAd/isReady/showAd/grantAdBonus +5/snackbar/dispose/showWatchAdButton)。残=**AdMobコンソールで広告ユニット登録(手動)** → `ad_config.dart` の `_prod*` に実ID + `useTestAds=false`(submission必須: テストID出荷はAdMobポリシー違反)。現状テストID(`ca-app-pub-3940256099942544`) |
 | fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
 
@@ -36,7 +37,12 @@
 2. **iOS submission**: ビルド 1.0.0+4 は CI(`ios-release.yml`)経由で App Store Connect へアップロード済み(2026-07-16、run `29471722651`)。
    残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
    **ローカルXcodeでのアーカイブは今後も使わない**(このMacはXcode 26非対応。iOS 26 SDK必須エラーで拒否される)。ビルドを更新する際は必ずCI(`ios-release.yml`をworkflow_dispatchで手動実行)を使う。
-3. **Push Phase2**(submission非必須・機能拡張): iOSで Push/Background Modes capability有効化 + APNsキーをFirebase Consoleにアップロード + 実機テスト
+3. **Push Phase2**(submission非必須・機能拡張・今回のリリースではスコープ外=「道2」)。着手時は以下を**この順で**、手動作業とPR #14マージをセットで行うこと(片方だけ進めるとiOSリリースビルドを壊すため):
+   1. Apple Developer PortalでApp ID(`jp.shibuyer.voikerchat`)のPush Notifications capabilityを有効化
+   2. プロビジョニングプロファイル「voikerchat App Store 2026」を、capability追加後の状態で再作成
+   3. APNsキー(`26PUZTM353`, .p8。Drive `00_Project_Credentials`、file ID `1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)をFirebase Console → Cloud Messagingにアップロード
+   4. PR #14(iOS APNsエンティトルメント追加)をマージ
+   5. 実機でのプッシュ受信テスト
 4. **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)
 5. **fil訳ネイティブレビュー**(妻に依頼) → 本番化
 6. 小タスク: G6ダイアログを権限取得済み時はスキップする改善(任意)。~~l10n.yaml非推奨行~~ ~~.dart_tool混入~~ → `1db8073` で完了
