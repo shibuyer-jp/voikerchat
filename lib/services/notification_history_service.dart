@@ -23,18 +23,24 @@ class NotificationHistoryService {
   /// 現在のユーザーID を取得
   String? get _userId => _supabase.auth.currentUser?.id;
 
-  /// 通知を保存（アプリが通知を受信したときに呼び出し）
-  /// 
+  /// 通知を保存
+  ///
   /// [title] 通知タイトル
   /// [body] 通知本文
   /// [payload] JSON ペイロード（オプション）
-  /// 
+  /// [status] delivered=表示・受信のその場で呼ぶ（デフォルト）。
+  ///   scheduled=zonedSchedule等でOS側に先行予約した時点で呼ぶ（案B）。
+  /// [receivedAt] 省略時は現在時刻(UTC)。status=scheduledの場合は
+  ///   予定発火時刻を渡すこと。
+  ///
   /// 戻り値: 保存された通知オブジェクト
   /// 例外: ユーザー未認証、DB エラー
   Future<NotificationHistory> saveNotification({
     required String title,
     required String body,
     String? payload,
+    NotificationHistoryStatus status = NotificationHistoryStatus.delivered,
+    DateTime? receivedAt,
   }) async {
     final userId = _userId;
     if (userId == null) {
@@ -51,13 +57,77 @@ class NotificationHistoryService {
           'body': body,
           'payload': payload,
           'is_read': false,
-          'received_at': now.toIso8601String(),
+          'status': status.value,
+          'received_at': (receivedAt ?? now).toUtc().toIso8601String(),
           'created_at': now.toIso8601String(),
         })
         .select()
         .single();
 
     return NotificationHistory.fromJson(response);
+  }
+
+  /// status='scheduled' で既に同じ内容の履歴が予約済みかどうかを確認する。
+  /// 同一 payload・同一 received_at（予定発火時刻）のscheduled行が既に
+  /// あれば true。毎起動時の再スケジュールで重複INSERTしないためのガード。
+  Future<bool> hasScheduledEntry({
+    required String payload,
+    required DateTime receivedAt,
+  }) async {
+    final userId = _userId;
+    if (userId == null) return false;
+
+    final response = await _supabase
+        .from(_tableName)
+        .select('id')
+        .eq('user_id', userId)
+        .eq('payload', payload)
+        .eq('status', NotificationHistoryStatus.scheduled.value)
+        .eq('received_at', receivedAt.toUtc().toIso8601String())
+        .limit(1);
+
+    return (response as List).isNotEmpty;
+  }
+
+  /// 予定時刻(received_at)を過ぎた scheduled 状態の履歴を delivered へ
+  /// 一括更新する（案B: アプリ起動時のリコンサイル）。
+  /// OSのローカル通知配信はほぼ確実に成功するため、時刻が過ぎていれば
+  /// 「届いた」とみなす。
+  Future<void> reconcileScheduledNotifications() async {
+    final userId = _userId;
+    if (userId == null) return;
+
+    try {
+      await _supabase
+          .from(_tableName)
+          .update({'status': NotificationHistoryStatus.delivered.value})
+          .eq('user_id', userId)
+          .eq('status', NotificationHistoryStatus.scheduled.value)
+          .lte('received_at', DateTime.now().toUtc().toIso8601String());
+    } catch (e) {
+      logger.warning(
+          '[NotificationHistoryService] reconcileScheduledNotifications failed: $e');
+    }
+  }
+
+  /// 指定payloadの未発火(scheduled)予約を取り消す。通知そのものを
+  /// キャンセルする際（例: 通知OFF切り替え時）に、後のreconcileで
+  /// 誤ってdeliveredにされないよう対で呼ぶこと。
+  Future<void> cancelScheduledByPayload(String payload) async {
+    final userId = _userId;
+    if (userId == null) return;
+
+    try {
+      await _supabase
+          .from(_tableName)
+          .delete()
+          .eq('user_id', userId)
+          .eq('payload', payload)
+          .eq('status', NotificationHistoryStatus.scheduled.value);
+    } catch (e) {
+      logger.warning(
+          '[NotificationHistoryService] cancelScheduledByPayload failed: $e');
+    }
   }
 
   /// 通知一覧を取得

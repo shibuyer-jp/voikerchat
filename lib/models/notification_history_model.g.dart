@@ -9,11 +9,14 @@ part of 'notification_history_model.dart';
 NotificationHistory _$NotificationHistoryFromJson(Map<String, dynamic> json) =>
     NotificationHistory(
       id: (json['id'] as num).toInt(),
-      userId: json['userId'] as String,
+      userId: json['user_id'] as String,
       title: json['title'] as String,
       body: json['body'] as String,
       payload: json['payload'] as String?,
-      isRead: json['isRead'] as bool? ?? false,
+      isRead: json['is_read'] as bool? ?? false,
+      status: json['status'] == null
+          ? NotificationHistoryStatus.delivered
+          : NotificationHistory._statusFromJson(json['status'] as String),
       receivedAt: DateTime.parse(json['received_at'] as String),
       readAt: json['read_at'] == null
           ? null
@@ -25,11 +28,12 @@ Map<String, dynamic> _$NotificationHistoryToJson(
   NotificationHistory instance,
 ) => <String, dynamic>{
   'id': instance.id,
-  'userId': instance.userId,
+  'user_id': instance.userId,
   'title': instance.title,
   'body': instance.body,
   'payload': instance.payload,
-  'isRead': instance.isRead,
+  'is_read': instance.isRead,
+  'status': NotificationHistory._statusToJson(instance.status),
   'received_at': instance.receivedAt.toIso8601String(),
   'read_at': instance.readAt?.toIso8601String(),
   'created_at': instance.createdAt.toIso8601String(),

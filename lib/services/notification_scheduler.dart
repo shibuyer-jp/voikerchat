@@ -2,7 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/models/notification_history_model.dart';
 import 'local_notification_service.dart';
+import 'notification_history_service.dart';
 
 /// 端末ロケールを supportedLocales に解決する（アプリに言語切替UIは無く、
 /// デバイスロケール駆動のため）。通知はBuildContextを持ちえない経路
@@ -94,7 +96,7 @@ class NotificationScheduler {
 
     for (int i = 0; i < times.length; i++) {
       try {
-        await _notificationService.scheduleDailyNotification(
+        final scheduledAt = await _notificationService.scheduleDailyNotification(
           id: ids[i],
           title: titles[i],
           body: bodies[i],
@@ -102,6 +104,12 @@ class NotificationScheduler {
           payload: 'daily_reminder',
         );
         logger.info('[NotificationScheduler] Daily reminder scheduled: ${times[i].hour}:${times[i].minute.toString().padLeft(2, '0')}');
+        await _saveScheduledHistory(
+          title: titles[i],
+          body: bodies[i],
+          payload: 'daily_reminder',
+          receivedAt: scheduledAt,
+        );
       } catch (e) {
         logger.info('[NotificationScheduler] Error scheduling daily reminder: $e');
       }
@@ -118,6 +126,71 @@ class NotificationScheduler {
 
     for (final id in ids) {
       await _notificationService.cancelNotification(id);
+    }
+
+    try {
+      await NotificationHistoryService().cancelScheduledByPayload('daily_reminder');
+    } catch (e) {
+      logger.info('[NotificationScheduler] Failed to clear scheduled history (daily): $e');
+    }
+  }
+
+  /// status='scheduled'として履歴に先行書き込みする（案B）。
+  /// 同一payload・同一予定時刻の行が既にあれば重複INSERTしない
+  /// （毎起動時のscheduleDailyReminders呼び出しで同じ枠を再スケジュール
+  /// しても履歴が増殖しないようにするため）。
+  /// 履歴書き込みの失敗は通知機能そのものに影響させない（best-effort）。
+  Future<void> _saveScheduledHistory({
+    required String title,
+    required String body,
+    required String payload,
+    required DateTime receivedAt,
+  }) async {
+    try {
+      final historyService = NotificationHistoryService();
+      final alreadyExists = await historyService.hasScheduledEntry(
+        payload: payload,
+        receivedAt: receivedAt,
+      );
+      if (alreadyExists) return;
+
+      await historyService.saveNotification(
+        title: title,
+        body: body,
+        payload: payload,
+        status: NotificationHistoryStatus.scheduled,
+        receivedAt: receivedAt,
+      );
+    } catch (e) {
+      logger.info('[NotificationScheduler] Failed to save scheduled history ($payload): $e');
+    }
+  }
+
+  /// showNotification直後に status='delivered' として即時書き込みする（案C）。
+  /// 履歴書き込みの失敗は通知機能そのものに影響させない（best-effort）。
+  Future<void> _saveDeliveredHistory({
+    required String title,
+    required String body,
+    required String payload,
+  }) async {
+    try {
+      await NotificationHistoryService().saveNotification(
+        title: title,
+        body: body,
+        payload: payload,
+        status: NotificationHistoryStatus.delivered,
+      );
+    } catch (e) {
+      logger.info('[NotificationScheduler] Failed to save delivered history ($payload): $e');
+    }
+  }
+
+  /// アプリ起動時に呼ぶ: 予定時刻を過ぎたscheduled履歴をdeliveredへ確定する。
+  Future<void> reconcileHistoryOnLaunch() async {
+    try {
+      await NotificationHistoryService().reconcileScheduledNotifications();
+    } catch (e) {
+      logger.info('[NotificationScheduler] Failed to reconcile history: $e');
     }
   }
 
@@ -149,6 +222,11 @@ class NotificationScheduler {
           );
           await _prefs.setBool(shownKey, true);
           logger.info('[NotificationScheduler] Milestone notification shown: ${milestone.days}d');
+          await _saveDeliveredHistory(
+            title: milestone.title,
+            body: milestone.body,
+            payload: 'milestone',
+          );
         } catch (e) {
           logger.info('[NotificationScheduler] Error showing milestone notification: $e');
         }
@@ -188,15 +266,23 @@ class NotificationScheduler {
 
     final (id, title, body) = stageConfig[stage]!;
 
+    final payload = 'premium_upsell_stage_$stage';
+
     try {
       await _notificationService.scheduleNotification(
         id: id,
         title: title,
         body: body,
         scheduledTime: scheduledTime,
-        payload: 'premium_upsell_stage_$stage',
+        payload: payload,
       );
       logger.info('[NotificationScheduler] Premium upsell notification scheduled: Stage $stage');
+      await _saveScheduledHistory(
+        title: title,
+        body: body,
+        payload: payload,
+        receivedAt: scheduledTime,
+      );
     } catch (e) {
       logger.info('[NotificationScheduler] Error scheduling premium upsell: $e');
     }
@@ -213,6 +299,15 @@ class NotificationScheduler {
     for (final id in ids) {
       await _notificationService.cancelNotification(id);
     }
+
+    final historyService = NotificationHistoryService();
+    for (final stage in [1, 2, 3]) {
+      try {
+        await historyService.cancelScheduledByPayload('premium_upsell_stage_$stage');
+      } catch (e) {
+        logger.info('[NotificationScheduler] Failed to clear scheduled history (upsell $stage): $e');
+      }
+    }
   }
 
   /// ===== Feature Update Notifications =====
@@ -223,13 +318,19 @@ class NotificationScheduler {
     required String description,
   }) async {
     try {
+      final title = _l10n.notifFeatureUpdateTitle(featureName);
       await _notificationService.showNotification(
         id: NotificationIds.featureUpdate,
-        title: _l10n.notifFeatureUpdateTitle(featureName),
+        title: title,
         body: description,
         payload: 'feature_update',
       );
       logger.info('[NotificationScheduler] Feature update notification shown: $featureName');
+      await _saveDeliveredHistory(
+        title: title,
+        body: description,
+        payload: 'feature_update',
+      );
     } catch (e) {
       logger.info('[NotificationScheduler] Error showing feature update: $e');
     }
