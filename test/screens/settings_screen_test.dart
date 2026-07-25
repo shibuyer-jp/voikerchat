@@ -49,4 +49,28 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('SettingsScreen notification toggle', () {
+    testWidgets('renders enabled by default (NotificationScheduler未初期化時)',
+        (WidgetTester tester) async {
+      // NotificationScheduler().initialize() を呼んでいないテスト環境では
+      // isInitialized ガードによりデフォルト値(ON)のまま表示される。
+      // 実際のON/OFF切り替え・スケジュール反映はプラットフォームチャンネル
+      // 依存のため実機検証で確認する(PR説明を参照)。
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(_wrap(const SettingsScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('通知'), findsOneWidget);
+      expect(find.text('毎日のリマインダーとストリーク達成通知'), findsOneWidget);
+
+      final toggle = tester.widget<SwitchListTile>(
+        find.widgetWithText(SwitchListTile, '通知'),
+      );
+      expect(toggle.value, isTrue);
+
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
