@@ -4,12 +4,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/models/notification_history_model.dart';
 import 'local_notification_service.dart';
+import 'locale_service.dart';
 import 'notification_history_service.dart';
 
-/// 端末ロケールを supportedLocales に解決する（アプリに言語切替UIは無く、
-/// デバイスロケール駆動のため）。通知はBuildContextを持ちえない経路
+/// 通知の文言を解決するロケールを決める。通知はBuildContextを持ちえない経路
 /// （バックグラウンド/スケジュール済み通知の発火）でも文言解決が必要。
+///
+/// アプリ内言語切替(LocaleService)で明示的に選択されている場合はそちらを
+/// 優先する。未選択(「端末設定に従う」)の場合のみ端末ロケールにフォールバック。
 Locale _resolveLocale() {
+  final appLocale = LocaleService.currentLocale.value;
+  if (appLocale != null) return appLocale;
+
   final device = WidgetsBinding.instance.platformDispatcher.locale;
   for (final l in AppLocalizations.supportedLocales) {
     if (l.languageCode == device.languageCode) return l;
