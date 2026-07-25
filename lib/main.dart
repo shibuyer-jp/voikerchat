@@ -69,7 +69,13 @@ void main() async {
         // payload は conversationId を含む場合がある
       },
     );
-    
+
+    // NotificationScheduler 初期化 + 毎日リマインダー(8/12/19)を予約。
+    // zonedScheduleは同一IDへの再予約で上書きされるため、毎起動時に
+    // 呼んでも安全（ロケール変更時の rescheduleForLocaleChange と同様）。
+    await NotificationScheduler().initialize(localNotificationService);
+    await NotificationScheduler().scheduleDailyReminders();
+
     // RemoteNotificationService 初期化
     final remoteNotificationService = RemoteNotificationService();
     await remoteNotificationService.initialize(

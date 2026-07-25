@@ -16,6 +16,7 @@ import '../services/revenuecat_service.dart';
 import '../services/streak_service.dart';
 import '../services/premium_upsell_service.dart';
 import '../services/rewarded_ad_service.dart';
+import '../services/notification_scheduler.dart';
 import '../services/voice/speech_recognition_service.dart';
 import '../services/voice/text_to_speech_service.dart';
 import '../services/voice/tts_text_cleaner.dart';
@@ -609,6 +610,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       // ストリークをインクリメント（メッセージ送信成功時）
       final newStreak = await _streakService.incrementStreak(_userId!, widget.sceneId);
       setState(() => _currentStreak = newStreak);
+
+      // マイルストーン（3/7/14/30日）到達時の通知判定。
+      // 既に表示済みのマイルストーンは NotificationScheduler 側の
+      // SharedPreferences フラグで重複表示をガードしている。
+      if (NotificationScheduler().isInitialized) {
+        await NotificationScheduler()
+            .checkAndScheduleMilestoneNotifications(newStreak);
+      }
 
       // 段階的プレミアム勧導：会話を記録し、条件を満たせば該当ステージを表示
       await _premiumUpsellService.recordConversation();

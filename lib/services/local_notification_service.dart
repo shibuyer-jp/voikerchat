@@ -1,4 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:logging/logging.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
 
@@ -14,6 +16,7 @@ class LocalNotificationService {
   LocalNotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final _logger = Logger('LocalNotificationService');
   bool _isInitialized = false;
 
   /// 初期化状態を確認
@@ -28,6 +31,19 @@ class LocalNotificationService {
 
     // Timezone データベース初期化
     tzdata.initializeTimeZones();
+
+    // 端末の実タイムゾーンを tz.local に反映する。未設定のままだと
+    // tz.local は UTC 扱いになり、zonedSchedule の「毎日8:00」等が
+    // 端末のローカル時刻ではなくUTC 8:00に発火してしまう。
+    // 取得に失敗した場合(未対応プラットフォーム等)はUTCのまま継続する。
+    try {
+      final localTimezone = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(localTimezone.identifier));
+    } catch (e) {
+      _logger.warning(
+          '[LocalNotificationService] Failed to resolve device timezone, '
+          'falling back to UTC: $e');
+    }
 
     // Android設定
     const AndroidInitializationSettings androidSettings =
@@ -52,6 +68,19 @@ class LocalNotificationService {
       },
       onDidReceiveBackgroundNotificationResponse: _notificationTapBackground,
     );
+
+    // Android 13(API 33)以降はランタイム権限が無いと通知が一切表示されない。
+    // 古いバージョンではno-op。
+    try {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+    } catch (e) {
+      _logger.warning(
+          '[LocalNotificationService] Notification permission request '
+          'skipped: $e');
+    }
 
     _isInitialized = true;
   }
