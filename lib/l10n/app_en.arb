@@ -1111,6 +1111,22 @@
   "@languageFollowSystem": {
     "description": "Language picker option: use the device's system locale instead of a fixed app language"
   },
+  "notificationToggleTitle": "Notifications",
+  "@notificationToggleTitle": {
+    "description": "Toggle: enable/disable daily reminder and milestone local notifications"
+  },
+  "notificationToggleSubtitle": "Daily reminders and streak milestone alerts",
+  "@notificationToggleSubtitle": {
+    "description": "Subtitle explaining what the notification toggle controls"
+  },
+  "notificationPermissionDeniedTitle": "Notifications unavailable",
+  "@notificationPermissionDeniedTitle": {
+    "description": "Dialog title shown when the OS notification permission is denied"
+  },
+  "notificationPermissionDeniedMessage": "Notifications are currently disabled. Please enable Notifications for Voikerchat in your device Settings.",
+  "@notificationPermissionDeniedMessage": {
+    "description": "Dialog body guiding the user to the system settings to enable notification permission"
+  },
   "deleteAccountTitle": "Delete account",
   "@deleteAccountTitle": {
     "description": "List tile: open delete-account confirmation"

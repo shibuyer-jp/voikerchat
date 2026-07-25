@@ -44,11 +44,30 @@ class NotificationScheduler {
     _initialized = true;
   }
 
+  /// ===== 通知ON/OFF設定 =====
+
+  static const String _notificationsEnabledKey = 'notifications_enabled';
+
+  /// ローカル通知(毎日リマインダー・マイルストーン)が有効かどうか。デフォルトON。
+  bool isNotificationsEnabled() {
+    return _prefs.getBool(_notificationsEnabledKey) ?? true;
+  }
+
+  /// 通知ON/OFFを永続化する。呼び出し側で scheduleDailyReminders()/
+  /// cancelDailyReminders() を続けて呼び、即座に反映させること。
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    await _prefs.setBool(_notificationsEnabledKey, enabled);
+  }
+
   /// ===== Daily Reminder Notifications =====
 
   /// 毎日のリマインダー通知をスケジュール
   /// 時刻: 8:00, 12:00, 19:00 JST
+  /// 通知がOFF設定の場合は何もしない（起動時の一括呼び出しがOFF状態を
+  /// 尊重するため、呼び出し側での分岐は不要）。
   Future<void> scheduleDailyReminders() async {
+    if (!isNotificationsEnabled()) return;
+
     const times = [
       (hour: 8, minute: 0),
       (hour: 12, minute: 0),
@@ -105,7 +124,10 @@ class NotificationScheduler {
   /// ===== Milestone Notifications =====
 
   /// マイルストーン通知をスケジュール（3日、7日、14日、30日達成時）
+  /// 通知がOFF設定の場合は何もしない。
   Future<void> checkAndScheduleMilestoneNotifications(int streakDays) async {
+    if (!isNotificationsEnabled()) return;
+
     final milestones = [
       (days: 3, id: NotificationIds.milestone3Days, title: _l10n.notifMilestone3Title, body: _l10n.notifMilestone3Body),
       (days: 7, id: NotificationIds.milestone7Days, title: _l10n.notifMilestone7Title, body: _l10n.notifMilestone7Body),

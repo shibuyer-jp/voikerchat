@@ -1,10 +1,15 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'
+  if (dart.library.html) 'package:voikerchat/stubs/firebase_messaging_stub.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/main.dart' show RootScreen;
 
 import '../services/account_service.dart';
 import '../services/learner_preferences_service.dart';
 import '../services/locale_service.dart';
+import '../services/notification_scheduler.dart';
+import '../services/remote_notification_service.dart';
 
 /// 設定画面。ストア必須の「アカウント削除」導線と、学習サポート設定を提供する。
 class SettingsScreen extends StatefulWidget {
@@ -19,8 +24,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final LearnerPreferencesService _learnerPreferencesService =
       LearnerPreferencesService();
   final LocaleService _localeService = LocaleService();
+  final NotificationScheduler _notificationScheduler = NotificationScheduler();
   bool _deleting = false;
   bool _furiganaEnabled = true;
+  bool _notificationsEnabled = true;
   String? _localeCode; // null = 端末設定に従う
 
   @override
@@ -28,6 +35,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _loadFuriganaPreference();
     _localeCode = LocaleService.currentLocale.value?.languageCode;
+    if (_notificationScheduler.isInitialized) {
+      _notificationsEnabled = _notificationScheduler.isNotificationsEnabled();
+    }
   }
 
   Future<void> _loadFuriganaPreference() async {
@@ -39,6 +49,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _toggleFurigana(bool value) async {
     setState(() => _furiganaEnabled = value);
     await _learnerPreferencesService.setFuriganaEnabled(value);
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    if (value) {
+      // ONにする際、OS側の通知権限が拒否済みなら設定アプリへ誘導する
+      // (アプリ内トグルだけONにしても実際には届かないため)。
+      AuthorizationStatus? status;
+      try {
+        status = await RemoteNotificationService().getAuthorizationStatus();
+      } catch (_) {
+        // 確認できない場合(Web等)はブロックせず進める。
+      }
+      if (status == AuthorizationStatus.denied) {
+        await _showNotificationPermissionDeniedDialog();
+        return;
+      }
+    }
+
+    setState(() => _notificationsEnabled = value);
+    await _notificationScheduler.setNotificationsEnabled(value);
+    if (value) {
+      await _notificationScheduler.scheduleDailyReminders();
+    } else {
+      await _notificationScheduler.cancelDailyReminders();
+    }
+  }
+
+  Future<void> _showNotificationPermissionDeniedDialog() async {
+    if (!mounted) return;
+    final l = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l.notificationPermissionDeniedTitle),
+        content: Text(l.notificationPermissionDeniedMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              AppSettings.openAppSettings();
+            },
+            child: Text(l.openSettings),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _selectLocale(String? code) async {
@@ -176,6 +236,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text(l.languageSettingTitle),
                 subtitle: Text(_localeDisplayName(_localeCode, l)),
                 onTap: _showLanguagePicker,
+              ),
+              SwitchListTile(
+                secondary: const Icon(Icons.notifications_outlined),
+                title: Text(l.notificationToggleTitle),
+                subtitle: Text(l.notificationToggleSubtitle),
+                value: _notificationsEnabled,
+                onChanged: _toggleNotifications,
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
