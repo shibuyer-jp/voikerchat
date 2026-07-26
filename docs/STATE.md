@@ -26,7 +26,8 @@
 | プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
 | AdMob リワード広告 | ✅ コード完了・実ID設定済 / ⚠️ No Fill(公開後に再検証) | `ad_config.dart`の`_prod*`は実ID設定済(`useTestAds=false`)、`GADApplicationIdentifier`・`SKAdNetworkItems`(PR #16、Google推奨50件)も設定済み。TestFlight Build 8〜10で継続的に`onAdFailedToLoad: code=1 No Fill`(コード側は正常、AdMobサーバーへのリクエスト自体は成功=responseId取得済み)。AdMobコンソール確認の結果、**原因はアプリがApp Store未公開であること**と判断(DECISIONS.md 2026-07-26)。App Store公開後に再検証すること(次タスク参照) |
 | fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
-| **daily_limitの日次リセット漏れ修正** | ✅ 完了・PR作成 | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。既存データの是正は`docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql`(人間が実行)、動作検証は`docs/verification/daily_limit_reset_verification_20260726.md`参照(DECISIONS.md 2026-07-26) |
+| **daily_limitの日次リセット漏れ修正** | ✅ 完了・main反映(PR #19) | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。既存データの是正は`docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql`(人間が実行、要)、動作検証は`docs/verification/daily_limit_reset_verification_20260726.md`参照(DECISIONS.md 2026-07-26) |
+| **ストア掲載文の数値非依存化(v1.3→v1.4)** | ✅ 完了・main反映(PR #20) | `docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。ストア本番反映(コンソールへの貼付)はPR #20本文のコピペ用テキストを使用(人間が実行、要)(DECISIONS.md 2026-07-26) |
 
 ## 確定定数(変更時はDECISIONSに記録)
 - App: Voikerchat / `jp.shibuyer.voikerchat` / voikerchat.com(Dynadot) / Team ID `S6XJP274T2`
@@ -38,6 +39,9 @@
 
 ## 次タスク(優先順・submission最短経路)
 > 主要機能のコードは概ね完了。残りは大半が手動(コンソール/Xcode/実機/AdMob/App Store Connect)。
+0. **リリース前修正2件(PR #19・#20は2026-07-26にmainへマージ済み。残るは人間のSupabase/ストア作業のみ)**:
+   - `docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql`(または統合版 `docs/verification/daily_limit_20260726_all_in_one.sql`)をSupabase SQL Editorで実行(既存ユーザーのdaily_limit是正、人間作業・未実施)
+   - PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映(人間作業・未実施)
 1. **iOS submission**: ビルド `1.0.0+10`(CI `ios-release.yml`経由でApp Store Connectへアップロード済、2026-07-25)。
    残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
    **ローカルXcodeでのアーカイブは今後も使わない**(このMacはXcode 26非対応。iOS 26 SDK必須エラーで拒否される)。ビルドを更新する際は必ずCI(`ios-release.yml`をworkflow_dispatchで手動実行)を使う。
