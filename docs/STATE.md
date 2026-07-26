@@ -42,7 +42,7 @@
 0. **リリース前修正2件(PR #19・#20は2026-07-26にmainへマージ済み。残るは人間の実機検証・ストア作業のみ)**:
    - `docs/verification/release_verification_session_20260726.md`を実施(通知/ストリーク系検証とdaily_limit是正+動作検証(PART A/B、**PART Bは必須**)を1本化した統合セッション。人間作業・未実施)。日をまたぐ/再インストールが必要な項目(Phase D・E)は同ドキュメント末尾に分離済み、別セッションでよい
    - PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映(人間作業・未実施)
-1. **iOS submission**: Build 11(`1.0.0+11`)への更新が必要(PR #17がBuild 10に未収録のため、実機検証STEP 4/Phase Bの実施にはBuild 11以降が必須)。2026-07-26のBuild 11起動はArchiveステップで失敗(根本原因・修正はDECISIONS.md 2026-07-26参照、`ios-release.yml`とRunner.xcodeprojのRelease設定を完全な手動署名に修正済み・PR未マージ)。**次回起動前に**: (a) 当該PRをレビュー・マージ、(b) Apple Developer Portalで証明書枚数に余裕があることを確認(2026-07-26に古いDevelopment証明書7枚を失効済み)、(c) `gh workflow run ios-release.yml --ref main` で再実行。成功後の残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
+1. **iOS submission**: Build 11(`1.0.0+11`)は2026-07-26に成功(手動署名固定PR #23適用後。ASC API実査でDistribution証明書`6M2X4S28G7`の実在・プロファイル紐付けを確認済み)。App Store Connectへのアップロード完了。残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
    **ローカルXcodeでのアーカイブは今後も使わない**(このMacはXcode 26非対応。iOS 26 SDK必須エラーで拒否される)。ビルドを更新する際は必ずCI(`ios-release.yml`をworkflow_dispatchで手動実行)を使う。
 2. **App Store公開後タスク**(公開して初めて着手可能。公開前は保留でよい):
    - AdMobリワード広告のNo Fill再検証(上記「AdMob リワード広告」欄参照。公開直後は在庫が薄い場合があるため数日様子を見る)
@@ -61,6 +61,7 @@
 7. 通知履歴の表示時ローカライズ改修(任意・優先度低): 現状「配信時点の言語で保持」が仕様(DECISIONS.md 2026-07-26)。ユーザーから改善要望が出た場合のみ着手
 8. 小タスク: G6ダイアログを権限取得済み時はスキップする改善(任意)。~~l10n.yaml非推奨行~~ ~~.dart_tool混入~~ → `1db8073` で完了
 9. **api/*.ts のテスト基盤整備**(任意・バックログ、2026-07-26追加): 現状jest/vitest等のTSテスト基盤が皆無、tsconfig.json/testスクリプトも無し。前提としてこのMacへのNode.jsインストールも必要(現状未インストールでローカル実行不可)。daily_limitリセット修正(DECISIONS.md 2026-07-26)ではスコープ肥大回避のため見送り、実機+SQL検証(`docs/verification/daily_limit_reset_verification_20260726.md`)で代替した
+10. **シーンのお気に入り機能**(任意・条件付きバックログ、2026-07-26追加): 未完成のまま放置されていたハートボタン(`lib/widgets/scene_preview_card.dart`)を削除(DECISIONS.md 2026-07-26参照)。再検討の条件: (a) シーン数が20を超えた段階(現在13シーンでは絞り込みの必要性が低い)、(b) 実装する場合は「一覧・絞り込み」までセットで設計する(保存だけして参照先が無い状態を繰り返さない)、(c) 代替案(「最近使ったシーン」・統計画面からのショートカット)も比較対象とする、(d) 判断は公開後の`usage_logs`(scene_idの分布)を確認してから行う
 
 ## 完了(2026-07-25〜26セッション)
 - **オープンPR一式のマージ**: #3(purchases_flutter v10.4.3対応)・#4(規約類の英語版・不整合修正)・#6(AI生成コンテンツ報告機能、Google Playポリシー必須)・#7(ストア掲載文v1.3)・#8(アプリ内UI言語切替)をmainへマージ
