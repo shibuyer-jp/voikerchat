@@ -132,20 +132,52 @@ class SceneSelectionScreen extends StatelessWidget {
     );
   }
 
+  /// 「続きから」バナーが実際に表示される場合の対象シーンIDを返す
+  /// (バナーの非表示条件と同一ロジック: 未記録/不正ID/未解放シーンはnull)。
+  /// 「最近使ったシーン」セクションでの重複除外にのみ使う。
+  Future<String?> _getVisibleResumeSceneId() async {
+    final lastSceneId = await LearnerPreferencesService().getLastSceneId();
+    if (lastSceneId == null) return null;
+
+    final id = int.tryParse(lastSceneId);
+    if (id == null) return null;
+
+    Scene? scene;
+    for (final candidate in SceneService.allScenes) {
+      if (candidate.id == id) {
+        scene = candidate;
+        break;
+      }
+    }
+    if (scene == null) return null;
+    if (scene.isPremium && !isPremiumUser) return null;
+
+    return lastSceneId;
+  }
+
   /// 「最近使ったシーン」セクション。最近開いたシーン(最大3件、最新順)を
   /// 上部に表示する。履歴が無ければセクションごと非表示にする。
+  /// 「続きから」バナーに表示中のシーンは重複して見えるため除外する
+  /// (除外後の残り件数が3件未満でも補充はしない)。
   Widget _buildRecentScenesSection(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return FutureBuilder<List<String>>(
-      future: LearnerPreferencesService().getRecentSceneIds(),
+    return FutureBuilder<(String? resumeSceneId, List<String> recentIds)>(
+      future: () async {
+        final resumeSceneId = await _getVisibleResumeSceneId();
+        final recentIds = await LearnerPreferencesService().getRecentSceneIds();
+        return (resumeSceneId, recentIds);
+      }(),
       builder: (context, snapshot) {
-        final recentIds = snapshot.data;
-        if (recentIds == null || recentIds.isEmpty) {
-          return const SizedBox.shrink();
-        }
+        final data = snapshot.data;
+        if (data == null) return const SizedBox.shrink();
+        final (resumeSceneId, recentIds) = data;
+
+        final filteredIds =
+            recentIds.where((id) => id != resumeSceneId).toList();
+        if (filteredIds.isEmpty) return const SizedBox.shrink();
 
         final recentScenes = <Scene>[];
-        for (final idStr in recentIds) {
+        for (final idStr in filteredIds) {
           final id = int.tryParse(idStr);
           if (id == null) continue;
           for (final candidate in SceneService.allScenes) {
