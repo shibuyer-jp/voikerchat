@@ -10,14 +10,12 @@ import '../theme/app_colors.dart';
 /// - シーン名
 /// - キャラクター名
 /// - 難易度タグ
-/// - お気に入りボタン
 class ScenePreviewCard extends StatefulWidget {
   final int sceneId;
   final String sceneName;
   final String characterName;
   final String description;
   final UserDiagnosticLevel recommendedLevel;
-  final bool isFavorite;
   final bool isPremium;
   final bool isLocked;
 
@@ -26,7 +24,6 @@ class ScenePreviewCard extends StatefulWidget {
   final Color? accentColor;
 
   final VoidCallback? onTap;
-  final ValueChanged<bool>? onFavoriteToggle;
 
   const ScenePreviewCard({
     super.key,
@@ -35,41 +32,18 @@ class ScenePreviewCard extends StatefulWidget {
     required this.characterName,
     required this.description,
     required this.recommendedLevel,
-    this.isFavorite = false,
     this.isPremium = false,
     this.isLocked = false,
     this.accentColor,
     this.onTap,
-    this.onFavoriteToggle,
   });
 
   @override
   State<ScenePreviewCard> createState() => _ScenePreviewCardState();
 }
 
-class _ScenePreviewCardState extends State<ScenePreviewCard>
-    with SingleTickerProviderStateMixin {
+class _ScenePreviewCardState extends State<ScenePreviewCard> {
   static const double _thumbnailSize = 88;
-
-  late AnimationController _animationController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-  }
-
-  void _toggleFavorite() {
-    if (widget.isFavorite) {
-      _animationController.reverse();
-    } else {
-      _animationController.forward();
-    }
-    widget.onFavoriteToggle?.call(!widget.isFavorite);
-  }
 
   Color _getLevelColor(UserDiagnosticLevel level) {
     switch (level) {
@@ -162,7 +136,7 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ヘッダー: シーン名 + お気に入りボタン
+                    // ヘッダー: シーン名 + ロックアイコン(プレミアム未解放時)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -230,22 +204,6 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
                           const Padding(
                             padding: EdgeInsets.all(8),
                             child: Icon(Icons.lock, color: Colors.grey),
-                          )
-                        else
-                          ScaleTransition(
-                            scale: Tween<double>(
-                              begin: 1,
-                              end: 1.2,
-                            ).animate(_animationController),
-                            child: IconButton(
-                              onPressed: _toggleFavorite,
-                              icon: Icon(
-                                widget.isFavorite
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: Colors.red,
-                              ),
-                            ),
                           ),
                       ],
                     ),
@@ -291,11 +249,5 @@ class _ScenePreviewCardState extends State<ScenePreviewCard>
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 }
