@@ -26,22 +26,22 @@
 | プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
 | AdMob リワード広告 | ✅ コード完了・実ID設定済 / ⚠️ No Fill(公開後に再検証) | `ad_config.dart`の`_prod*`は実ID設定済(`useTestAds=false`)、`GADApplicationIdentifier`・`SKAdNetworkItems`(PR #16、Google推奨50件)も設定済み。TestFlight Build 8〜10で継続的に`onAdFailedToLoad: code=1 No Fill`(コード側は正常、AdMobサーバーへのリクエスト自体は成功=responseId取得済み)。AdMobコンソール確認の結果、**原因はアプリがApp Store未公開であること**と判断(DECISIONS.md 2026-07-26)。App Store公開後に再検証すること(次タスク参照) |
 | fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
-| **daily_limitの日次リセット漏れ修正** | 🚧 PR #19作成済み・マージ待ち | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。既存データの是正は`docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql`(人間が実行)、動作検証は`docs/verification/daily_limit_reset_verification_20260726.md`参照(DECISIONS.md 2026-07-26) |
-| **ストア掲載文の数値非依存化(v1.3→v1.4)** | 🚧 PR作成予定 | `docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。iOS未提出のため今回変更してもコスト増なし(DECISIONS.md 2026-07-26) |
+| **daily_limitの日次リセット漏れ修正** | ✅ 完了・main反映(PR #19) | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。既存データの是正は`docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql`(人間が実行、要)、動作検証は`docs/verification/daily_limit_reset_verification_20260726.md`参照(DECISIONS.md 2026-07-26) |
+| **ストア掲載文の数値非依存化(v1.3→v1.4)** | ✅ 完了・main反映(PR #20) | `docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。ストア本番反映(コンソールへの貼付)はPR #20本文のコピペ用テキストを使用(人間が実行、要)(DECISIONS.md 2026-07-26) |
 
 ## 確定定数(変更時はDECISIONSに記録)
 - App: Voikerchat / `jp.shibuyer.voikerchat` / voikerchat.com(Dynadot) / Team ID `S6XJP274T2`
 - Vercelプロジェクト: `voikerchat-x621`(env: SUPABASE_URL / SUPABASE_SERVICE_KEY=service_role / ANTHROPIC_API_KEY)
 - APIエンドポイント(api/): chat / rate-limit / analytics / revenuecat-webhook / delete-account
-- フリーミアム: 無料5回/日(広告+5、最大10)/ プレミアム$12.99月(50回/日・全13シーン・広告なし)
+- フリーミアム: 無料5回/日(広告+5、最大10、当日限り)/ プレミアム$12.99月(50回/日・全13シーン・広告なし)。値の唯一の定義元は`api/_constants.ts`(サーバー)/`lib/constants/rate_limit_constants.dart`(クライアントfallback)
 - サポート: voikerchat.support@gmail.com(forward→takatoh01@gmail.com)。kizunavi.support は非運用 / APNs `.p8`: Drive `00_Project_Credentials`(`1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)
 - 設計書: repo `docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
 
 ## 次タスク(優先順・submission最短経路)
 > 主要機能のコードは概ね完了。残りは大半が手動(コンソール/Xcode/実機/AdMob/App Store Connect)。
-0. **リリース前修正2件(submission前に完了させること)**:
-   - PR #19(daily_limit日次リセット修正): レビュー・マージ後、`docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql`をSupabase SQL Editorで実行(既存ユーザーの是正、人間作業)。可能なら`docs/verification/daily_limit_reset_verification_20260726.md`で動作検証
-   - ストア掲載文v1.4のPR: レビュー・マージ後、PR本文のコピペ用テキストをGoogle Play Console/App Store Connectの該当欄に反映
+0. **リリース前修正2件(PR #19・#20は2026-07-26にmainへマージ済み。残るは人間のSupabase/ストア作業のみ)**:
+   - `docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql`(または統合版 `docs/verification/daily_limit_20260726_all_in_one.sql`)をSupabase SQL Editorで実行(既存ユーザーのdaily_limit是正、人間作業・未実施)
+   - PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映(人間作業・未実施)
 1. **iOS submission**: ビルド `1.0.0+10`(CI `ios-release.yml`経由でApp Store Connectへアップロード済、2026-07-25)。
    残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
    **ローカルXcodeでのアーカイブは今後も使わない**(このMacはXcode 26非対応。iOS 26 SDK必須エラーで拒否される)。ビルドを更新する際は必ずCI(`ios-release.yml`をworkflow_dispatchで手動実行)を使う。
@@ -61,6 +61,7 @@
 6. **fil訳ネイティブレビュー**(妻に依頼) → 本番化。対象は既存21キー(notification_scheduler)に加え、言語切替UI(PR #8)・通知トグル(PR #11)の新規キーも機械翻訳のまま未レビュー
 7. 通知履歴の表示時ローカライズ改修(任意・優先度低): 現状「配信時点の言語で保持」が仕様(DECISIONS.md 2026-07-26)。ユーザーから改善要望が出た場合のみ着手
 8. 小タスク: G6ダイアログを権限取得済み時はスキップする改善(任意)。~~l10n.yaml非推奨行~~ ~~.dart_tool混入~~ → `1db8073` で完了
+9. **api/*.ts のテスト基盤整備**(任意・バックログ、2026-07-26追加): 現状jest/vitest等のTSテスト基盤が皆無、tsconfig.json/testスクリプトも無し。前提としてこのMacへのNode.jsインストールも必要(現状未インストールでローカル実行不可)。daily_limitリセット修正(DECISIONS.md 2026-07-26)ではスコープ肥大回避のため見送り、実機+SQL検証(`docs/verification/daily_limit_reset_verification_20260726.md`)で代替した
 
 ## 完了(2026-07-25〜26セッション)
 - **オープンPR一式のマージ**: #3(purchases_flutter v10.4.3対応)・#4(規約類の英語版・不整合修正)・#6(AI生成コンテンツ報告機能、Google Playポリシー必須)・#7(ストア掲載文v1.3)・#8(アプリ内UI言語切替)をmainへマージ

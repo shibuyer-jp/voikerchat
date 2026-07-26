@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { timingSafeEqual } from 'crypto';
+import { baseDailyLimit } from './_constants';
 
 /**
  * 環境変数（chat.ts と同方式に統一）
@@ -12,9 +13,6 @@ const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey =
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || '';
 const webhookSecret = process.env.REVENUECAT_WEBHOOK_SECRET || '';
-
-const PREMIUM_DAILY_LIMIT = 50;
-const FREE_DAILY_LIMIT = 5;
 
 // Premium 付与エンティティ確認後、is_premium=true / daily_limit=50 にするイベント
 const GRANT_EVENT_TYPES = new Set([
@@ -95,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const isPremium = action === 'grant';
-    const dailyLimit = isPremium ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT;
+    const dailyLimit = baseDailyLimit(isPremium);
 
     await upsertPremiumStatus(supabase, appUserId, isPremium, dailyLimit);
 

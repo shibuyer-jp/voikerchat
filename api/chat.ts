@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import { PREMIUM_DAILY_LIMIT, FREE_DAILY_LIMIT, baseDailyLimit } from './_constants';
 
 /**
  * 環境変数（名前ゆれ・新旧キーに両対応）
@@ -14,10 +15,6 @@ const supabaseKey =
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || '';
 const claudeApiKey =
   process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || '';
-
-// revenuecat-webhook.ts の daily_limit 付与値と一致させること
-const PREMIUM_DAILY_LIMIT = 50;
-const FREE_DAILY_LIMIT = 5;
 
 /**
  * POST /api/chat
@@ -214,9 +211,15 @@ async function checkAndIncrementRateLimit(
     );
 
     if (daysPassed >= 1) {
+      // 日次リセット: used_today だけでなく daily_limit も基礎値へ戻す。
+      // 広告視聴ボーナス(当日限り)を翌日以降に持ち越さないため。
       const { error: resetError } = await supabase
         .from('rate_limits')
-        .update({ used_today: 1, last_reset_utc: today.toISOString() })
+        .update({
+          used_today: 1,
+          daily_limit: baseDailyLimit(isPremium),
+          last_reset_utc: today.toISOString(),
+        })
         .eq('user_id', userId);
       if (resetError) {
         console.error('rate_limits reset update failed:', resetError.code, resetError.message, resetError.details);

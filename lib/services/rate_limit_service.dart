@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../constants/rate_limit_constants.dart';
 import '../models/rate_limit.dart';
 
 class RateLimitService {
@@ -23,10 +24,10 @@ class RateLimitService {
 
       return RateLimit.fromJson(response);
     } catch (e) {
-      // If no record exists, return default (free tier: 5 calls/day)
+      // If no record exists, return default (free tier)
       return RateLimit(
         userId: userId,
-        dailyLimit: 5,
+        dailyLimit: RateLimitConstants.freeDailyLimit,
         usedToday: 0,
         lastResetUtc: DateTime.now(),
         isPremium: false,
