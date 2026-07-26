@@ -1,0 +1,90 @@
+name: (temp) ASC certificate/profile check
+
+# 一時的な調査用ワークフロー。iOSビルド(macos-26ランナー、10倍課金)は一切行わず、
+# App Store Connect APIに問い合わせて証明書/プロファイルの実体を確認するだけ。
+# 調査完了後にこのファイルごと削除する(ブランチも削除)。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install deps
+        run: pip install --quiet pyjwt cryptography
+
+      - name: Generate JWT and query ASC API
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, time, json, subprocess
+          import jwt
+
+          key_id = os.environ["ASC_KEY_ID"]
+          issuer_id = os.environ["ASC_ISSUER_ID"]
+          private_key = os.environ["ASC_API_KEY_P8"]
+
+          now = int(time.time())
+          payload = {
+              "iss": issuer_id,
+              "iat": now,
+              "exp": now + 1200,
+              "aud": "appstoreconnect-v1",
+          }
+          token = jwt.encode(payload, private_key, algorithm="ES256", headers={"kid": key_id, "typ": "JWT"})
+          print(f"::add-mask::{token}")
+
+          def call(path):
+              result = subprocess.run(
+                  ["curl", "-s", "-H", f"Authorization: Bearer {token}",
+                   f"https://api.appstoreconnect.apple.com{path}"],
+                  capture_output=True, text=True
+              )
+              try:
+                  return json.loads(result.stdout)
+              except json.JSONDecodeError:
+                  print("RAW RESPONSE (non-JSON):", result.stdout[:500])
+                  return {}
+
+          print("=== CERTIFICATES (/v1/certificates) ===")
+          certs = call("/v1/certificates?limit=200")
+          if "errors" in certs:
+              print("CERT ERROR:", certs["errors"])
+          for c in certs.get("data", []):
+              a = c["attributes"]
+              print(f"id={c['id']} type={a.get('certificateType')} name={a.get('displayName')} "
+                    f"serial={a.get('serialNumber')} expires={a.get('expirationDate')}")
+          print(f"total certificates returned: {len(certs.get('data', []))}")
+
+          print()
+          print("=== PROFILES (/v1/profiles) ===")
+          profiles = call("/v1/profiles?limit=200")
+          if "errors" in profiles:
+              print("PROFILE ERROR:", profiles["errors"])
+          target_profile_id = None
+          for p in profiles.get("data", []):
+              a = p["attributes"]
+              name = a.get("name")
+              print(f"id={p['id']} name={name} state={a.get('profileState')} "
+                    f"expires={a.get('expirationDate')} type={a.get('profileType')}")
+              if name and "voikerchat App Store 2026" in name:
+                  target_profile_id = p["id"]
+
+          print()
+          print(f"=== TARGET PROFILE: voikerchat App Store 2026 (id={target_profile_id}) ===")
+          if target_profile_id:
+              profile_certs = call(f"/v1/profiles/{target_profile_id}/certificates")
+              if "errors" in profile_certs:
+                  print("PROFILE-CERT ERROR:", profile_certs["errors"])
+              for c in profile_certs.get("data", []):
+                  a = c["attributes"]
+                  print(f"id={c['id']} type={a.get('certificateType')} name={a.get('displayName')} "
+                        f"serial={a.get('serialNumber')} expires={a.get('expirationDate')}")
+              print(f"total certificates on this profile: {len(profile_certs.get('data', []))}")
+          else:
+              print("profile named 'voikerchat App Store 2026' not found in /v1/profiles listing")
+          PYEOF
