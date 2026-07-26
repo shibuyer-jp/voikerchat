@@ -60,6 +60,10 @@
   "@sceneSelectionTitle": {
     "description": "App bar title on the scene selection screen"
   },
+  "sceneSectionRecentlyPlayed": "Recently played",
+  "@sceneSectionRecentlyPlayed": {
+    "description": "Section header for the recently played scenes shortcut (up to 3, hidden when history is empty)"
+  },
   "sceneSectionRecommended": "Recommended for you",
   "@sceneSectionRecommended": {
     "description": "Section header for scenes recommended by user level"

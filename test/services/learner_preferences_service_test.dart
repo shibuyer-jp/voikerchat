@@ -33,5 +33,38 @@ void main() {
       final service = LearnerPreferencesService();
       expect(await service.isFuriganaEnabled(), isTrue);
     });
+
+    test('recent scene ids default to empty list', () async {
+      final service = LearnerPreferencesService();
+      expect(await service.getRecentSceneIds(), isEmpty);
+    });
+
+    test('recent scene ids are ordered most-recent-first', () async {
+      final service = LearnerPreferencesService();
+      await service.recordRecentSceneId('1');
+      await service.recordRecentSceneId('2');
+      await service.recordRecentSceneId('3');
+
+      expect(await service.getRecentSceneIds(), ['3', '2', '1']);
+    });
+
+    test('recording an existing id moves it to the front instead of duplicating', () async {
+      final service = LearnerPreferencesService();
+      await service.recordRecentSceneId('1');
+      await service.recordRecentSceneId('2');
+      await service.recordRecentSceneId('1');
+
+      expect(await service.getRecentSceneIds(), ['1', '2']);
+    });
+
+    test('recent scene ids are capped at 3, dropping the oldest', () async {
+      final service = LearnerPreferencesService();
+      await service.recordRecentSceneId('1');
+      await service.recordRecentSceneId('2');
+      await service.recordRecentSceneId('3');
+      await service.recordRecentSceneId('4');
+
+      expect(await service.getRecentSceneIds(), ['4', '3', '2']);
+    });
   });
 }

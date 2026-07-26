@@ -132,6 +132,48 @@ class SceneSelectionScreen extends StatelessWidget {
     );
   }
 
+  /// 「最近使ったシーン」セクション。最近開いたシーン(最大3件、最新順)を
+  /// 上部に表示する。履歴が無ければセクションごと非表示にする。
+  Widget _buildRecentScenesSection(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return FutureBuilder<List<String>>(
+      future: LearnerPreferencesService().getRecentSceneIds(),
+      builder: (context, snapshot) {
+        final recentIds = snapshot.data;
+        if (recentIds == null || recentIds.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final recentScenes = <Scene>[];
+        for (final idStr in recentIds) {
+          final id = int.tryParse(idStr);
+          if (id == null) continue;
+          for (final candidate in SceneService.allScenes) {
+            if (candidate.id == id) {
+              recentScenes.add(candidate);
+              break;
+            }
+          }
+        }
+        if (recentScenes.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(context, l.sceneSectionRecentlyPlayed),
+            ...recentScenes.map(
+              (scene) => _buildCard(
+                context,
+                scene,
+                isLocked: scene.isPremium && !isPremiumUser,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 12),
@@ -200,6 +242,7 @@ class SceneSelectionScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           _buildResumeBanner(context),
+          _buildRecentScenesSection(context),
 
           if (recommended.isNotEmpty) ...[
             _buildSectionHeader(context, l.sceneSectionRecommended),

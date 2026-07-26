@@ -45,4 +45,26 @@ class LearnerPreferencesService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_lastSceneIdKey, sceneId);
   }
+
+  // ---- 最近使ったシーン(シーン選択画面の「最近使ったシーン」セクション) ----
+
+  static const String _recentSceneIdsKey = 'recent_scene_ids';
+  static const int _recentSceneIdsMaxLength = 3;
+
+  /// 最近開いたシーンID一覧(最新順、最大3件、重複なし)。履歴が無ければ空リスト。
+  Future<List<String>> getRecentSceneIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_recentSceneIdsKey) ?? [];
+  }
+
+  /// シーンを開いた際に呼び出し、履歴を最新順で更新する。
+  /// 既に履歴にあるIDは一旦除いてから先頭に追加する(重複は最新側に統合)。
+  Future<void> recordRecentSceneId(String sceneId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getStringList(_recentSceneIdsKey) ?? [];
+    final updated = [sceneId, ...current.where((id) => id != sceneId)]
+        .take(_recentSceneIdsMaxLength)
+        .toList();
+    await prefs.setStringList(_recentSceneIdsKey, updated);
+  }
 }

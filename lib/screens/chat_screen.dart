@@ -126,6 +126,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     // D案: 前回シーンとして記録(シーン一覧の「続きから」バナーで使用)。
     _learnerPreferencesService.setLastSceneId(widget.sceneId);
+    // シーン一覧の「最近使ったシーン」セクションで使用(最新順・重複統合)。
+    _learnerPreferencesService.recordRecentSceneId(widget.sceneId);
 
     _initializeChat();
   }
