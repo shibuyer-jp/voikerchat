@@ -1,5 +1,11 @@
 # daily_limit 日次リセット 実地検証(2026-07-26)
 
+> ## 【実行禁止】このファイルは記録用です。実行しないでください。
+> 実行するのは `docs/verification/daily_limit_20260726_all_in_one.sql`
+> (または統合版 `docs/verification/release_verification_session_20260726.md`)
+> のみです。このファイルに含まれるSQLを重ねて実行すると、UPDATEが
+> 二重に走ります。
+
 対象: `api/chat.ts` の `checkAndIncrementRateLimit()` および `api/rate-limit.ts` の日次リセット処理(PR参照)。
 日付境界を跨いだ際に `daily_limit` が基礎値(無料5/Premium50)へ正しく戻ることを、実機でのアプリ操作を交えて検証する。
 

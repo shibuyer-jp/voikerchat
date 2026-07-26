@@ -1,3 +1,10 @@
+-- ============================================================
+-- 【実行禁止】このファイルは記録用です。実行しないでください。
+-- 実行するのは docs/verification/daily_limit_20260726_all_in_one.sql
+-- (または docs/verification/release_verification_session_20260726.md)
+-- のみです。このファイルを重ねて実行すると、UPDATEが二重に走ります。
+-- ============================================================
+--
 -- 2026-07-26: daily_limit 日次リセット漏れバグ(api/chat.ts の
 -- checkAndIncrementRateLimit() が used_today のみリセットし daily_limit を
 -- 基礎値へ戻していなかった)により、広告視聴ボーナス(+5、上限10)を一度でも
