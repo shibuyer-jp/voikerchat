@@ -1,7 +1,19 @@
-# ストア掲載文 v1.3（提出可能版 / 2026-07-24）
+# ストア掲載文 v1.4（提出可能版 / 2026-07-26）
 
 v1.1 は方針ドラフトだったため、**そのままコピー&ペーストして提出できる完成版**として作成。
 主要ターゲットはフィリピン人学習者のため、**英語版を主、日本語版を従**とする。
+
+## v1.3 からの変更点
+- 詳細説明（英語版/日本語版）の「無料版とプレミアム」段落から、無料枠の具体的回数（5回/日、広告視聴+5回）の記載を削除。
+  アプリ側は既に `callsRemainingToday` 等で残り回数を動的表示しており、ストア掲載文に固定数値を残すと、
+  サーバー側の日次リセット処理を修正した際などにストア掲載文とアプリの実際の挙動がズレるリスクがあるため
+  （経緯は `docs/DECISIONS.md` 2026-07-26参照）。
+  - 英語版: "The free plan includes 5 conversations per day, and you can watch a short ad to unlock 5 more." →
+    "The free plan lets you practice every day, and you can watch a short ad to unlock additional conversations."
+  - 日本語版: 「無料版は1日5回まで会話できます。広告を視聴するとさらに5回追加されます。」→
+    「無料版でも毎日会話を楽しめます。広告視聴でさらに回数を追加できます。」
+  - `featureUnlimitedDesc`（ARB、「無料の10倍」/"10x"）は本変更の対象外。無料版の基礎値(5)自体は変えていないため、この比率表記はそのまま正しい。
+- 上記変更に伴い、詳細説明の実測文字数を再計測（英語版 2,936→2,949字 / 日本語版 960→957字）。いずれも上限4000字以内。
 
 ## v1.2 からの変更点
 - Premium unlocks（英語版）/ プレミアムの説明（日本語版）から「バッジコレクション」の記述を削除。
@@ -39,7 +51,7 @@ Never freeze up again. Chat with AI characters, tap the hint button when you're 
 ```
 
 ## 詳細説明（Google Play 詳細説明 / App Store 説明 共通）
-**上限4000文字 / 実測2,936文字**
+**上限4000文字 / 実測2,949文字**
 
 ```
 Speak Japanese without fear.
@@ -80,7 +92,7 @@ TRACK YOUR PROGRESS
 
 FREE AND PREMIUM
 
-Voikerchat is free to start. The free plan includes 5 conversations per day, and you can watch a short ad to unlock 5 more.
+Voikerchat is free to start. The free plan lets you practice every day, and you can watch a short ad to unlock additional conversations.
 
 Voikerchat Premium unlocks:
 - A greatly expanded daily conversation limit
@@ -114,7 +126,7 @@ Support: voikerchat.support@gmail.com
 ```
 
 ## 詳細説明
-**上限4000文字 / 実測960文字**
+**上限4000文字 / 実測957文字**
 
 ```
 「言葉に詰まっても大丈夫」な日本語会話アプリ。
@@ -140,7 +152,7 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 
 ■ 無料版とプレミアム
 
-無料版は1日5回まで会話できます。広告を視聴するとさらに5回追加されます。
+無料版でも毎日会話を楽しめます。広告視聴でさらに回数を追加できます。
 
 プレミアムでは、1日の会話回数の大幅な拡大、アニメ風を含む全シーンの利用、広告の非表示、キャラクター音声、学習統計ダッシュボードがご利用いただけます。
 
