@@ -31,6 +31,13 @@
   **`scene_id=1`以外のシーン(例: scene_id=2)** で行うことで、ストリークのキー
   (`streak_<userId>_<sceneId>_days`)を完全に分離した(下記STEP 3の該当手順に明記)。これにより、
   実行順序に関わらずPART BとPhase Cは互いに影響しない。
+  **なお、この分離によって「二重加算」が起きないことも確認済み**: `user_streaks`テーブルは
+  `user_id`+`scene_id`の複合キーで管理されるシーン単位の独立した値であり(`streak_service.dart`の
+  `_restoreStreakFromSupabase`/`_syncStreakFromSupabaseIfNewer`はいずれも`user_id`と`scene_id`両方で
+  絞り込んだ単一行を前提にしている)、ユーザー単位のグローバル値ではない。したがってscene_id=2側の
+  加算がscene_id=1側の値に影響することはなく(全シーン合算の`getAllStreaks()`もコード上どこからも
+  呼ばれていない未使用メソッドのため、集計表示への副作用もない)、分離により「取り合い」が
+  「二重加算」に変わることもない。
 - Phase B(言語切替)はセッション中1回のみ行い、以降のPhase(C以降)はFilipinoのまま進めます(切り戻し不要、
   元の`notification_verification_20260726.md`と同じ方針)。
 - Phase D(再インストール)は破壊的操作のため必ず最後、Phase E(オフライン復帰確認)はPhase Dの直後(復元された
