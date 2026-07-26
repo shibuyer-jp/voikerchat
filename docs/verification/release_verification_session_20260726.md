@@ -19,6 +19,18 @@
   (サーバー側が「今日」と判定する基準は端末の時計ではなくサーバー自身の時計のため)。Phase C(ストリーク検証)の
   ように端末の時計そのものを操作する必要はありません。この性質上、端末の時計をいじる前(通常の時計のまま)に
   済ませておくのが安全なため、Phase C より前に配置しています。
+- **daily_limit PART BがPhase C(ストリーク検証)の前提を壊さないかの確認結果(重要)**:
+  会話を1回送信すると、`lib/screens/chat_screen.dart`が毎回無条件に`StreakService.incrementStreak(userId,
+  sceneId)`を呼ぶ副作用がある。この関数は`rate_limits.last_reset_utc`を一切参照せず、**端末の実時刻**と
+  **`userId`+`sceneId`単位**のローカル(SharedPreferences)な「1日1回」ガードのみで動く、daily_limitとは
+  完全に独立した仕組みである。したがって、PART Bが`rate_limits.last_reset_utc`をサーバー側で操作すること
+  自体はストリーク判定に一切影響しない。**唯一の実際のリスクは、「メッセージを1回送信する」という操作
+  そのものが副作用としてストリークを加算してしまう点**であり、PART BとPhase Cが**同じscene_id**でメッセージを
+  送信すると、1日1回の加算枠を奪い合い、Phase Cの期待値(streak=1→2→3)がずれる可能性がある。
+  → **対策**: Phase Cは`scene_id=1`を使用し、daily_limit PART B(B1・B2)のメッセージ送信は
+  **`scene_id=1`以外のシーン(例: scene_id=2)** で行うことで、ストリークのキー
+  (`streak_<userId>_<sceneId>_days`)を完全に分離した(下記STEP 3の該当手順に明記)。これにより、
+  実行順序に関わらずPART BとPhase Cは互いに影響しない。
 - Phase B(言語切替)はセッション中1回のみ行い、以降のPhase(C以降)はFilipinoのまま進めます(切り戻し不要、
   元の`notification_verification_20260726.md`と同じ方針)。
 - Phase D(再インストール)は破壊的操作のため必ず最後、Phase E(オフライン復帰確認)はPhase Dの直後(復元された
@@ -151,6 +163,8 @@ ORDER BY created_at DESC;
 > その判断の前提は「代わりに実地検証(このSTEP)で動作を確認する」ことにあるため、**このSTEPを省略すると
 > daily_limitの日次リセットロジックが一切検証されないままリリースされることになり、判断の前提が崩れる**。
 > シナリオB1(無料ユーザー)は必須。シナリオB2(Premiumユーザー)のみ、テスト用Premiumアカウントが無い場合に限り省略可。
+>
+> **使用シーン**: このSTEPのメッセージ送信は`scene_id=1`**以外**(例: scene_id=2)を使うこと。STEP 5(Phase C)は`scene_id=1`を使う。ストリークは`userId`+`sceneId`単位で1日1回しか加算されないため、同じシーンを使うと加算枠を消費し合いPhase Cの期待値がずれる(冒頭「最適化の根拠」参照)。
 
 ### B0: 検証用の現状をバックアップ(あとで元に戻すため)
 
@@ -195,7 +209,7 @@ WHERE user_id = current_setting('myapp.user_id')::uuid
 - **期待結果**: `UPDATE 1`
 - **NG時に疑うべき箇所**: `UPDATE 0`の場合、対象ユーザーが`is_premium = true`になっている(Premiumテストアカウントを誤って使っている)。B0の結果を確認し、無料ユーザーで実施し直す。
 
-★ここでアプリを操作: 対象ユーザーでログイン中のiPhone/シミュレータで、任意のシーンを開き、メッセージを1回送信する(またはボイス発話を1回行う)。
+★ここでアプリを操作: 対象ユーザーでログイン中のiPhone/シミュレータで、**`scene_id=1`以外**のシーン(例: scene_id=2)を開き、メッセージを1回送信する(またはボイス発話を1回行う)。`scene_id=1`はSTEP 5(Phase C、ストリーク検証)で使うため、同じシーンを使うとストリークの1日1回加算枠を消費し合ってしまう(冒頭「最適化の根拠」内の「daily_limit PART BがPhase Cの前提を壊さないかの確認結果」参照)。
 
 ★ここでSQLを実行
 
@@ -238,7 +252,7 @@ WHERE user_id = current_setting('myapp.user_id')::uuid
 - **期待結果**: `UPDATE 1`
 - **NG時に疑うべき箇所**: `UPDATE 0`の場合、対象ユーザーが実は`is_premium = false`(Premiumテストアカウントの権限が失効している可能性。RevenueCatのテスト購入状態を確認)。
 
-★ここでアプリを操作: Premiumテストユーザーでログイン中の端末で、任意のシーンを開き、メッセージを1回送信する。
+★ここでアプリを操作: Premiumテストユーザーでログイン中の端末で、**`scene_id=1`以外**のシーン(例: scene_id=2)を開き、メッセージを1回送信する(B1と同じ理由。Premiumテストアカウントは別ユーザーのため通常は`streak_<userId>`単位で既に分離されているが、念のため統一しておく)。
 
 ★ここでSQLを実行
 
