@@ -42,17 +42,16 @@
 0. **リリース前修正2件(PR #19・#20は2026-07-26にmainへマージ済み。残るは人間の実機検証・ストア作業のみ)**:
    - `docs/verification/release_verification_session_20260726.md`を実施(通知/ストリーク系検証とdaily_limit是正+動作検証(PART A/B、**PART Bは必須**)を1本化した統合セッション。人間作業・未実施)。日をまたぐ/再インストールが必要な項目(Phase D・E)は同ドキュメント末尾に分離済み、別セッションでよい
    - PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映(人間作業・未実施)
-1. **iOS submission**: ビルド `1.0.0+10`(CI `ios-release.yml`経由でApp Store Connectへアップロード済、2026-07-25)。
-   残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
+1. **iOS submission**: Build 11(`1.0.0+11`)への更新が必要(PR #17がBuild 10に未収録のため、実機検証STEP 4/Phase Bの実施にはBuild 11以降が必須)。2026-07-26のBuild 11起動はArchiveステップで失敗(根本原因・修正はDECISIONS.md 2026-07-26参照、`ios-release.yml`とRunner.xcodeprojのRelease設定を完全な手動署名に修正済み・PR未マージ)。**次回起動前に**: (a) 当該PRをレビュー・マージ、(b) Apple Developer Portalで証明書枚数に余裕があることを確認(2026-07-26に古いDevelopment証明書7枚を失効済み)、(c) `gh workflow run ios-release.yml --ref main` で再実行。成功後の残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
    **ローカルXcodeでのアーカイブは今後も使わない**(このMacはXcode 26非対応。iOS 26 SDK必須エラーで拒否される)。ビルドを更新する際は必ずCI(`ios-release.yml`をworkflow_dispatchで手動実行)を使う。
 2. **App Store公開後タスク**(公開して初めて着手可能。公開前は保留でよい):
    - AdMobリワード広告のNo Fill再検証(上記「AdMob リワード広告」欄参照。公開直後は在庫が薄い場合があるため数日様子を見る)
    - AdMobコンソールにApp Storeのストアリンク(アプリURL)を登録
    - `voikerchat.com`に`app-ads.txt`を設置(認可済み広告枠の申告。未設置だと広告収益に悪影響が出る可能性)
    - AdMobの「準備状況」レビュー(Ready for review的なチェックリスト)を確認し、指摘があれば対応
-3. **Push Phase2**(submission非必須・機能拡張・今回のリリースではスコープ外=「道2」)。着手時は以下を**この順で**、手動作業とPR #14マージをセットで行うこと(片方だけ進めるとiOSリリースビルドを壊すため):
-   1. Apple Developer PortalでApp ID(`jp.shibuyer.voikerchat`)のPush Notifications capabilityを有効化
-   2. プロビジョニングプロファイル「voikerchat App Store 2026」を、capability追加後の状態で再作成
+3. **Push Phase2**(submission非必須・機能拡張・今回のリリースではスコープ外=「道2」)。**2026-07-26のApple Developer Portal実査で判明**: 手順1・2は既に完了済み(「voikerchat App Store 2026」プロファイルには既にPush Notifications capabilityが有効。Created By: API Keyで、経緯は不明・未調査)。よってPR #14マージ時の当初の技術的懸念(capability不一致でarchive失敗するリスク)は解消したと判断(DECISIONS.md 2026-07-26参照)。ただし「道2」の戦略判断自体は独立しており、着手時は以下を**この順で**、手動作業とPR #14マージをセットで行うこと:
+   1. ~~Apple Developer PortalでApp ID(`jp.shibuyer.voikerchat`)のPush Notifications capabilityを有効化~~ → 2026-07-26確認時点で既に有効化済み
+   2. ~~プロビジョニングプロファイル「voikerchat App Store 2026」を、capability追加後の状態で再作成~~ → 現行プロファイルが既にcapability有効化後の状態
    3. APNsキー(`26PUZTM353`, .p8。Drive `00_Project_Credentials`、file ID `1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)をFirebase Console → Cloud Messagingにアップロード
    4. PR #14(iOS APNsエンティトルメント追加、実装済み・マージ保留中)をマージ
    5. 実機でのプッシュ受信テスト

@@ -6,9 +6,15 @@ name: iOS Release (Archive & Upload to App Store Connect)
 # ローカル(Intel Mac, Xcode 16)では iOS 26 SDK 要件を満たせず
 # App Store Connect へのアップロードが不可能なため、Xcode 26 が
 # プリインストール済みの macos-26 ランナー上でアーカイブ〜アップロードまで行う。
-# 署名は App Store Connect API キー方式(-allowProvisioningUpdates)で
-# ヘッドレスに解決するため、証明書/プロビジョニングプロファイルの
-# 事前準備は不要。
+#
+# 署名は完全な手動署名(CODE_SIGN_STYLE=Manual)。GitHub Secretsに保管した
+# Apple Distribution証明書(p12)とプロビジョニングプロファイル
+# ("voikerchat App Store 2026")を毎回インポート/インストールしてから使う。
+# -allowProvisioningUpdates は使わない(2026-07-26に判明: この設定+
+# Xcodeプロジェクト側のCODE_SIGN_STYLE=Automaticの組み合わせにより、
+# archive毎にApple Developer Portal上へ新規Development証明書が自動作成
+# され続け、証明書の上限到達でarchiveが失敗する不具合があった。詳細は
+# docs/DECISIONS.md 2026-07-26参照)。
 on:
   workflow_dispatch:
     inputs:
@@ -67,10 +73,12 @@ jobs:
 
       # App Manager 権限の ASC API キーではクラウド管理署名
       # (cloud-managed distribution certificate) が使えないため、
-      # ASC API で発行済みの Apple Distribution 証明書(6M2X4S28G7)を
-      # p12 として一時キーチェーンに取り込み、通常の自動署名で解決する。
-      # プロビジョニングプロファイルの生成/取得は引き続き
-      # -allowProvisioningUpdates + API キーが担う。
+      # Apple Distribution 証明書を IOS_DIST_CERT_P12(p12)として
+      # 一時キーチェーンに取り込み、完全な手動署名で解決する。
+      # 実際にインポートされる証明書の名称・フィンガープリントは
+      # 下記 `security find-identity` の出力で都度確認できる(CI実行毎に
+      # ログに出力される。証明書IDをコメント等に書き写して恒久的な事実と
+      # 扱わないこと。証明書はローテーションされうる)。
       - name: Import distribution certificate
         env:
           IOS_DIST_CERT_P12: ${{ secrets.IOS_DIST_CERT_P12 }}
@@ -95,9 +103,11 @@ jobs:
           echo "== signing identities =="
           security find-identity -v -p codesigning "$KEYCHAIN_PATH"
 
-      # App Store 用プロビジョニングプロファイル(W8XH2M23DC,
-      # "voikerchat App Store 2026")を ASC API で作成済み。
-      # Export は ExportOptions.plist の manual 署名でこのプロファイルを使う。
+      # App Store 用プロビジョニングプロファイル("voikerchat App Store 2026")を
+      # IOS_PROVISIONING_PROFILE から都度インストールする。Archive/Export とも
+      # ExportOptions.plist および Runner.xcodeproj の Release 設定
+      # (CODE_SIGN_STYLE=Manual, PROVISIONING_PROFILE_SPECIFIER=このプロファイル名)
+      # で明示的に指定する、完全な手動署名で解決する。
       - name: Install provisioning profile
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
@@ -109,32 +119,18 @@ jobs:
           echo "installed profile UUID: $UUID"
 
       - name: Archive
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         working-directory: ios
         run: |
           xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release \
-            -archivePath "$RUNNER_TEMP/Runner.xcarchive" archive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" archive
 
       - name: Export IPA
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         working-directory: ios
         run: |
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportPath "$RUNNER_TEMP/export" \
-            -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            -exportOptionsPlist ExportOptions.plist
 
       - name: Upload to App Store Connect
         env:
