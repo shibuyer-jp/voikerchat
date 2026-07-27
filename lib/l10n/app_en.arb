@@ -321,7 +321,7 @@
   "@featureAnimeTitle": {
     "description": "Premium feature: anime title"
   },
-  "featureAnimeDesc": "13 engaging scenes to master Japanese",
+  "featureAnimeDesc": "A wide variety of engaging scenes to master Japanese",
   "@featureAnimeDesc": {
     "description": "Premium feature: anime desc"
   },
@@ -823,11 +823,27 @@
   "badgeConversationMaster50Title": "Conversation Master",
   "badgeConversationMaster50Desc": "Reach 50 conversations",
   "badgeBasicMasterTitle": "Basics Cleared",
-  "badgeBasicMasterDesc": "Chat in all 8 basic scenes",
+  "badgeBasicMasterDesc": "Chat in all {count} basic scenes",
+  "@badgeBasicMasterDesc": {
+    "description": "Badge unlock condition: chat in every free/basic scene. count is the current number of basic scenes (SceneService.getFreeScenes().length), not hardcoded",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "badgeAnimeExplorerTitle": "Into the Anime World",
   "badgeAnimeExplorerDesc": "Try an anime scene for the first time",
   "badgeAnimeMasterTitle": "Anime Master",
-  "badgeAnimeMasterDesc": "Chat in all 5 anime scenes",
+  "badgeAnimeMasterDesc": "Chat in all {count} anime scenes",
+  "@badgeAnimeMasterDesc": {
+    "description": "Badge unlock condition: chat in every anime scene. count is the current number of anime scenes (SceneService.getPremiumAnimeScenes().length), not hardcoded",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "badgeStreak3Title": "Past the First Hurdle",
   "badgeStreak3Desc": "Study 3 days in a row",
   "badgeStreak7Title": "Habit Formed",

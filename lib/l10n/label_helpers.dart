@@ -1,6 +1,7 @@
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/models/diagnostic.dart';
 import 'package:voikerchat/services/premium_upsell_service.dart';
+import 'package:voikerchat/services/scene_service.dart';
 
 /// モデル/サービス層のID・enum を、画面表示用の翻訳文字列へ解決するヘルパー。
 ///
@@ -153,11 +154,13 @@ String badgeDesc(AppLocalizations l10n, String id) {
     case 'conversation_master_50':
       return l10n.badgeConversationMaster50Desc;
     case 'basic_master':
-      return l10n.badgeBasicMasterDesc;
+      // 固定数値を持たず、実際のシーンリスト件数から動的に埋め込む
+      // (シーン数が変わっても文言修正が不要になるようにするため)。
+      return l10n.badgeBasicMasterDesc(SceneService.getFreeScenes().length);
     case 'anime_explorer':
       return l10n.badgeAnimeExplorerDesc;
     case 'anime_master':
-      return l10n.badgeAnimeMasterDesc;
+      return l10n.badgeAnimeMasterDesc(SceneService.getPremiumAnimeScenes().length);
     case 'streak_3':
       return l10n.badgeStreak3Desc;
     case 'streak_7':

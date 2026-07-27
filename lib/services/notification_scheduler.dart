@@ -133,6 +133,7 @@ class NotificationScheduler {
     for (final id in ids) {
       await _notificationService.cancelNotification(id);
     }
+    logger.info('[NotificationScheduler] Daily reminders cancelled: $ids');
 
     try {
       await NotificationHistoryService().cancelScheduledByPayload('daily_reminder');
@@ -348,6 +349,7 @@ class NotificationScheduler {
   /// 呼び出し側が保持し scheduler は持たないため、ここではキャンセルのみ
   /// とし、再予約は通常のアップセル判定フローに委ねる（prefsで二重管理しない）。
   Future<void> rescheduleForLocaleChange() async {
+    logger.info('[NotificationScheduler] Locale changed; rescheduling reserved notifications');
     await cancelDailyReminders();
     await scheduleDailyReminders();
     await cancelPremiumUpsellNotifications();
