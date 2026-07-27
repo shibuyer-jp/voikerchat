@@ -6,6 +6,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// ユーザーのストリーク（連続学習日数）を管理
 /// ローカル：SharedPreferences（高速・通常時の読み書きの正）、
 /// リモート：Supabase（端末変更/再インストール時の復元用バックアップ）
+///
+/// 日付境界(「今日」「昨日」の判定)は端末ローカルタイム基準(Build 13、
+/// 2026-07-27)。主要ターゲットがフィリピン(UTC+8)在住の日本語学習者で
+/// あり、UTC基準だと日付切替がJST 09:00/フィリピン時間08:00に発生して
+/// 朝型ユーザーに「同日2回加算」「学習したのに前日扱い」が起きうるため。
+/// 一方、複数端末間の新旧比較(`last_updated`)は絶対時刻の比較が必要な
+/// ため、従来通りUTCのまま扱う(`_updateStreakInSupabase`/
+/// `_syncStreakFromSupabaseIfNewer`参照)。この2つは別概念。
 class StreakService {
   final logger = Logger('StreakService');
 
@@ -21,6 +29,10 @@ class StreakService {
   late SupabaseClient _supabase;
   bool _isInitialized = false;
 
+  /// 現在時刻の取得元。テスト時のみ差し替える(日付境界の単体テスト用、
+  /// Build 13)。通常は既定値の `DateTime.now`(端末ローカルタイム)のまま。
+  DateTime Function() nowProvider = DateTime.now;
+
   /// 初期化
   Future<void> initialize({
     required SharedPreferences prefs,
@@ -30,6 +42,24 @@ class StreakService {
     _prefs = prefs;
     _supabase = supabase;
     _isInitialized = true;
+  }
+
+  /// [dt] の暦日を 'YYYY-MM-DD' へ変換する(端末ローカルタイム基準)。
+  /// [dt] がUTCの場合は呼び出し側で `.toLocal()` してから渡すこと。
+  String localDateString(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+
+  /// [lastLearnedDate](ローカル暦日の'YYYY-MM-DD'、未記録ならnull)を
+  /// 現在時刻と比較し、'today' | 'continuing'(昨日) | 'broken'(一昨日
+  /// 以前、または記録無し)のいずれかを返す(案A、2026-07-27決定)。
+  String evaluateGap(String? lastLearnedDate) {
+    final today = localDateString(nowProvider());
+    if (lastLearnedDate == today) return 'today';
+    final yesterday =
+        localDateString(nowProvider().subtract(const Duration(days: 1)));
+    if (lastLearnedDate == yesterday) return 'continuing';
+    return 'broken';
   }
 
   /// 現在のストリーク日数を取得
@@ -56,35 +86,41 @@ class StreakService {
   }
 
   /// ストリークをインクリメント（チャット送信時に呼び出し）
+  ///
+  /// 案A(2026-07-27決定): 前回学習日が昨日なら継続(+1)、一昨日以前
+  /// (または記録無し)ならリセットして1(当日分としてカウント)。
   Future<int> incrementStreak(String userId, String sceneId) async {
     try {
       final key = 'streak_${userId}_${sceneId}_days';
       final lastUpdateKey = 'streak_${userId}_${sceneId}_last_update';
       final updatedAtKey = 'streak_${userId}_${sceneId}_updated_at';
-      final now = DateTime.now().toUtc();
-      final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-      // 最後の更新日を確認（同じ日に複数回インクリメントされないようにする）
-      final lastUpdate = _prefs.getString(lastUpdateKey) ?? '';
+      final lastUpdate = _prefs.getString(lastUpdateKey);
+      final gap = evaluateGap(lastUpdate);
 
-      if (lastUpdate == todayStr) {
-        // 今日は既にインクリメント済み
+      if (gap == 'today') {
+        // 今日は既にインクリメント済み(1日1回制限)
         return _prefs.getInt(key) ?? 0;
       }
 
-      // ストリーク数をインクリメント
       final currentStreak = _prefs.getInt(key) ?? 0;
-      final newStreak = currentStreak + 1;
+      final newStreak = gap == 'continuing' ? currentStreak + 1 : 1;
 
-      // ローカル更新（更新時刻も記録し、後の同期での競合判定に使う）
+      final today = localDateString(nowProvider());
+      // last_updatedは複数端末間の新旧比較に使う絶対時刻のため、
+      // 引き続きUTCで記録する(日付境界のローカル化とは別概念)。
+      final nowInstant = nowProvider().toUtc();
+
+      // ローカル更新
       await _prefs.setInt(key, newStreak);
-      await _prefs.setString(lastUpdateKey, todayStr);
-      await _prefs.setString(updatedAtKey, now.toIso8601String());
+      await _prefs.setString(lastUpdateKey, today);
+      await _prefs.setString(updatedAtKey, nowInstant.toIso8601String());
 
       // Supabase へ更新（背景）。ローカルと同じ時刻を使う。
-      _updateStreakInSupabase(userId, sceneId, newStreak, now).ignore();
+      _updateStreakInSupabase(userId, sceneId, newStreak, nowInstant).ignore();
 
-      logger.info('[StreakService] Streak incremented: $newStreak days for $sceneId');
+      logger.info(
+          '[StreakService] Streak updated ($gap): $newStreak days for $sceneId');
       return newStreak;
     } catch (e) {
       logger.info('[StreakService] Error incrementing streak: $e');
@@ -92,13 +128,18 @@ class StreakService {
     }
   }
 
-  /// ストリークをリセット（ストリーク終了時）
+  /// ストリークを明示的に0へ全リセットする。
+  ///
+  /// incrementStreak()内蔵のギャップ検知リセット(→1)とは別物。
+  /// 現時点でこのメソッドの呼び出し箇所は無いが、将来の明示的リセット
+  /// 機能(設定画面での手動リセット、退会時のクリーンアップ等)のための
+  /// 公開APIとして残している。
   Future<void> resetStreak(String userId, String sceneId) async {
     try {
       final key = 'streak_${userId}_${sceneId}_days';
       final lastUpdateKey = 'streak_${userId}_${sceneId}_last_update';
       final updatedAtKey = 'streak_${userId}_${sceneId}_updated_at';
-      final now = DateTime.now().toUtc();
+      final now = nowProvider().toUtc();
 
       // ローカルリセット
       await _prefs.remove(key);
@@ -141,8 +182,14 @@ class StreakService {
   /// ===== Internal Sync Methods =====
 
   /// ローカルに記録が無い場合(初回起動/再インストール直後)、Supabaseの
-  /// 値を無条件に採用してローカルへ書き戻す。復元専用のため、
-  /// タイムスタンプ比較は行わない(比較対象のローカル値が無いため)。
+  /// 値を採用してローカルへ書き戻す。
+  ///
+  /// 2026-07-27(Build 13)より、単純に値を採用するのではなく、
+  /// incrementStreak()と同じギャップ判定を適用する。復元直後の初回表示
+  /// から正確な値にするため(例: 42日間放置していた場合、復元直後に
+  /// 「42」と表示され、次の会話送信で「1」に落ちる、というユーザー体験
+  /// 上のバグを避ける)。PR #13の複数端末間タイムスタンプ比較方式
+  /// (`_syncStreakFromSupabaseIfNewer`)自体は変更しない別レイヤーの対応。
   Future<int> _restoreStreakFromSupabase(String userId, String sceneId) async {
     try {
       final response = await _supabase
@@ -153,16 +200,43 @@ class StreakService {
           .maybeSingle();
 
       final remoteStreak = (response?['streak_days'] as int?) ?? 0;
-      final remoteUpdatedAt = response?['last_updated'] as String?;
+      final remoteUpdatedAtRaw = response?['last_updated'] as String?;
+      final remoteUpdatedAt =
+          remoteUpdatedAtRaw != null ? DateTime.tryParse(remoteUpdatedAtRaw) : null;
 
       final key = 'streak_${userId}_${sceneId}_days';
+      final lastUpdateKey = 'streak_${userId}_${sceneId}_last_update';
       final updatedAtKey = 'streak_${userId}_${sceneId}_updated_at';
-      await _prefs.setInt(key, remoteStreak);
-      if (remoteUpdatedAt != null) {
-        await _prefs.setString(updatedAtKey, remoteUpdatedAt);
+
+      var effectiveStreak = remoteStreak;
+      String? lastLearnedDate;
+
+      if (remoteUpdatedAt != null && remoteStreak > 0) {
+        // remote の last_updated(UTC)を端末ローカル暦日へ変換して判定。
+        lastLearnedDate = localDateString(remoteUpdatedAt.toLocal());
+        if (evaluateGap(lastLearnedDate) == 'broken') {
+          // 復元時点で既に途切れている → 0扱い(今日はまだ未学習のため)。
+          // 1になるのは実際にincrementStreak()が呼ばれた瞬間。
+          effectiveStreak = 0;
+        }
+      } else {
+        effectiveStreak = 0;
       }
-      logger.info('[StreakService] Streak restored from Supabase: $remoteStreak days for $sceneId');
-      return remoteStreak;
+
+      await _prefs.setInt(key, effectiveStreak);
+      if (remoteUpdatedAtRaw != null) {
+        await _prefs.setString(updatedAtKey, remoteUpdatedAtRaw);
+      }
+      // 次回incrementStreak()が正しくギャップ判定できるよう、実際の
+      // 最終学習日(ローカル暦日)を書き戻す。ストリークが元々0/記録無し
+      // の場合はlastLearnedDateもnullのままでよい(記録無し扱い)。
+      if (lastLearnedDate != null) {
+        await _prefs.setString(lastUpdateKey, lastLearnedDate);
+      }
+
+      logger.info(
+          '[StreakService] Streak restored from Supabase: $effectiveStreak days for $sceneId (raw remote value: $remoteStreak)');
+      return effectiveStreak;
     } catch (e) {
       logger.info('[StreakService] Error restoring streak from Supabase: $e');
       return 0;
@@ -212,8 +286,13 @@ class StreakService {
 
       final remoteStreak = (response['streak_days'] as int?) ?? 0;
       final key = 'streak_${userId}_${sceneId}_days';
+      final lastUpdateKey = 'streak_${userId}_${sceneId}_last_update';
       await _prefs.setInt(key, remoteStreak);
       await _prefs.setString(updatedAtKey, remoteUpdatedAtRaw!);
+      // last_updatedをローカル暦日に変換し、次回incrementStreak()の
+      // ギャップ判定にも反映させる(復元パスと同じ理由)。
+      await _prefs.setString(
+          lastUpdateKey, localDateString(remoteUpdatedAt.toLocal()));
       logger.info('[StreakService] Streak overwritten by newer Supabase value: $remoteStreak days for $sceneId');
     } catch (e) {
       logger.info('[StreakService] Error syncing streak from Supabase: $e');

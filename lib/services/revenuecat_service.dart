@@ -73,6 +73,13 @@ class RevenueCatService {
   /// Premium ステータス取得
   bool get isPremium => _isPremium;
 
+  /// Purchases.configure() が完了しているか。
+  ///
+  /// false の場合、購入・復元系メソッドは全て早期returnし何もしない
+  /// (API key未注入時。例: RevenueCatダッシュボードにAndroidアプリ未登録)。
+  /// UI側はこれを見て購読ボタンを無効化するなど、実行前に案内できる。
+  bool get isConfigured => _configured;
+
   /// Supabase user_id と RevenueCat の app_user_id を紐付ける
   ///
   /// Webhook が RevenueCat の app_user_id しか受け取れないため、
