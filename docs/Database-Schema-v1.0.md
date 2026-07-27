@@ -199,6 +199,29 @@ CREATE TABLE public.content_reports (
 -- Index: user_id、created_at。
 ```
 
+### 9. user_streaks
+ユーザーのストリーク(連続学習日数)。シーン単位で独立した値(`user_id`+`scene_id`の組ごと)。
+
+**⚠️ 注意**: このテーブルは他と異なり、リポジトリ内にCREATE TABLE文(migrationファイル)が存在しない。以下は`lib/services/streak_service.dart`のクエリ(`.select()`/`.eq('user_id',...)`/`.eq('scene_id',...)`/`.upsert({...})`)から逆算した**推定スキーマ**であり、Supabase実体との差異がある可能性がある(カラムの型・NULL許容・デフォルト値・インデックス・RLSポリシーの詳細は未確認)。実体を直接確認できた場合はこの節を実測値で置き換えること。
+
+```sql
+-- 推定スキーマ(実体未確認、2026-07-27時点)
+CREATE TABLE public.user_streaks (
+  user_id      UUID NOT NULL,
+  scene_id     TEXT NOT NULL,
+  streak_days  INT NOT NULL DEFAULT 0,
+  last_updated TIMESTAMPTZ NOT NULL DEFAULT now()
+  -- 複合主キー(user_id, scene_id)と推定(クライアントが常にこの2列で
+  -- 単一行をfilter/upsertしているため)。実際にPRIMARY KEY/UNIQUE制約が
+  -- 貼られているかは未確認。
+);
+
+-- RLS: 未確認。owner-scoped(auth.uid() = user_id)であることが強く
+-- 期待されるが、実ポリシーは未検証。
+```
+
+クライアント側の読み書きロジック(タイムスタンプ比較同期・ギャップ判定によるリセット)は`lib/services/streak_service.dart`参照。日付境界は端末ローカルタイム基準、`last_updated`は複数端末間の新旧比較用に絶対時刻(UTC)のまま(Build 13、`docs/DECISIONS.md` 2026-07-27参照)。
+
 ---
 
 ## Deployment Instructions

@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/l10n/label_helpers.dart';
 import 'package:voikerchat/models/notification_history_model.dart';
+import 'package:voikerchat/services/locale_service.dart';
 import 'package:voikerchat/services/notification_history_service.dart';
 
 /// 通知履歴画面
@@ -39,11 +40,17 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     _service = NotificationHistoryService();
     _loadNotifications();
     _setupRealtimeListener();
+    // 言語切替時、この画面が既にマウント済み(裏タブ等)だと initState が
+    // 再実行されず一覧がキャッシュされたままになる(Build 13で発覚)。
+    // 予約通知(status='scheduled')はロケール変更時に再スケジュールされ
+    // 中身が変わるため、この画面でも変更を検知して再読み込みする。
+    LocaleService.currentLocale.addListener(_loadNotifications);
   }
 
   @override
   void dispose() {
     _subscription?.unsubscribe();
+    LocaleService.currentLocale.removeListener(_loadNotifications);
     super.dispose();
   }
 
