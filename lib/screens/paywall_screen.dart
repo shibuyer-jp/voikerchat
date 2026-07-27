@@ -21,6 +21,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
   String? _dynamicPrice;
   bool _isProcessing = false;
 
+  // RevenueCat未configured(APIキー未注入)時は購読ボタンを無効化する。
+  // main.dart起動時に一度だけinitialize()されるため、画面表示時点で確定済み。
+  late final bool _purchasingAvailable = _revenueCatService.isConfigured;
+
   @override
   void initState() {
     super.initState();
@@ -219,7 +223,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: _isProcessing ? null : _purchase,
+                onPressed: (_isProcessing || !_purchasingAvailable) ? null : _purchase,
                 child: _isProcessing
                     ? const SizedBox(
                         width: 20,
@@ -228,6 +232,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       )
                     : Text(l.subscribeCta),
               ),
+              if (!_purchasingAvailable) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l.subscribeUnavailableMessage,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
               const SizedBox(height: 12),
               TextButton(
                 onPressed: _isProcessing ? null : _restore,

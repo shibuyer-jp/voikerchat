@@ -91,6 +91,7 @@
   "termsOfService": "Mga Tuntunin ng Serbisyo",
   "privacyPolicy": "Patakaran sa Privacy",
   "subscribeCta": "Mag-subscribe",
+  "subscribeUnavailableMessage": "Hindi available ang pagbili sa device na ito sa ngayon.",
   "lookUpMeaning": "Tingnan ang kahulugan",
   "reportContent": "I-report",
   "reportSheetTitle": "I-report ang mensaheng ito",
