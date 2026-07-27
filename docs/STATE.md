@@ -1,8 +1,8 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
-> **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。
-> 最終更新: 2026-07-26(通知機能一式・ストリーク修正・AdMob調査・アプリ内言語切替とiOS下準備をフル反映。ビルド番号は`1.0.0+10`まで進行。詳細は下記「完了(2026-07-25〜26セッション)」)
-> 旧: 2026-07-16(App Icon/Launch Image独自素材化 + iOS CI/CDパイプライン再稼働。詳細は下記「完了(直近・2026-07-16)」)
+> **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。ただしPlay Console/App Store Connect等の外部サービスの配布状況は、必ず実画面で確認してから記録すること(2026-07-27、Android versionCode 7の配布状況誤認を教訓に追記)。
+> 最終更新: 2026-07-27(Android versionCode 7が2026-07-23にAlphaトラック公開済みと判明、かつSupabase未接続の不良ビルドの疑いを追記。Build 13投入をクリティカルパス最優先に設定)
+> 旧: 2026-07-26(通知機能一式・ストリーク修正・AdMob調査・アプリ内言語切替とiOS下準備をフル反映。ビルド番号は`1.0.0+10`まで進行。詳細は下記「完了(2026-07-25〜26セッション)」)
 
 ## 機能ステータス
 | 機能 | 状態 | 備考 |
@@ -26,6 +26,7 @@
 | プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
 | AdMob リワード広告 | ✅ コード完了・実ID設定済 / ⚠️ No Fill(公開後に再検証) | `ad_config.dart`の`_prod*`は実ID設定済(`useTestAds=false`)、`GADApplicationIdentifier`・`SKAdNetworkItems`(PR #16、Google推奨50件)も設定済み。TestFlight Build 8〜10で継続的に`onAdFailedToLoad: code=1 No Fill`(コード側は正常、AdMobサーバーへのリクエスト自体は成功=responseId取得済み)。AdMobコンソール確認の結果、**原因はアプリがApp Store未公開であること**と判断(DECISIONS.md 2026-07-26)。App Store公開後に再検証すること(次タスク参照) |
 | fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
+| **Androidクローズドテスト配布** | ⚠️ **配布中(不良ビルドの疑い)** | Play Consoleで直接確認(2026-07-27): クローズドテストAlphaトラックが有効で、**versionCode 7が2026-07-23 16:31に日本・フィリピンのテスターへ公開済み**(「一度もアップロードされていない」という過去の記録は誤りだった。詳細は`shibuyer-ops/memory/handoff_20260727_am.md`参照)。当該ビルドは`flutter build appbundle --release`のみ(`--dart-define`無し)でビルドされており、`SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY`未注入のためSupabase未接続=**チャット機能(中核機能)が動作しない不良ビルドである可能性が高い**(アプリ自体はクラッシュしないが、チャット画面がエラー表示になる設計。DECISIONS.md 2026-07-27参照)。14日タイマーは既に起算中で新AABアップロードでリセットされない仕様のため、Build 13を`docs/ANDROID_RELEASE.md`の手順(dart-define明記)で速やかに同トラックへ再アップロードすることが最優先(次タスク参照) |
 | **daily_limitの日次リセット漏れ修正** | ✅ コード完了・main反映(PR #19) / ⚠️ 実地検証**必須・未実施** | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。api/*.ts自動テストを追加していないため、`docs/verification/release_verification_session_20260726.md`のPART B(daily_limit動作検証)実施が必須(省略可の任意項目ではない。DECISIONS.md 2026-07-26参照)。既存データの是正・動作検証は同ドキュメントに統合済み(旧ファイルは実行禁止マーク済み・記録用) |
 | **ストア掲載文の数値非依存化(v1.3→v1.4)** | ✅ 完了・main反映(PR #20) | `docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。ストア本番反映(コンソールへの貼付)はPR #20本文のコピペ用テキストを使用(人間が実行、要)(DECISIONS.md 2026-07-26) |
 
@@ -42,26 +43,27 @@
 0. **リリース前修正2件(PR #19・#20は2026-07-26にmainへマージ済み。残るは人間の実機検証・ストア作業のみ)**:
    - `docs/verification/release_verification_session_20260726.md`を実施(通知/ストリーク系検証とdaily_limit是正+動作検証(PART A/B、**PART Bは必須**)を1本化した統合セッション。人間作業・未実施)。日をまたぐ/再インストールが必要な項目(Phase D・E)は同ドキュメント末尾に分離済み、別セッションでよい
    - PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映(人間作業・未実施)
-1. **iOS submission**: Build 11(`1.0.0+11`)は2026-07-26に成功(手動署名固定PR #23適用後。ASC API実査でDistribution証明書`6M2X4S28G7`の実在・プロファイル紐付けを確認済み)。App Store Connectへのアップロード完了。残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
+1. **【最優先・クリティカルパス】Android Build 13を既存Alphaトラックへ再アップロード**: 配布中のversionCode 7が不良ビルド(Supabase未接続の疑い、上記「Androidクローズドテスト配布」欄参照)。14日タイマーは2026-07-23 16:31から起算中で新AABアップロードでもリセットされないため、テスト期間を無駄にしないよう最優先で対応する。`docs/ANDROID_RELEASE.md`の手順(`--dart-define`でSUPABASE_URL/SUPABASE_PUBLISHABLE_KEYを必ず指定)に従い、pubspec.yamlを`1.0.0+13`にしてビルド→既存Alphaトラックへ投入(新規トラック作成・テスター再オプトインは不要)。
+2. **iOS submission**: Build 11(`1.0.0+11`)は2026-07-26に成功(手動署名固定PR #23適用後。ASC API実査でDistribution証明書`6M2X4S28G7`の実在・プロファイル紐付けを確認済み)。App Store Connectへのアップロード完了。残作業(手動): App Store Connectでビルド処理完了を確認 → メタデータ・スクショ・特商法 → TestFlight → 審査提出。
    **ローカルXcodeでのアーカイブは今後も使わない**(このMacはXcode 26非対応。iOS 26 SDK必須エラーで拒否される)。ビルドを更新する際は必ずCI(`ios-release.yml`をworkflow_dispatchで手動実行)を使う。
-2. **App Store公開後タスク**(公開して初めて着手可能。公開前は保留でよい):
+3. **App Store公開後タスク**(公開して初めて着手可能。公開前は保留でよい):
    - AdMobリワード広告のNo Fill再検証(上記「AdMob リワード広告」欄参照。公開直後は在庫が薄い場合があるため数日様子を見る)
    - AdMobコンソールにApp Storeのストアリンク(アプリURL)を登録
    - `voikerchat.com`に`app-ads.txt`を設置(認可済み広告枠の申告。未設置だと広告収益に悪影響が出る可能性)
    - AdMobの「準備状況」レビュー(Ready for review的なチェックリスト)を確認し、指摘があれば対応
-3. **Push Phase2**(submission非必須・機能拡張・今回のリリースではスコープ外=「道2」)。**2026-07-26のApple Developer Portal実査で判明**: 手順1・2は既に完了済み(「voikerchat App Store 2026」プロファイルには既にPush Notifications capabilityが有効。Created By: API Keyで、経緯は不明・未調査)。よってPR #14マージ時の当初の技術的懸念(capability不一致でarchive失敗するリスク)は解消したと判断(DECISIONS.md 2026-07-26参照)。ただし「道2」の戦略判断自体は独立しており、着手時は以下を**この順で**、手動作業とPR #14マージをセットで行うこと:
+4. **Push Phase2**(submission非必須・機能拡張・今回のリリースではスコープ外=「道2」)。**2026-07-26のApple Developer Portal実査で判明**: 手順1・2は既に完了済み(「voikerchat App Store 2026」プロファイルには既にPush Notifications capabilityが有効。Created By: API Keyで、経緯は不明・未調査)。よってPR #14マージ時の当初の技術的懸念(capability不一致でarchive失敗するリスク)は解消したと判断(DECISIONS.md 2026-07-26参照)。ただし「道2」の戦略判断自体は独立しており、着手時は以下を**この順で**、手動作業とPR #14マージをセットで行うこと:
    1. ~~Apple Developer PortalでApp ID(`jp.shibuyer.voikerchat`)のPush Notifications capabilityを有効化~~ → 2026-07-26確認時点で既に有効化済み
    2. ~~プロビジョニングプロファイル「voikerchat App Store 2026」を、capability追加後の状態で再作成~~ → 現行プロファイルが既にcapability有効化後の状態
    3. APNsキー(`26PUZTM353`, .p8。Drive `00_Project_Credentials`、file ID `1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)をFirebase Console → Cloud Messagingにアップロード
    4. PR #14(iOS APNsエンティトルメント追加、実装済み・マージ保留中)をマージ
    5. 実機でのプッシュ受信テスト
-4. **Android署名fail-fast**(PR #5、実装済み・マージ保留中): key.properties不在時のdebug鍵フォールバック廃止。Windows Laptopでのローカルgradle検証待ち(このMacはAndroid SDK未セットアップのため検証不可)
-5. **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)
-6. **fil訳ネイティブレビュー**(妻に依頼) → 本番化。対象は既存21キー(notification_scheduler)に加え、言語切替UI(PR #8)・通知トグル(PR #11)の新規キーも機械翻訳のまま未レビュー
-7. 通知履歴の表示時ローカライズ改修(任意・優先度低): 現状「配信時点の言語で保持」が仕様(DECISIONS.md 2026-07-26)。ユーザーから改善要望が出た場合のみ着手
-8. 小タスク: G6ダイアログを権限取得済み時はスキップする改善(任意)。~~l10n.yaml非推奨行~~ ~~.dart_tool混入~~ → `1db8073` で完了
-9. **api/*.ts のテスト基盤整備**(任意・バックログ、2026-07-26追加): 現状jest/vitest等のTSテスト基盤が皆無、tsconfig.json/testスクリプトも無し。前提としてこのMacへのNode.jsインストールも必要(現状未インストールでローカル実行不可)。daily_limitリセット修正(DECISIONS.md 2026-07-26)ではスコープ肥大回避のため見送り、実機+SQL検証(`docs/verification/daily_limit_reset_verification_20260726.md`)で代替した
-10. **シーンのお気に入り機能**(任意・条件付きバックログ、2026-07-26追加): 未完成のまま放置されていたハートボタン(`lib/widgets/scene_preview_card.dart`)を削除(DECISIONS.md 2026-07-26参照)。再検討の条件: (a) シーン数が20を超えた段階(現在13シーンでは絞り込みの必要性が低い)、(b) 実装する場合は「一覧・絞り込み」までセットで設計する(保存だけして参照先が無い状態を繰り返さない)、(c) 代替案(「最近使ったシーン」・統計画面からのショートカット)も比較対象とする、(d) 判断は公開後の`usage_logs`(scene_idの分布)を確認してから行う
+5. **Android署名fail-fast**(PR #5、実装済み・マージ保留中): key.properties不在時のdebug鍵フォールバック廃止。Windows Laptopでのローカルgradle検証待ち(このMacはAndroid SDK未セットアップのため検証不可)
+6. **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)
+7. **fil訳ネイティブレビュー**(妻に依頼) → 本番化。対象は既存21キー(notification_scheduler)に加え、言語切替UI(PR #8)・通知トグル(PR #11)の新規キーも機械翻訳のまま未レビュー
+8. 通知履歴の表示時ローカライズ改修(任意・優先度低): 現状「配信時点の言語で保持」が仕様(DECISIONS.md 2026-07-26)。ユーザーから改善要望が出た場合のみ着手
+9. 小タスク: G6ダイアログを権限取得済み時はスキップする改善(任意)。~~l10n.yaml非推奨行~~ ~~.dart_tool混入~~ → `1db8073` で完了
+10. **api/*.ts のテスト基盤整備**(任意・バックログ、2026-07-26追加): 現状jest/vitest等のTSテスト基盤が皆無、tsconfig.json/testスクリプトも無し。前提としてこのMacへのNode.jsインストールも必要(現状未インストールでローカル実行不可)。daily_limitリセット修正(DECISIONS.md 2026-07-26)ではスコープ肥大回避のため見送り、実機+SQL検証(`docs/verification/daily_limit_reset_verification_20260726.md`)で代替した
+11. **シーンのお気に入り機能**(任意・条件付きバックログ、2026-07-26追加): 未完成のまま放置されていたハートボタン(`lib/widgets/scene_preview_card.dart`)を削除(DECISIONS.md 2026-07-26参照)。再検討の条件: (a) シーン数が20を超えた段階(現在18シーンでは絞り込みの必要性が低い)、(b) 実装する場合は「一覧・絞り込み」までセットで設計する(保存だけして参照先が無い状態を繰り返さない)、(c) 代替案(「最近使ったシーン」・統計画面からのショートカット)も比較対象とする、(d) 判断は公開後の`usage_logs`(scene_idの分布)を確認してから行う
 
 ## 完了(2026-07-25〜26セッション)
 - **オープンPR一式のマージ**: #3(purchases_flutter v10.4.3対応)・#4(規約類の英語版・不整合修正)・#6(AI生成コンテンツ報告機能、Google Playポリシー必須)・#7(ストア掲載文v1.3)・#8(アプリ内UI言語切替)をmainへマージ
