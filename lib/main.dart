@@ -236,6 +236,7 @@ class _VoikerchatAppState extends State<VoikerchatApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Voikerchat',
+      debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: _locale,
