@@ -247,26 +247,33 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 onPressed: _isProcessing ? null : _restore,
                 child: Text(l.restorePurchasesButton),
               ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: () => _openLink('Terms-of-Service-v1.0'),
-                    child: Text(
-                      l.termsOfService,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                  const Text('・'),
-                  TextButton(
-                    onPressed: () => _openLink('Privacy-Policy-v1.0'),
-                    child: Text(
-                      l.privacyPolicy,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
+            ],
+          ),
+        ),
+      ),
+      // Guideline 3.1.2対応: スクロール位置に関わらず常に見える固定フッターに
+      // 利用規約/プライバシーポリシーへのリンクを配置する(スクロール本文内だと
+      // 端末のテキストサイズ設定によっては画面外に出て見えなくなる報告があったため)。
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => _openLink('Terms-of-Service-v1.0'),
+                child: Text(
+                  l.termsOfService,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+              const Text('・'),
+              TextButton(
+                onPressed: () => _openLink('Privacy-Policy-v1.0'),
+                child: Text(
+                  l.privacyPolicy,
+                  style: const TextStyle(fontSize: 12),
+                ),
               ),
             ],
           ),
