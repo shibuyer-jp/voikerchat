@@ -349,9 +349,18 @@
   "@featureVoiceDesc": {
     "description": "Premium feature: high-quality TTS voice desc"
   },
-  "pricePerMonth": "$12.99/month",
-  "@pricePerMonth": {
-    "description": "Monthly price tag"
+  "premiumPriceFallback": "$12.99",
+  "@premiumPriceFallback": {
+    "description": "Fallback monthly price (price only, no period) used when RevenueCat's storeProduct.priceString is unavailable"
+  },
+  "premiumPriceWithPeriod": "{price}/month",
+  "@premiumPriceWithPeriod": {
+    "description": "Paywall price label: price (from RevenueCat storeProduct.priceString or premiumPriceFallback) plus the billing period, to satisfy App Store Guideline 3.1.2's period disclosure requirement",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
   },
   "processingPurchase": "Processing purchase...",
   "@processingPurchase": {

@@ -32,7 +32,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   /// RevenueCat の Offering から現地価格を取得する。
-  /// 取得できない場合は ARB の `pricePerMonth`(固定フォールバック表示)を使う。
+  /// 取得できない場合は ARB の `premiumPriceFallback`(固定フォールバック価格)を使う。
+  /// いずれの値も価格のみ(期間表記なし)で、表示時に `premiumPriceWithPeriod` で期間を付与する。
   Future<void> _loadPrice() async {
     final info = await _revenueCatService.getPremiumInfo();
     if (!mounted) return;
@@ -164,7 +165,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final price = _dynamicPrice ?? l.pricePerMonth;
+    final priceValue = _dynamicPrice ?? l.premiumPriceFallback;
+    final price = l.premiumPriceWithPeriod(priceValue);
 
     return Scaffold(
       appBar: AppBar(title: Text(l.paywallTitle)),
