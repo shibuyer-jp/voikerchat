@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import { FREE_DAILY_RECAP_LIMIT } from './_constants';
 
 /**
  * 環境変数(chat.ts と同一の名前ゆれ対応)。
@@ -26,9 +27,9 @@ If the conversation has fewer than 8 notable words, return fewer. Output ONLY th
  * POST /api/vocab-summary
  *
  * セッション終了時に「今日の単語」を最大8個抽出する(T-36)。
- * 会話回数(rate_limits)は消費しない。セッション終了時に1回だけ呼ばれる想定
- * (クライアント側で3往復未満はスキップ)のため、辞書/ヒントのような
- * 専用の日次上限は設けない(仕様書通り)。
+ * 会話回数(rate_limits)は消費しないが、recapと合算の軽い日次上限
+ * (FREE_DAILY_RECAP_LIMIT)をサーバー側で持つ(API直叩き対策、define/hintの
+ * 別枠とは独立)。Premiumは無制限。
  *
  * Request body:
  * {
@@ -86,6 +87,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     } catch (err) {
       console.error('Error checking premium status:', err);
+    }
+
+    // recap/vocab-summary合算の軽い日次上限(Premiumは無制限)。define/hintの
+    // 枠(metadata.feature in ('define','hint'))とは完全に独立させるため、
+    // ここでは 'recap'/'vocab_summary' のみを対象にする。
+    if (!isPremium) {
+      const startOfDayUtc = new Date();
+      startOfDayUtc.setUTCHours(0, 0, 0, 0);
+      const { count, error: countError } = await supabase
+        .from('usage_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('event', 'message_sent')
+        .in('metadata->>feature', ['recap', 'vocab_summary'])
+        .gte('created_at', startOfDayUtc.toISOString());
+
+      if (countError) {
+        console.error('usage_logs count failed:', countError.code, countError.message);
+      } else if ((count ?? 0) >= FREE_DAILY_RECAP_LIMIT) {
+        return res.status(429).json({
+          error: 'Daily vocab summary limit reached',
+        });
+      }
     }
 
     const response = await anthropic.messages.create({
