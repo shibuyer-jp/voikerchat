@@ -26,7 +26,12 @@ class AdConfig {
   static const String _testRewardedIos =
       'ca-app-pub-3940256099942544/1712485313';
 
-  // 本番リワード広告ユニット（AdMob 登録後に実 ID を設定）。
+  // 本番リワード広告ユニット。2026-07-30、AdMob管理画面で照合済み:
+  // Android(ca-app-pub-1612072387421821/5678139568、広告ユニット名
+  // rewarded_android)は一致。iOS(.../7701667676)はAdMobのiOSアプリ配下に
+  // 別途あるため、Androidアプリの広告ユニット一覧には出ない(正常)。
+  // useTestAds=true時のGoogle公式テストID(_testRewardedAndroid/Ios、
+  // ca-app-pub-3940256099942544系)とは別枠。
   static const String _prodRewardedAndroid = 'ca-app-pub-1612072387421821/5678139568';
   static const String _prodRewardedIos = 'ca-app-pub-1612072387421821/7701667676';
 

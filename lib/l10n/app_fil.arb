@@ -163,6 +163,7 @@
   "diagDontKnow": "Hindi ko alam",
   "sceneCharacterLabel": "Karakter: {name}",
   "sceneRecommendedLabel": "Inirerekomenda: {level}",
+  "scenePremiumLabel": "PREMIUM",
   "badgeUnlocked": "🎉 Bagong badge ang nakuha: {names}",
   "badgeLoadError": "Nabigong i-load ang mga badge",
   "badgeUnlockedCount": "{unlocked} / {total} ang nakuha",

@@ -169,18 +169,18 @@ class _ScenePreviewCardState extends State<ScenePreviewCard> {
                                             .withValues(alpha: 0.25),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Row(
+                                      child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.star,
                                             size: 12,
                                             color: AppColors.premiumText,
                                           ),
-                                          SizedBox(width: 2),
+                                          const SizedBox(width: 2),
                                           Text(
-                                            'PREMIUM',
-                                            style: TextStyle(
+                                            l10n.scenePremiumLabel,
+                                            style: const TextStyle(
                                               color: AppColors.premiumText,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 10,

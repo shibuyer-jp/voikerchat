@@ -34,8 +34,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- AdMob App ID. Sample/test ID below (ca-app-pub-1612072387421821~1327831013);
-             replace with the real AdMob app ID before production release. -->
+        <!-- AdMob App ID(Android)。2026-07-30、AdMob管理画面で本番IDと照合済み
+             (ca-app-pub-1612072387421821~1327831013、一致)。
+             useTestAds=true時に使うGoogle公式テストID(ca-app-pub-3940256099942544系、
+             ad_config.dart参照)とは別物で、こちらは常にこの本番IDを指す
+             (AndroidManifestはビルド設定で差し替えできないため)。 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-1612072387421821~1327831013" />
