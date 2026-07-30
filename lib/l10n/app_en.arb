@@ -751,6 +751,10 @@
       }
     }
   },
+  "scenePremiumLabel": "PREMIUM",
+  "@scenePremiumLabel": {
+    "description": "Scene preview premium badge. Intentionally identical across ja/en/fil: 'Premium' is kept untranslated app-wide (see premiumDialogTitle, premiumUpsellStage1Message, etc.), this is not a missing translation."
+  },
   "badgeUnlocked": "🎉 New badge unlocked: {names}",
   "@badgeUnlocked": {
     "description": "SnackBar shown when one or more badges are newly unlocked",

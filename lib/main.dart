@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:logging/logging.dart';
@@ -45,7 +46,8 @@ void main() async {
   // logging パッケージの Logger は、リスナーを登録しない限りどこにも
   // 出力されない(これまでアプリ内の Logger.warning/info 呼び出しが
   // 実質すべて握りつぶされていた)。コンソールへ出すリスナーを登録する。
-  Logger.root.level = Level.ALL;
+  // リリースビルドではWARNING以上のみに絞る(debug/profileは従来通り全量)。
+  Logger.root.level = kReleaseMode ? Level.WARNING : Level.ALL;
   Logger.root.onRecord.listen((record) {
     // ignore: avoid_print
     print('${record.level.name}: ${record.loggerName}: ${record.message}');

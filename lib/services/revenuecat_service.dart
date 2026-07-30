@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:logging/logging.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,7 +54,9 @@ class RevenueCatService {
         return;
       }
 
-      await Purchases.setLogLevel(LogLevel.debug);
+      // リリースビルドはinfoに抑える(購入トラブル調査の手がかりは残しつつ、
+      // debugの冗長なネットワーク詳細は出さない)。debug/profileは従来通り。
+      await Purchases.setLogLevel(kReleaseMode ? LogLevel.info : LogLevel.debug);
       await Purchases.configure(
         PurchasesConfiguration(apiKey),
       );
