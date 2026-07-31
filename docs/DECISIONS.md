@@ -28,6 +28,72 @@
 - 2026-07-26 | iOSビルド(Build 11)のArchiveが失敗した根本原因は「証明書の枚数上限到達」ではなく、`ios/Runner.xcodeproj`のRunnerターゲットRelease設定が`CODE_SIGN_STYLE=Automatic`+`CODE_SIGN_IDENTITY="Apple Development"`のままだったこと(構造的な設定ミス)と判定した。`ios-release.yml`を完全な手動署名(`-allowProvisioningUpdates`および認証系フラグを`Archive`/`Export IPA`ステップから削除)に、Release設定を`CODE_SIGN_STYLE=Manual`+`CODE_SIGN_IDENTITY="Apple Distribution"`+`PROVISIONING_PROFILE_SPECIFIER="voikerchat App Store 2026"`に修正した | Apple Developer Portal実査(2026-07-26)で判明した事実: (1)証明書一覧12枚中10枚が同一APIキー経由の自動作成品で、有効期限の分布(2027/07/11×3・07/12,16,17×4・07/25×1・07/26×2)がビルド履歴と完全一致=**成功していたBuild 10ですら新規証明書を1枚作成していた**。(2)一覧に`Apple Distribution`型は1枚も無い(全てDevelopment)。一方でBuild 10の実ログ(`security find-identity`出力)では`IOS_DIST_CERT_P12`から実際に`"Apple Distribution: Takatoh Abe (S6XJP274T2)"`(fingerprint `A529C75A91E310A6A73529E5FA0E8AC7F4A7A216`)が正しくインポートされていたことを確認済み(このp12はローカルキーチェーンへの取り込みである以上、ポータル側で失効済みでも見かけ上は成功しうる)。旧`ios-release.yml`コメントに記載されていた証明書ID「6M2X4S28G7」は実ログで検証されたものではなく、過去のコメントをそのまま引用した未検証の記載だったため誤りと判明・訂正した。(3)`CODE_SIGN_STYLE=Automatic`によりXcodeの自動署名管理が`-allowProvisioningUpdates`経由で毎回Development証明書を要求/作成しようとし、手動でインポートした`Apple Distribution`証明書・手動でインストールしたプロビジョニングプロファイルを実質的に無視していた。これが証明書量産の直接原因であり、今回の失敗は「たまたま枠を使い切った」のではなく構造的必然。証明書の失効による空き枠確保だけでは次回以降も同じ理由で再発するため、恒久修正として signing style を Manual に固定した
 - 2026-07-26 | PR #14(iOS APNsエンティトルメント追加)の保留理由を再評価: 当初の保留理由は「プロビジョニングプロファイルにPush Notifications capabilityが無く、entitlementsとの不一致でarchive失敗するリスク」だったが、Apple Developer Portal実査で「voikerchat App Store 2026」プロファイルには**既にPush Notifications capabilityが有効になっている**ことが判明した(Created By: API Key、手動作成ではない。なぜ有効化されたか経緯は不明・未調査)。これにより当初の技術的な保留理由(capability不一致リスク)は解消したと判断する。ただし「道2」(今回のリリースでは自動送信基盤を構築せずPhase2へ先送りする、2026-07-25決定)という上位のビジネス判断は本件と独立しており、この事実だけでは変わらない。**結論: 技術的な保留理由は解消したが、戦略的な理由でのマージ保留は継続を推奨**(実装は行わず提案のみ。マージするかどうかは別途判断が必要)
 - 2026-07-26 | シーン選択カードのハートボタン(お気に入り機能)を削除した(`lib/widgets/scene_preview_card.dart`)。非表示化ではなく削除を選択 | 調査の結果、`isFavorite`/`onFavoriteToggle`が呼び出し元(`scene_selection_screen.dart`)から一度も渡されておらず、状態の永続化(SharedPreferences/Supabaseいずれも)も一切行われていない未完成機能(実装当初から行き止まり)と判明。無料/Premiumの区別なく表示されておりPremium限定機能でもない。非表示化(コード温存)ではなく削除を選んだ理由は、コードを残すと将来「消し忘れ」や「実は動いていると誤認して再利用される」温床になるため。お気に入り機能自体は今回実装しない(バックログへ、再検討条件は`docs/STATE.md`参照)。代替として「最近使ったシーン」機能を別PRで検討する
+
+#### 2026-07-30 Android クローズドテスト 14日タイマー起算
+
+- 起算日: 2026-07-30(確認時刻 19:31 JST / 10:31 UTC)
+- Play Console ダッシュボードで「12人以上のテスターにクローズド
+  テストにオプトインしてもらう」に取消し線を確認
+- 達成経路: ココナラ「もっとPython＠アンドロイドテスター」から
+  受領した45アカウント(既存16名と合わせてリスト61名)
+- 完走見込み: 2026-08-13 以降(Google 側の判定ロジックは非公開のため前後しうる)
+
+**オプトイン不通問題の原因特定**
+- 原因: SNS(Messenger)内蔵ブラウザ。端末の Google アカウントと
+  別のログイン状態を持つため、テスターリスト登録済みでも
+  「App not available」となる
+- 検証: 同一テスターに Messenger ではなく Email でリンクを送付
+  → 正常に "Become a tester" に到達(2026-07-30 夜)。以降、
+  実テスターも順次オプトイン
+- Play Console 側の設定(トラック、リスト、国/地域、URL)は
+  すべて正常だった
+- 正しいオプトインURL:
+  https://play.google.com/apps/testing/jp.shibuyer.voikerchat
+  (2026-07-29 に「ストアURLが正」と記載したのは誤り。撤回)
+- 対策: 配布はメール経由。SNS 経由なら「リンクをタップせず
+  コピーして Chrome に貼る」を明示
+- 教訓: 一斉送信の前に必ず1名で疎通確認する。今回は16名に
+  送付後に発覚し、3回の訂正連絡を要した
+
+**外部サービスの保証条件(重要)**
+- リジェクト時は審査通過まで無償で継続テスト参加
+- ただし依頼者側で「アプリのアップデート」と「統計情報の共有」を
+  1回以上行っていない場合、再テストに別途3,000円
+- → Build 16 のテスト期間中リリースは保証条件・申請要件の両面で必須
+
+#### 2026-07-31 usage_logs の記録漏れを発見・一部修正(PR #33)
+
+**発見の経緯**
+クローズドテスト2日目、テスターの内訳(国・言語・OS)を分析しよう
+としたところ、locale / platform が全件 NULL であることが判明。
+CHECK 制約は NULL を通すため、エラーにならず静かに欠落していた。
+
+**NULL のまま運用されていたカラム**
+- locale / platform: 全9箇所で未送信。クライアントも送っていなかった
+  → PR #33 で修正
+- session_id: 全箇所で未使用。chat.ts の logUsage() はパラメータを
+  受け付けるが呼び出し側が渡していない → 未対応
+- model: tts.ts は OpenAI TTS を呼んでいるが未記録 → 未対応
+
+**未使用イベント(CHECK 制約に定義があるが insert 箇所がゼロ)**
+- session_start / upsell_shown / upsell_clicked / upsell_converted
+- 影響: アップセル導線の効果測定ができない。Premium 転換率の
+  分析基盤が無い状態 → 未対応
+
+**PR #33 の設計判断**
+- api/_validation.ts に sanitizeLocale / sanitizePlatform を集約。
+  chat.ts のみに存在したホワイトリスト検証を7ファイルで共用
+- 入力型を unknown にし、req.body 由来の値に型注釈を信じない
+- locale のフォールバックは en に丸めず null。usage_logs は
+  観測用データであり、ja/en/fil 以外の端末ロケールを en として
+  記録すると言語分布の分析が歪むため(フィリピンにはビサヤ語圏の
+  テスターが存在することを確認済み)
+- notification_scheduler.dart の _resolveLocale() は変更せず。
+  用途が異なる(表示用は en フォールバックが正しい)
+
+**教訓**
+スキーマにカラムがあることと、値が入っていることは別。本番投入前に
+実データで NULL 率を確認すべきだった。
 - 2026-07-27 | **インシデント記録**: Android versionCode 7が2026-07-23 16:31にPlay Consoleクローズドテスト(Alphaトラック、日本・フィリピン)へ公開済みであったにもかかわらず、`shibuyer-ops/memory/handoff_20260723_4.md`記載の「クローズドテストは未開始・AABは一度もアップロードされていない」という同日時点では正しかった記録が、以降のhandoff/STATE.mdに訂正されないまま4日間連鎖して引き継がれ、2026-07-27時点まで「未配布」という誤った前提で作業計画が立てられていた。さらに、当該versionCode 7のビルドコマンド(`flutter build appbundle --release`のみ、`--dart-define`無し)には`SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY`が含まれておらず、`lib/main.dart`はこれらが空の場合`Supabase.initialize()`自体をスキップする設計のため、**現在配布中のビルドはチャット機能(中核機能)が動作しない不良ビルドである可能性が高い**(アプリ自体はクラッシュしない設計。チャット画面を開くとエラー表示になる)。発覚の経緯: `docs/ANDROID_RELEASE.md`作成のための調査で`lib/`配下の`fromEnvironment`呼び出しとビルド実績記録を突き合わせた結果、dart-define漏れを検出。その後ユーザーがPlay Console実画面を直接確認し、「未配布」の前提自体が誤りだったと判明した | **再発防止策**: (1) 今後Androidのリリースビルドは必ず`docs/ANDROID_RELEASE.md`の手順(dart-defineを明記したコマンド)を使用すること。手順書に無いアドホックなコマンドでのビルドを禁止する。(2) Play Console/App Store Connect等の外部サービスの配布状況は、記録(handoff/STATE.md)を鵜呑みにせず、疑わしい場合は実画面で確認してから作業計画を立てること(`docs/STATE.md`冒頭にも運用ルールとして追記済み)。(3) Build 13は`docs/ANDROID_RELEASE.md`の手順で既存Alphaトラックへ再アップロードし、不良ビルドを差し替える。14日タイマーは新AABアップロードでリセットされない仕様のため、トラック・テスターの再作成は不要
 - 2026-07-27 | ストリーク(`user_streaks`/`streak_service.dart`)のリセット判定に案A(前回学習日が昨日なら+1継続、一昨日以前または記録無しなら1にリセット)を採用した | `resetStreak()`が定義済みだが呼び出し箇所ゼロ(デッドコード)で、何日サボってもストリークが減らず単調増加する不具合が判明。「N日連続」という表示・バッジ文言と実挙動の乖離を解消する必要があった。案A(前日継続/一昨日以前リセット)は最も標準的な「連続日数」の定義であり、Duolingo等の競合アプリの一般的な仕様とも一致する。判定は`user_id`+`scene_id`の組ごとに独立(`docs/DECISIONS.md` 2026-07-26のシーン単位方針を維持)。本番ユーザーがまだゼロの時点でのみ安全に変更可能だったため、Build 13で実施した。あわせて`_restoreStreakFromSupabase()`(端末変更/再インストール時の復元)にも同じギャップ判定を適用し、復元直後の初回表示から正確な値になるようにした(例: 42日間放置後の再インストールで「42」→次の会話送信で「1」に落ちるという体験上のバグを回避)。PR #13のタイムスタンプ比較方式(`_syncStreakFromSupabaseIfNewer`)自体は変更していない
 - 2026-07-27 | ストリークの日付境界判定をUTC基準から端末ローカルタイム基準へ変更した(`DateTime.now().toUtc()`→`DateTime.now()`) | 主要ターゲットがフィリピン(UTC+8)在住の日本語学習者であり、UTC基準だと暦日の切り替わりがJST 09:00/フィリピン時間08:00に発生してしまい、朝型ユーザーで「同日に2回加算」「学習したのに前日扱いになる」不具合が起きうるため。ユーザーの体感(現地の暦日)と一致させる必要があった。複数端末間の新旧比較に使う`last_updated`(絶対時刻)は日付境界とは別概念のため、従来通りUTCのまま変更していない。移行時(既存のUTC基準日付文字列が端末に残っている場合)は、単純な文字列比較のため例外は発生せず、最大1日分のズレが生じる可能性があるのみ(許容範囲として設計)
