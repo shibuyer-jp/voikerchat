@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/platform_code.dart';
+import 'locale_service.dart';
+
 /// RecapService: セッション終了時の「今日の言い直し」を最大3件取得する。
 ///
 /// 競合分析(Speakの "Made for You")を参考にした個別化復習の簡易版。
@@ -32,6 +35,8 @@ class RecapService {
               'token': token,
               'conversation': conversation,
               'sceneId': sceneId,
+              'locale': LocaleService.resolveLocaleCodeForLogging(),
+              'platform': currentPlatformCode(),
             }),
           )
           // vocab-summary と同様、Vercelコールドスタート+モデル応答を考慮して長め

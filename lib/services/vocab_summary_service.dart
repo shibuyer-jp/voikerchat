@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/platform_code.dart';
+import 'locale_service.dart';
+
 /// VocabSummaryService: セッション終了時に「今日の単語」を最大8個抽出する(T-36)。
 ///
 /// 会話回数(rate_limits)は消費しない。セッション終了/リセット時に1回だけ呼ばれる想定。
@@ -30,6 +33,8 @@ class VocabSummaryService {
               'token': token,
               'conversation': conversation,
               'sceneId': sceneId,
+              'locale': LocaleService.resolveLocaleCodeForLogging(),
+              'platform': currentPlatformCode(),
             }),
           )
           // Vercelコールドスタート+モデル応答を考慮して長め(15秒で失敗報告あり)

@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/platform_code.dart';
+import 'locale_service.dart';
+
 /// HintService: 会話の続き方に迷った時のヒント(次に言えそうな例文+英訳)を取得する(T-36)。
 ///
 /// 会話回数(rate_limits)は消費しない。T-31の辞書機能と合算の軽い日次上限を
@@ -31,6 +34,8 @@ class HintService {
               'token': token,
               'context': context,
               'sceneId': sceneId,
+              'locale': LocaleService.resolveLocaleCodeForLogging(),
+              'platform': currentPlatformCode(),
             }),
           )
           .timeout(const Duration(seconds: 10));

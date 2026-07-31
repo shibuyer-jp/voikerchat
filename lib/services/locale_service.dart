@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// LocaleService: ユーザーが選択したUI言語の永続化と即時反映を管理する。
 ///
 /// [currentLocale] が null の間は「端末設定に従う」(MaterialApp.locale
@@ -33,5 +35,20 @@ class LocaleService {
       await prefs.setString(_localeKey, code);
     }
     currentLocale.value = code != null ? Locale(code) : null;
+  }
+
+  /// usage_logs.locale(観測用)向けの言語コード解決。
+  /// notification_scheduler.dart の _resolveLocale() と解決順は同じ
+  /// (明示選択 → 端末ロケール一致)だが、これは表示用途ではないため
+  /// 最終フォールバックはせず、ja/en/fil いずれにも一致しない場合は
+  /// null を返す(実際の言語分布を歪めないため)。
+  static String? resolveLocaleCodeForLogging() {
+    final selected = currentLocale.value?.languageCode;
+    if (selected != null) return selected;
+    final device = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    for (final l in AppLocalizations.supportedLocales) {
+      if (l.languageCode == device) return l.languageCode;
+    }
+    return null;
   }
 }
