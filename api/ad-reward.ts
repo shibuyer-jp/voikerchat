@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { AD_BONUS, FREE_DAILY_CAP } from './_constants';
+import { sanitizeLocale, sanitizePlatform } from './_validation';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey =
@@ -49,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   try {
-    const { token, mode } = req.body || {};
+    const { token, mode, locale, platform } = req.body || {};
     const isTtsFallback = mode === 'tts_fallback';
     if (!token) {
       return res.status(401).json({ error: 'Missing authentication token' });
@@ -111,6 +112,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         user_id: userId,
         event: 'ad_reward',
         is_premium: false,
+        platform: sanitizePlatform(platform),
+        locale: sanitizeLocale(locale),
         metadata: { fallback: true },
       });
       if (fallbackLogError) {
@@ -144,6 +147,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       user_id: userId,
       event: 'ad_reward',
       is_premium: false,
+      platform: sanitizePlatform(platform),
+      locale: sanitizeLocale(locale),
       metadata: {},
     });
     if (logError) {

@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { sanitizeLocale, sanitizePlatform } from './_validation';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey =
@@ -82,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   try {
-    const { token, text, sceneId } = req.body || {};
+    const { token, text, sceneId, locale, platform } = req.body || {};
 
     if (!token) {
       return res.status(401).json({ error: 'Missing authentication token' });
@@ -174,6 +175,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         user_id: userId,
         event: 'message_sent',
         is_premium: isPremium,
+        platform: sanitizePlatform(platform),
+        locale: sanitizeLocale(locale),
         metadata: { feature: 'cloud_tts', scene: sceneId ?? null, chars: text.length },
       });
       if (logError) {

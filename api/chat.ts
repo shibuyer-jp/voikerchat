@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { PREMIUM_DAILY_LIMIT, FREE_DAILY_LIMIT, baseDailyLimit } from './_constants';
+import { sanitizeLocale, sanitizePlatform } from './_validation';
 
 /**
  * 環境変数（名前ゆれ・新旧キーに両対応）
@@ -62,6 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       maxTokens = 500,
       furiganaEnabled = true,
       difficultyHint,
+      locale,
+      platform,
     } = req.body || {};
 
     // 1. トークン検証（getUser はHS256/非対称鍵いずれの署名でも検証可能）
@@ -100,6 +103,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         userId,
         event: 'quota_reached',
         isPremium,
+        locale,
+        platform,
         metadata: sceneId ? { scene: sceneId } : {},
       });
       return res.status(429).json({
@@ -131,6 +136,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       isPremium,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
+      locale,
+      platform,
       metadata: sceneId ? { scene: sceneId } : {},
     });
 
@@ -379,22 +386,12 @@ async function logUsage(
     isPremium?: boolean;
     inputTokens?: number;
     outputTokens?: number;
-    locale?: string;
-    platform?: string;
+    locale?: unknown;
+    platform?: unknown;
     metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
   try {
-    // locale / platform は CHECK 制約付き。許容値以外は null に落とす（書込み失敗を防ぐ）
-    const ALLOWED_LOCALES = ['ja', 'en', 'fil'];
-    const ALLOWED_PLATFORMS = ['ios', 'android', 'web'];
-    const locale =
-      params.locale && ALLOWED_LOCALES.includes(params.locale) ? params.locale : null;
-    const platform =
-      params.platform && ALLOWED_PLATFORMS.includes(params.platform)
-        ? params.platform
-        : null;
-
     // 注意: scene_id 列は smallint(1..13)。アプリの sceneId は文字列のため列には入れず、
     // metadata.scene に格納する（数値ID対応表が整うまでの暫定）。created_at は DB 既定 now() に委ねる。
     const { error } = await supabase.from('usage_logs').insert({
@@ -402,8 +399,8 @@ async function logUsage(
       event: params.event,
       session_id: params.sessionId ?? null,
       model: params.model ?? null,
-      platform,
-      locale,
+      platform: sanitizePlatform(params.platform),
+      locale: sanitizeLocale(params.locale),
       is_premium: params.isPremium ?? false,
       input_tokens: params.inputTokens ?? null,
       output_tokens: params.outputTokens ?? null,

@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/platform_code.dart';
+import 'locale_service.dart';
+
 /// DictionaryService: AIメッセージ内の語句の意味を調べる(T-31)。
 ///
 /// 会話回数(rate_limits)は消費せず、api/define.ts 側で辞書専用の
@@ -34,6 +37,8 @@ class DictionaryService {
               'term': term,
               'context': context,
               'sceneId': sceneId,
+              'locale': LocaleService.resolveLocaleCodeForLogging(),
+              'platform': currentPlatformCode(),
             }),
           )
           .timeout(const Duration(seconds: 10));

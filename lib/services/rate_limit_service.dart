@@ -4,6 +4,8 @@ import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/rate_limit_constants.dart';
 import '../models/rate_limit.dart';
+import '../utils/platform_code.dart';
+import 'locale_service.dart';
 
 class RateLimitService {
   final logger = Logger('RateLimitService');
@@ -77,7 +79,11 @@ class RateLimitService {
           .post(
             Uri.parse('$_baseUrl/api/ad-reward'),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'token': token}),
+            body: jsonEncode({
+              'token': token,
+              'locale': LocaleService.resolveLocaleCodeForLogging(),
+              'platform': currentPlatformCode(),
+            }),
           )
           .timeout(const Duration(seconds: 10));
 
@@ -112,7 +118,12 @@ class RateLimitService {
           .post(
             Uri.parse('$_baseUrl/api/ad-reward'),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'token': token, 'mode': 'tts_fallback'}),
+            body: jsonEncode({
+              'token': token,
+              'mode': 'tts_fallback',
+              'locale': LocaleService.resolveLocaleCodeForLogging(),
+              'platform': currentPlatformCode(),
+            }),
           )
           .timeout(const Duration(seconds: 10));
 

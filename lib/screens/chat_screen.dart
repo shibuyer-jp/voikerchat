@@ -17,6 +17,8 @@ import '../services/streak_service.dart';
 import '../services/premium_upsell_service.dart';
 import '../services/rewarded_ad_service.dart';
 import '../services/notification_scheduler.dart';
+import '../services/locale_service.dart';
+import '../utils/platform_code.dart';
 import '../services/voice/speech_recognition_service.dart';
 import '../services/voice/text_to_speech_service.dart';
 import '../services/voice/tts_text_cleaner.dart';
@@ -688,6 +690,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           // 'good'/null は調整不要のため送らない(サーバー側でも無視されるが通信量節約)。
           if (_difficultyFeedback == 'easy' || _difficultyFeedback == 'hard')
             'difficultyHint': _difficultyFeedback,
+          'locale': LocaleService.resolveLocaleCodeForLogging(),
+          'platform': currentPlatformCode(),
         }),
       );
 

@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import { sanitizeLocale, sanitizePlatform } from './_validation';
 
 /**
  * 環境変数(chat.ts と同一の名前ゆれ対応)。
@@ -67,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const anthropic = new Anthropic({ apiKey: claudeApiKey, maxRetries: 4 });
 
   try {
-    const { token, term, context, sceneId } = req.body || {};
+    const { token, term, context, sceneId, locale, platform } = req.body || {};
 
     if (!token) {
       return res.status(401).json({ error: 'Missing authentication token' });
@@ -165,6 +166,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         is_premium: isPremium,
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,
+        platform: sanitizePlatform(platform),
+        locale: sanitizeLocale(locale),
         metadata: { feature: 'define', scene: sceneId ?? null, term },
       });
       if (logError) {
