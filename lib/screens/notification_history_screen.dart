@@ -34,6 +34,11 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   // リアルタイムリスナー
   dynamic _subscription;
 
+  // 削除処理中の通知ID。Dismissibleは confirmDismiss の完了を待たずに
+  // 同じタイルへの再スワイプを受け付けてしまうため、二重にDELETEを
+  // 発行しないようここで排他制御する。
+  final Set<int> _deletingIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -106,21 +111,25 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     }
   }
 
-  /// 通知を削除
-  Future<void> _deleteNotification(NotificationHistory notification) async {
+  /// 通知を削除する（Dismissible.confirmDismiss から呼ばれる）。
+  /// 実際に削除できた場合のみ true を返し、そのときだけ Dismissible に
+  /// スワイプ除去させる。false を返すとタイルは自動的に元の位置へ戻り、
+  /// ローカル表示とサーバー状態が乖離しない（2026-07-31調査）。
+  Future<bool> _deleteNotification(NotificationHistory notification) async {
+    if (_deletingIds.contains(notification.id)) {
+      // 既に削除処理中の同じタイルへの再スワイプ。二重送信を防ぐため
+      // 何もせずタイルを元の位置へ戻す。
+      return false;
+    }
+    _deletingIds.add(notification.id);
+
     final l10n = AppLocalizations.of(context);
     try {
-      await _service.deleteNotification(notification.id);
-      _loadNotifications();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.notifDeleted),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+      final deletedCount = await _service.deleteNotification(notification.id);
+      if (deletedCount == 0) {
+        throw Exception('Notification already deleted');
       }
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -130,6 +139,27 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
           ),
         );
       }
+      return false;
+    } finally {
+      _deletingIds.remove(notification.id);
+    }
+  }
+
+  /// スワイプ削除が確定した（confirmDismiss が true を返した）後に呼ばれる。
+  /// 一覧再取得はここで行う。confirmDismiss 内で行うと、削除に失敗して
+  /// タイルが元の位置へ戻るアニメーション中にリストごと再構築されて
+  /// しまうため。
+  void _onNotificationDismissed(NotificationHistory notification) {
+    final l10n = AppLocalizations.of(context);
+    _loadNotifications();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.notifDeleted),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -233,9 +263,8 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
     return Dismissible(
       key: Key(notification.id.toString()),
       direction: DismissDirection.endToStart,
-      onDismissed: (direction) {
-        _deleteNotification(notification);
-      },
+      confirmDismiss: (direction) => _deleteNotification(notification),
+      onDismissed: (direction) => _onNotificationDismissed(notification),
       background: Container(
         color: Colors.red,
         alignment: Alignment.centerRight,

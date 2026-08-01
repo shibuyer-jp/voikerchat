@@ -131,13 +131,16 @@ class NotificationHistoryService {
   }
 
   /// 通知一覧を取得
-  /// 
+  ///
   /// [isRead] true=既読のみ、false=未読のみ、null=全て
   /// [limit] 取得件数（デフォルト: 50）
   /// [offset] スキップ件数（ページング用）
-  /// 
+  ///
   /// 戻り値: NotificationHistory オブジェクトのリスト
   /// RLS により、現在のユーザーの通知のみ取得可能
+  /// status='scheduled'（未配信・予定時刻が未来）の行は対象外。
+  /// 画面に出さないことで、誤既読・誤削除・削除後の「復活に見える」
+  /// 挙動を防ぐ（2026-07-31調査、案C-①）。
   Future<List<NotificationHistory>> getHistory({
     bool? isRead,
     int limit = 50,
@@ -151,7 +154,8 @@ class NotificationHistoryService {
     var query = _supabase
         .from(_tableName)
         .select()
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('status', NotificationHistoryStatus.delivered.value);
 
     // フィルタリング
     if (isRead != null) {
@@ -196,11 +200,9 @@ class NotificationHistoryService {
   }
 
   /// 複数の通知を既読マーク
-  /// 
+  ///
   /// [notificationIds] 通知IDのリスト
-  /// 
-  /// 戻り値: 更新件数
-  Future<int> markMultipleAsRead(List<int> notificationIds) async {
+  Future<void> markMultipleAsRead(List<int> notificationIds) async {
     final userId = _userId;
     if (userId == null) {
       throw Exception('User not authenticated');
@@ -222,15 +224,16 @@ class NotificationHistoryService {
       query = query.or('id.eq.$id');
     }
 
-    final response = await query;
-    return response;
+    await query;
   }
 
   /// 通知を削除
-  /// 
+  ///
   /// [notificationId] 通知ID
-  /// 
-  /// 戻り値: 削除件数（通常は 1）
+  ///
+  /// 戻り値: 実際に削除された件数（0=対象が既に存在しなかった、1=成功）。
+  /// .select() で削除された行を返させることで、削除の成否を
+  /// 呼び出し側が判定できるようにする（2026-07-31調査、案B）。
   Future<int> deleteNotification(int notificationId) async {
     final userId = _userId;
     if (userId == null) {
@@ -241,17 +244,16 @@ class NotificationHistoryService {
         .from(_tableName)
         .delete()
         .eq('id', notificationId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id');
 
-    return response;
+    return (response as List).length;
   }
 
   /// 複数の通知を削除
-  /// 
+  ///
   /// [notificationIds] 通知IDのリスト
-  /// 
-  /// 戻り値: 削除件数
-  Future<int> deleteMultiple(List<int> notificationIds) async {
+  Future<void> deleteMultiple(List<int> notificationIds) async {
     final userId = _userId;
     if (userId == null) {
       throw Exception('User not authenticated');
@@ -267,8 +269,7 @@ class NotificationHistoryService {
       query = query.or('id.eq.$id');
     }
 
-    final response = await query;
-    return response;
+    await query;
   }
 
   /// 未読通知件数を取得
@@ -318,21 +319,18 @@ class NotificationHistoryService {
   }
 
   /// すべての通知を削除（危険操作）
-  /// 
-  /// 戻り値: 削除件数
+  ///
   /// 注意: RLS により、現在のユーザーの通知のみ削除
-  Future<int> clearAllNotifications() async {
+  Future<void> clearAllNotifications() async {
     final userId = _userId;
     if (userId == null) {
       throw Exception('User not authenticated');
     }
 
-    final response = await _supabase
+    await _supabase
         .from(_tableName)
         .delete()
         .eq('user_id', userId);
-
-    return response;
   }
 
   /// リアルタイム通知リスナー（Supabase Realtime）
