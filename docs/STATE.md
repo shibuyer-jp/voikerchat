@@ -166,6 +166,14 @@
 - 監視: usage_logs で event='ad_reward' かつ metadata->>'fallback'='true' の発生を確認
 - 数日発生しなければ、テスターへの案内文で「広告ボタンを1日1回押してほしい」旨を明示する
 
+### [優先: 中] 統計のトークン集計元が二系統に分かれている
+
+- overview.totalTokens は usage_logs.output_tokens(サーバー権威)
+- sceneProgress[x].tokens は conversation_sessions.total_tokens_used(クライアント側 _updateSessionStats のベストエフォート処理、例外を握りつぶす設計)
+- 2026-08-01 実機確認で 696 vs 523(差分173)の不整合を観測
+- 同一画面で内訳の合計が総合計と一致しないのはユーザーから見て不可解
+- 恒久対応案: usage_logs.metadata.scene を正としてシーン別集計を再実装する。ただしシーン別メッセージ数の再定義を伴う設計変更
+
 ### [優先: 中] 技術的負債
 
 - chat.ts のリセット基準が他エンドポイントと不統一(chat.ts: 24時間ローリング / define・hint・recap・vocab-summary: UTC暦日境界)
