@@ -155,6 +155,42 @@ class StreakService {
     }
   }
 
+  /// 全シーンの中で「現在も継続している(brokenでない)」ストリークの
+  /// 最大値を返す(統計画面の「連続学習日数」用、2026-08-01)。
+  ///
+  /// 単純に streak_days の最大値を取ると、resetStreak() が未使用で
+  /// 明示的なリセット処理が無いため、放置されたシーンの古い streak_days
+  /// が混ざってしまう(例: シーンAを2週間放置していても、DB上の
+  /// streak_daysは最後に更新された時の値のまま)。last_updated を
+  /// evaluateGap() で判定し、今日または継続中のものだけに絞り込んでから
+  /// 最大値を取る。取得失敗時・該当なしは 0 を返す。
+  Future<int> getOverallCurrentStreak(String userId) async {
+    try {
+      final response = await _supabase
+          .from('user_streaks')
+          .select('streak_days, last_updated')
+          .eq('user_id', userId);
+
+      var maxStreak = 0;
+      for (final row in (response as List)) {
+        final streakDays = (row['streak_days'] as int?) ?? 0;
+        final updatedAtRaw = row['last_updated'] as String?;
+        final updatedAt =
+            updatedAtRaw != null ? DateTime.tryParse(updatedAtRaw) : null;
+        if (streakDays <= 0 || updatedAt == null) continue;
+
+        final lastLearnedDate = localDateString(updatedAt.toLocal());
+        if (evaluateGap(lastLearnedDate) == 'broken') continue;
+
+        if (streakDays > maxStreak) maxStreak = streakDays;
+      }
+      return maxStreak;
+    } catch (e) {
+      logger.info('[StreakService] Error getting overall current streak: $e');
+      return 0;
+    }
+  }
+
   /// 全ストリーク情報を取得（ダッシュボード用）
   Future<Map<String, int>> getAllStreaks(String userId) async {
     try {

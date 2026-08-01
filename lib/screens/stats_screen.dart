@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import 'package:voikerchat/l10n/label_helpers.dart';
+import 'package:voikerchat/services/streak_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -22,10 +25,34 @@ class _StatsScreenState extends State<StatsScreen> {
   String? _errorCode; // 'auth' | 'premium' | 'load' | 'exception'
   String? _errorDetail;
 
+  // 連続学習日数は /api/analytics ではなく user_streaks から独自に取得する
+  // (StreakService.getOverallCurrentStreak、2026-08-01)。取得失敗時は 0 の
+  // まま(画面全体のエラー状態にはしない)。
+  int _consecutiveDays = 0;
+
   @override
   void initState() {
     super.initState();
     _loadStats();
+    _loadConsecutiveDays();
+  }
+
+  Future<void> _loadConsecutiveDays() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final streakService = StreakService();
+      await streakService.initialize(
+        prefs: await SharedPreferences.getInstance(),
+        supabase: Supabase.instance.client,
+      );
+      final days = await streakService.getOverallCurrentStreak(userId);
+      if (!mounted) return;
+      setState(() => _consecutiveDays = days);
+    } catch (e) {
+      // 失敗しても 0 のまま。統計画面全体はブロックしない。
+    }
   }
 
   Future<void> _loadStats() async {
@@ -158,7 +185,8 @@ class _StatsScreenState extends State<StatsScreen> {
             _StatCard(
               icon: '⏱️',
               title: l.statsLearningHours,
-              value: '${overview['estimatedLearningHours'] ?? 0}h',
+              value: _formatLearningTime(
+                  l, (overview['estimatedLearningMinutes'] as int?) ?? 0),
               color: Colors.blue,
             ),
             _StatCard(
@@ -179,8 +207,31 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
+  /// conversation_sessions.scene_id(数値文字列、"1"〜"18")をi18n対応の
+  /// シーン名へ変換する(label_helpers.dartのsceneName()を再利用)。
+  /// パース不能・未定義IDの場合は元のキーをそのまま返す。
+  String _displaySceneName(AppLocalizations l, String sceneIdKey) {
+    final id = int.tryParse(sceneIdKey);
+    if (id == null) return sceneIdKey;
+    final name = sceneName(l, id);
+    return name.isEmpty ? sceneIdKey : name;
+  }
+
+  /// 学習時間(分)を「45分」/「1時間」/「1時間30分」形式に整形する。
+  String _formatLearningTime(AppLocalizations l, int minutes) {
+    if (minutes < 60) return l.statsDurationMinutes(minutes);
+    final hours = minutes ~/ 60;
+    final remainder = minutes % 60;
+    if (remainder == 0) return l.statsDurationHours(hours);
+    return l.statsDurationHoursMinutes(hours, remainder);
+  }
+
   Widget _buildEngagementSection(AppLocalizations l) {
     final engagement = (_stats?['engagement'] as Map<String, dynamic>?) ?? {};
+    final favoriteSceneKey = engagement['favoriteScene'] as String?;
+    final favoriteSceneLabel = favoriteSceneKey == null
+        ? null
+        : _displaySceneName(l, favoriteSceneKey);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -209,7 +260,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${engagement['consecutiveLearningDays'] ?? 0} 🔥',
+                    '$_consecutiveDays 🔥',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -226,7 +277,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${engagement['favoriteScene'] ?? l.statsNone} ⭐',
+                    '${favoriteSceneLabel ?? l.statsNone} ⭐',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -257,7 +308,7 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         const SizedBox(height: 12),
         ...sceneProgress.entries.map((entry) {
-          final sceneName = entry.key;
+          final sceneLabel = _displaySceneName(l, entry.key);
           final data = entry.value as Map<String, dynamic>;
           final messages = data['messages'] as int? ?? 0;
           final tokens = data['tokens'] as int? ?? 0;
@@ -273,7 +324,7 @@ class _StatsScreenState extends State<StatsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  sceneName,
+                  sceneLabel,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,

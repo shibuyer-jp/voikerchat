@@ -147,64 +147,33 @@ async function getAnalyticsStats(
     );
 
     // 3. 学習時間計算（セッション数から推定）
+    // 算出式(セッション数×5分)は維持。以前は時間へfloor()していたため
+    // 60分未満(11セッションまで)が常に「0h」表示になっていた
+    // (2026-08-01実機確認)。分単位の生値を返し、表示側で分/時間を
+    // 切り替える。
     const totalSessions = sessions?.length || 0;
-    const estimatedMinutes = totalSessions * 5; // 各セッション平均5分と仮定
-    const estimatedHours = Math.floor(estimatedMinutes / 60);
+    const estimatedLearningMinutes = totalSessions * 5; // 各セッション平均5分と仮定
 
     // 4. 使用エラー数
     // 新スキーマの usage_logs はエラーイベントを持たない（event はすべて正常系）ため 0 を返す。
     // 将来エラーを可観測にする場合は event 許容値の追加が必要。
     const totalErrors = 0;
 
-    // 5. 連続学習日数（簡易版）
-    const { data: dateActivity, error: dateActivityError } = await supabase
-      .from('usage_logs')
-      .select('created_at')
-      .eq('user_id', userId)
-      .eq('event', 'message_sent')
-      .order('created_at', { ascending: false });
-    if (dateActivityError) {
-      console.error('usage_logs select (dateActivity) failed:', dateActivityError.code, dateActivityError.message, dateActivityError.details);
-    }
-
-    let consecutiveDays = 0;
-    if (dateActivity && dateActivity.length > 0) {
-      const dates = new Set<string>();
-      dateActivity.forEach((log) => {
-        const date = new Date(log.created_at).toISOString().split('T')[0];
-        dates.add(date);
-      });
-
-      const sortedDates = Array.from(dates).sort().reverse();
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      if (sortedDates[0] === todayStr || sortedDates[0] === getYesterdayDate()) {
-        let current = new Date(sortedDates[0]);
-        for (const dateStr of sortedDates) {
-          const date = new Date(dateStr);
-          const diff = Math.floor(
-            (current.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
-          );
-          if (diff === 0 || diff === 1) {
-            consecutiveDays++;
-            current = date;
-          } else {
-            break;
-          }
-        }
-      }
-    }
-
     return {
       overview: {
         totalTokens,
         tokensToday,
-        estimatedLearningHours: estimatedHours,
+        estimatedLearningMinutes,
         totalSessions,
         errorCount: totalErrors,
       },
       engagement: {
-        consecutiveLearningDays: consecutiveDays,
+        // 連続学習日数はクライアント側(StreakService.getOverallCurrentStreak、
+        // user_streaks + 端末ローカル日付基準)で算出するようになったため、
+        // ここでは返さない。usage_logsの生タイムスタンプをUTC暦日で再集計する
+        // 旧ロジックはローカル日付基準のstreak_service.dartと食い違い、
+        // 実機で「7/30に会話記録があるのに連続日数0」の原因になっていた
+        // (2026-08-01調査)。
         favoriteScene:
           Object.entries(sceneProgress).sort(
             (a: any, b: any) => b[1].messages - a[1].messages
@@ -219,13 +188,4 @@ async function getAnalyticsStats(
     console.error('Error getting analytics stats:', err);
     throw err;
   }
-}
-
-/**
- * 前日の日付文字列を返すヘルパー
- */
-function getYesterdayDate(): string {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday.toISOString().split('T')[0];
 }
