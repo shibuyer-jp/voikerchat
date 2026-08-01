@@ -110,6 +110,7 @@
 - **api/*.tsのテスト基盤整備**(任意): jest/vitest等のTSテスト基盤・tsconfig.json・testスクリプトが皆無。前提としてこのMacへのNode.jsインストールも必要。改善候補「技術的負債」の`api/にtsconfig.json/lint設定が存在しない`と同一課題。担当: 未定。期限: 未定
 - **シーンのお気に入り機能**(任意・条件付きバックログ): 未完成のまま放置されていたハートボタンは削除済み(DECISIONS.md 2026-07-26)。再検討条件: (a) シーン数が20を超えた段階、(b) 実装する場合は「一覧・絞り込み」までセットで設計、(c) 代替案(「最近使ったシーン」)も比較対象、(d) 判断は公開後のusage_logs(scene_idの分布)を確認してから。担当: 未定。期限: 未定
 - **小タスク: G6ダイアログを権限取得済み時はスキップする改善**(任意)。担当: 未定。期限: 未定
+- **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-13以降)
 
 ## 運用ルール
 
@@ -174,6 +175,7 @@
 - Vercel プロジェクトが2つ存在(voikerchat / voikerchat-x621)。用途の切り分けが未確認
 - linux/ macos/ windows/ の自動生成ファイルが checkout のたびに差分として出る
 - lib/services/revenuecat_service.dart:5 が dart:io の Platform を kIsWeb ガードなしで参照している。web 実行時の潜在バグ(2026-07-31発見、PR #33のスコープ外として保留)
+- `Documents/voikerchat`(別チェックアウト、2026-06-29時点の古い状態)の git remote URL に GitHub PAT が平文で埋め込まれている(2026-08-01にCCが発見)。対応候補: 該当PATのrevoke、不要チェックアウトの削除、fine-grained PATへの移行。現行PATはclassic/repoスコープ/有効期限なしのため漏洩時の影響が最大
 
 ## 市場・競合メモ
 
