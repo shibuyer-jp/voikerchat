@@ -140,9 +140,39 @@
   "@statsSessions": {
     "description": "Stat card: sessions"
   },
-  "statsLearningHours": "Learning Hours",
+  "statsLearningHours": "Study Time",
   "@statsLearningHours": {
-    "description": "Stat card: learning hours"
+    "description": "Stat card: study time"
+  },
+  "statsDurationMinutes": "{minutes} min",
+  "@statsDurationMinutes": {
+    "description": "Study time under 1 hour",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "statsDurationHours": "{hours} hr",
+  "@statsDurationHours": {
+    "description": "Study time, whole hours only (no remainder minutes)",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "statsDurationHoursMinutes": "{hours} hr {minutes} min",
+  "@statsDurationHoursMinutes": {
+    "description": "Study time, hours plus remainder minutes",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
   },
   "statsTotalTokens": "Total Tokens",
   "@statsTotalTokens": {
