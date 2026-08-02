@@ -59,8 +59,8 @@
 ## 未完了項目(クローズドテスト期間中に対応)
 
 1. **Build 16のリリース**
-   - 内容: A(#31 レート制限) / B(#32 AdMobコメント) / C(#32 PREMIUM i18n) / D(#32 ログレベル) / E(#33 locale・platform記録)
-   - 担当: CC(versionCode更新)+ 人間(Play Consoleアップロード)
+   - 内容: A(#31 レート制限) / B(#32 AdMobコメント) / C(#32 PREMIUM i18n) / D(#32 ログレベル) / E(#33 locale・platform記録) / F(#34 通知履歴の削除・表示修正) / G(#35 統計画面の表示修正4件)
+   - 担当: CC(versionCode更新→**2026-08-01完了、`1.0.0+16`、mainにpush済み**)+ 人間(AABビルド・Play Consoleアップロード、`docs/ANDROID_RELEASE.md`参照)
    - 検証: クローズドテストのリリース一覧にBuild 16が「選択したテスターに公開されました」と表示されること
    - 期限: 2026-08-05(Eの観測日数を確保するため早めに)
 
