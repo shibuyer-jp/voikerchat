@@ -90,11 +90,13 @@ CREATE POLICY "Users can insert own messages"
 ### 5. conversation_sessions
 Track conversation state and usage per user per scene.
 
+**⚠️ 注意(2026-08-01訂正)**: 下記`scene_id UUID`は本番DBの実体と異なる。実際は**TEXT型で"1"〜"18"の数値文字列**(`scenes`テーブルへのUUID外部キーではない)。アプリ側がシーン管理をDBの`scenes`テーブルからstatic Dartリスト(`lib/services/scene_service.dart`、整数ID)へ移行した際に、このテーブルのスキーマ変更がこのドキュメントへ反映されていなかった。
+
 ```sql
 CREATE TABLE public.conversation_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.user_profiles ON DELETE CASCADE,
-  scene_id UUID NOT NULL REFERENCES public.scenes ON DELETE CASCADE,
+  scene_id UUID NOT NULL REFERENCES public.scenes ON DELETE CASCADE,  -- 古い(実体はTEXT、上記注意参照)
   total_messages INT DEFAULT 0,
   total_tokens_used INT DEFAULT 0,
   last_message_at TIMESTAMPTZ,

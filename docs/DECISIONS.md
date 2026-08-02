@@ -159,3 +159,29 @@ CHECK 制約は NULL を通すため、エラーにならず静かに欠落し�
 
 **教訓**
 テーブルの一部カラム(created_at)だけを見て「履歴が増殖している」と誤断定した。status / received_at を含む全カラムを確認していれば正しく判断できた。テーブルを語る前に全カラムを見ること。
+
+### 2026-08-01 統計画面の不具合を修正(PR #35)
+
+**発見の経緯**
+Premium 限定機能のため一度も動作確認されていなかった。2026-08-01、本番DBで rate_limits.is_premium を一時的に true にして実機(iOS)で確認したところ、5件の問題が判明。確認後は元に戻した。
+
+**確認された表示(実機)**
+- シーン進捗のタイトルが「1」「2」と scene_id の生値
+- お気に入りシーンも「2」と数字
+- 学習時間が「0h」(セッション2件×5分=10分が時間単位で切り捨て)
+- 連続日数が「0」(前日に会話記録があるにもかかわらず)
+- 合計トークン696に対しシーン別合計523(差分173)
+
+**原因と対処**
+1・2: label_helpers.dart の sceneName() を呼んでいなかった → _displaySceneName() を追加して適用
+3: Math.floor(分/60) で60分未満が必ず0。11セッションまで0hだった → 分の生値を返し、表示側で整形。算出式(セッション×5分)は維持
+4: analytics.ts が usage_logs から UTC 日付境界で再実装しており、streak_service.dart のローカル日付境界と食い違っていた → StreakService.getOverallCurrentStreak() を新設し、user_streaks を既存の evaluateGap()/localDateString() で判定してから最大値を取る。analytics.ts の consecutiveLearningDays は削除
+5-a: シーン1の「メッセージ1・トークン0」はオープニング台詞のみの正常な値。対応不要
+5-b: トークン集計元の二系統(usage_logs vs conversation_sessions)は設計変更を伴うため保留。STATE.md に記録
+
+**設計判断の記録**
+単純な MAX(streak_days) は不適切と判明。resetStreak() が未使用のため、放置されたシーンの古い streak_days が DB上に残り続ける。「2週間放置した10日」が「今3日連続」を上回る恐れがあった。連続日数の算出をクライアント側で行う案(a)を採用。サーバー側で再実装する案(b)は、今回問題になった「同じロジックの重複によるズレ」を再生産するため却下。チャット画面の🔥バッジ(シーン単体)と統計画面(全シーン最大)で数字が異なる差異は既存のまま。「全体の連続日数」の定義を再設計する必要があり、今回スコープ外
+
+**ドキュメントの誤りを発見(同日修正済み)**
+- Database-Schema-v1.0.md の conversation_sessions.scene_id が UUID と記載されているが、実DBは text 型で "1"〜"18" の数値文字列(2026-08-01 確認)
+- Supabase のプロジェクト表示名が voikerchat-prod。過去の記録にある "Japanese-learning-app" は古い(STATE.md訂正済み)

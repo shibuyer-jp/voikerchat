@@ -14,7 +14,7 @@
 ## 機能ステータス
 | 機能 | 状態 | 備考 |
 |------|------|------|
-| 認証(Supabase匿名認証) | ✅ 稼働 | プロジェクト `rfwbwwhqclabhnbsrygw`(Tokyo)。表示名は旧称"Japanese-learning-app"だが本番DB |
+| 認証(Supabase匿名認証) | ✅ 稼働 | プロジェクト `rfwbwwhqclabhnbsrygw`(Tokyo)。表示名は`voikerchat-prod`(2026-08-01確認。旧称"Japanese-learning-app"という記載は古い) |
 | チャット | ✅ 稼働 | `messages`/`conversation_sessions`/`user_streaks`/`rate_limits`(RLS有) |
 | usage_logs | ✅ 稼働 | スキーマは commit `9877de6`。API層整合済 |
 | analytics/rate-limit認証統一 | ✅ 完了 | `supabase.auth.getUser` パターンに統一済 |
