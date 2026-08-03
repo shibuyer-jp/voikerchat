@@ -1,7 +1,8 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
 > **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。ただしPlay Console/App Store Connect等の外部サービスの配布状況は、必ず実画面で確認してから記録すること(2026-07-27、Android versionCode 7の配布状況誤認を教訓に追記)。
-> 最終更新: 2026-07-31(PR #33マージ: usage_logsのlocale/platform記録漏れを修正。Androidクローズドテスト14日タイマーが2026-07-30 19:31 JSTに起算(完走見込み2026-08-13以降)。オプトイン不通の原因はSNS内蔵ブラウザと特定・解消済み。詳細はDECISIONS.md参照。「次タスク」を「進行中/未完了項目/バックログ」の3分類に再編)
+> 最終更新: 2026-08-03(Build 16をAndroidクローズドテストへ配布・10:27 JST「選択したテスターに公開されました」。iOS 2回目リジェクト(Submission ID `94530390-d70e-4942-b6fc-9c709f735099`、審査対象Build 15/iPad Air 11-inch M3、Guideline 5.1.1(iv)+5.1.1(i)/5.1.2(i))を受け、Build 17(PR #36: マイク権限ダイアログのCancel削除+AIデータ同意画面新設+プライバシーポリシー修正)を14:38 JSTに再提出・審査待ち。詳細はDECISIONS.md 2026-08-03参照)
+> 旧: 2026-07-31(PR #33マージ: usage_logsのlocale/platform記録漏れを修正。Androidクローズドテスト14日タイマーが2026-07-30 19:31 JSTに起算(完走見込み2026-08-13以降)。オプトイン不通の原因はSNS内蔵ブラウザと特定・解消済み。詳細はDECISIONS.md参照。「次タスク」を「進行中/未完了項目/バックログ」の3分類に再編)
 > 旧: 2026-07-29 夜(Google Play の定期購入商品を作成・有効化しP3の①を完了。`voikerchat_premium_monthly:monthly-autorenew`、174か国、JPY 2,120 / PHP 895.00。**Play Console 側の設定作業はこれで全て完了**。アプリのコンテンツ10件は7/14に申告済み、ポリシー違反ゼロ。テスターは16アカウント確保見込みで要件12に対し余裕4)
 > 旧: 2026-07-29 夕方(Play Console 実画面確認。Billing Library 8 未対応のポリシー違反は 07-28 18:43 に解消済みと判明(P6クローズ)、Build 13 の対象SDKは 36 で 2026-08-31 期限の要件を充足済みと確認)
 > 旧: 2026-07-29 午後(App Store 1.0 審査提出完了(`1.0.0+15`/commit `7c9687c`、10:50 JST、承認後自動リリース)。サブスク価格が米国1か国のみだった問題を修正し175か国へ展開。Androidクローズドテストのテスターリスト「Voikerchat Closed Test - PH」に確定11名を登録、オプトインURL `https://play.google.com/apps/testing/jp.shibuyer.voikerchat` を確認済み。RevenueCatの`app_user_id`はSupabase user_id と結線済みでコード修正不要と確認)
@@ -34,7 +35,7 @@
 | プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
 | AdMob リワード広告 | ✅ コード完了・実ID設定済 / ⚠️ No Fill(公開後に再検証) | `ad_config.dart`の`_prod*`は実ID設定済(`useTestAds=false`)、`GADApplicationIdentifier`・`SKAdNetworkItems`(PR #16、Google推奨50件)も設定済み。TestFlight Build 8〜10で継続的に`onAdFailedToLoad: code=1 No Fill`(コード側は正常、AdMobサーバーへのリクエスト自体は成功=responseId取得済み)。AdMobコンソール確認の結果、**原因はアプリがApp Store未公開であること**と判断(DECISIONS.md 2026-07-26)。App Store公開後に再検証すること(次タスク参照) |
 | fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
-| **Androidクローズドテスト配布** | ⚠️ **Build 13配布中 / テスター募集フェーズ(要件割れリスク高)** | Alphaトラック「公開」、配布中は**Build 13(versionCode 13)**。main(`1.0.0+15`)より2世代古く、PR #29(価格期間表記)・PR #30(Paywallフッター)が未反映。※実機確認ではBuild 13でも `$12.99/月` は表示されていた(要因未確定)。**次に使えるversionCodeは15**(7・13は使用済で永久予約)。テスター: リスト名「Voikerchat Closed Test - PH」に**確定11名+開発者自身=12アカウント**を登録済み。メールアドレス要確認3名(Kenn Generala / Lorevie Barraca / Reyna Antonio)は妻の回答後に追加。**確保可能な上限が15名しかなく、要件(12名以上が14日間連続オプトイン)に対して余裕が2名分しかない**。オプトインURL: `https://play.google.com/apps/testing/jp.shibuyer.voikerchat`(Play Consoleの「リンクをコピー」はストア掲載URLを返すためこちらを使用。実機で表示確認済み)。国/地域: フィリピン・日本の2か国。**タイマーの起点は登録ではなくオプトイン**。新AAB配信でタイマーはリセットされない。募集文面(英語/タガログ語)作成済み、タガログ語は妻のネイティブ確認後に送付(DECISIONS.md 2026-07-29参照) |
+| **Androidクローズドテスト配布** | ✅ **Build 16(versionCode 16)配布中**(2026-08-03 10:27 JST「選択したテスターに公開されました」) | 2026-08-03、Build 16の審査提出・配布が完了。**usage_logsのplatform/localeはBuild 16配信より前から記録が存在していた**(android/ja=4件、android/en=2件、最終記録00:27 UTC、NULLは233件残存。どのPRで実装されたかは未特定、要追跡)。旧: Alphaトラック「公開」、配布中は**Build 13(versionCode 13)**。main(`1.0.0+15`)より2世代古く、PR #29(価格期間表記)・PR #30(Paywallフッター)が未反映。※実機確認ではBuild 13でも `$12.99/月` は表示されていた(要因未確定)。**次に使えるversionCodeは15**(7・13は使用済で永久予約)。テスター: リスト名「Voikerchat Closed Test - PH」に**確定11名+開発者自身=12アカウント**を登録済み。メールアドレス要確認3名(Kenn Generala / Lorevie Barraca / Reyna Antonio)は妻の回答後に追加。**確保可能な上限が15名しかなく、要件(12名以上が14日間連続オプトイン)に対して余裕が2名分しかない**。オプトインURL: `https://play.google.com/apps/testing/jp.shibuyer.voikerchat`(Play Consoleの「リンクをコピー」はストア掲載URLを返すためこちらを使用。実機で表示確認済み)。国/地域: フィリピン・日本の2か国。**タイマーの起点は登録ではなくオプトイン**。新AAB配信でタイマーはリセットされない。募集文面(英語/タガログ語)作成済み、タガログ語は妻のネイティブ確認後に送付(DECISIONS.md 2026-07-29参照) |
 | **daily_limitの日次リセット漏れ修正** | ✅ コード完了・main反映(PR #19) / ⚠️ 実地検証**必須・未実施** | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。api/*.ts自動テストを追加していないため、`docs/verification/release_verification_session_20260726.md`のPART B(daily_limit動作検証)実施が必須(省略可の任意項目ではない。DECISIONS.md 2026-07-26参照)。既存データの是正・動作検証は同ドキュメントに統合済み(旧ファイルは実行禁止マーク済み・記録用) |
 | **ストア掲載文の数値非依存化(v1.3→v1.4)** | ✅ 完了・main反映(PR #20) | `docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。ストア本番反映(コンソールへの貼付)はPR #20本文のコピペ用テキストを使用(人間が実行、要)(DECISIONS.md 2026-07-26) |
 | **プレミアム案内文の数値除去** | ✅ 完了・PR #28(main反映済み) | `featureAnimeDesc`の「13」(実態18シーンと既に不一致だった)を数字なしの表現に変更(3言語)。`badgeBasicMasterDesc`/`badgeAnimeMasterDesc`は数字を残しつつ`{count}`プレースホルダー化し、`SceneService`の実件数を動的に埋め込む方式に変更(DECISIONS.md 2026-07-27参照) |
@@ -54,40 +55,45 @@
 ## 進行中
 
 - **Androidクローズドテスト**: 14日タイマー進行中(起算 2026-07-30 19:31 JST、完走見込み 2026-08-13以降。オプトイン不通問題(SNS内蔵ブラウザ起因)は特定・解消済み。詳細はDECISIONS.md 2026-07-30参照)
-- **iOS**: App Store審査待ち(`1.0.0+15`/commit `7c9687c`、2026-07-29 10:50 JST提出、2026-07-31時点で「審査待ち」のまま。承認後は自動リリース)
+- **iOS**: 2回目リジェクト後、Build 17(`1.0.0+17`)を2026-08-03 14:38 JSTに再提出・審査待ち。Submission ID `94530390-d70e-4942-b6fc-9c709f735099`。アプリ本体・サブスクリプショングループ・サブスクリプション商品の3項目とも「審査待ち」。詳細はDECISIONS.md 2026-08-03参照(旧: `1.0.0+15`/commit `7c9687c`、2026-07-29 10:50 JST提出は2回目リジェクトで終了)
 
 ## 未完了項目(クローズドテスト期間中に対応)
 
-1. **Build 16のリリース**
-   - 内容: A(#31 レート制限) / B(#32 AdMobコメント) / C(#32 PREMIUM i18n、表示上の変化なし) / D(#32 ログレベル) / E(#33 locale・platform記録) / F(#34 通知履歴の削除・表示修正) / G(#35 統計画面の表示修正4件) / H(#29 Paywall価格期間表記) / I(#30 Paywallフッター化)。**H・IはAndroidのBuild 13時点で未反映(37行目参照)のため、Build 16でAndroidに初めて届く可能性がある**(ただしH/Iとも実機での反映有無は断定できないため、リリースノート本文には記載しない。2026-08-01判断、`docs/DECISIONS.md`参照)
-   - 担当: CC(versionCode更新→**2026-08-01完了、`1.0.0+16`、mainにpush済み**)+ 人間(AABビルド・Play Consoleアップロード、`docs/ANDROID_RELEASE.md`参照)
-   - 検証: クローズドテストのリリース一覧にBuild 16が「選択したテスターに公開されました」と表示されること
-   - 期限: 2026-08-05(Eの観測日数を確保するため早めに)
+1. **Build 16のリリース** ✅ 完了(2026-08-03 10:27 JST「選択したテスターに公開されました」を確認)
+   - 内容: A(#31 レート制限) / B(#32 AdMobコメント) / C(#32 PREMIUM i18n、表示上の変化なし) / D(#32 ログレベル) / E(#33 locale・platform記録) / F(#34 通知履歴の削除・表示修正) / G(#35 統計画面の表示修正4件) / H(#29 Paywall価格期間表記) / I(#30 Paywallフッター化)
+   - 担当: CC(versionCode更新)+ 人間(AABビルド・Play Consoleアップロード)、いずれも完了
+   - 検証: クローズドテストのリリース一覧にBuild 16が「選択したテスターに公開されました」と表示されること → 2026-08-03 10:27 JST確認済み
 
-2. **API原価の実測**
+2. **iOS Build 17の審査結果待ち**
+   - 内容: 2回目リジェクト(Guideline 5.1.1(iv)/5.1.1(i)/5.1.2(i))への対応(PR #36)。詳細はDECISIONS.md 2026-08-03参照
+   - 担当: CC(実装・再提出)完了、審査結果待ち
+   - 検証: App Store Connectでアプリ本体・サブスクリプショングループ・サブスクリプション商品の3項目とも「承認済み」になること
+   - 期限: Apple審査完了まで(通常48時間以内)
+
+3. **API原価の実測**
    - 担当: 人間(Anthropic / OpenAIダッシュボード)
    - 検証: 1ユーザー1日あたりのAPI原価が算出されていること
    - 期限: 2026-08-13
    - 現況: Claude Haikuは7/25-7/30累計で$0.084(6日間)。1ユーザー1日あたり約$0.006で、価格設計の制約要因にならない水準。OpenAI TTSはusage_logsに記録が無いためダッシュボードの合計値でしか把握できない
 
-3. **統計情報の共有(外部サービス保証条件)**
+4. **統計情報の共有(外部サービス保証条件)**
    - 担当: 人間
    - 検証: 出品者へPlay Console統計を共有済みであること
    - 期限: 2026-08-13
 
-4. **本番環境へのアクセス申請**
+5. **本番環境へのアクセス申請**
    - 担当: 人間
    - 検証: 申請フォームの送信完了
    - 期限: 完走確認後すみやかに
    - 前提: 「質問のプレビュー」で設問を事前確認しておくこと
 
-5. **年齢設定の不整合を解消**
+6. **年齢設定の不整合を解消**
    - 担当: 人間
    - 検証: 利用規約・プライバシーポリシー・Play Consoleのコンテンツレーティング・App Store Connectのレーティングの4箇所が一致していること
    - 期限: 本番申請前
    - 注記: 法務ページは13歳以上、App Store Connectは18+と記録されているが未確認。実物で確認すること
 
-6. **テスターフィードバックの収集**
+7. **テスターフィードバックの収集**
    - 担当: 人間(配偶者経由で依頼済み、2026-07-31)
    - 検証: `docs/TESTER-FEEDBACK.md`に日付・内容・対応方針が記録されていること
    - 期限: 2026-08-10
@@ -180,7 +186,8 @@
 - FREE_DAILY_DEFINE_HINT_LIMIT = 30 が define.ts / hint.ts で重複定義
 - recap_service.dart / vocab_summary_service.dart に 429 分岐がなく、上限到達が「一時的な失敗」として表示される
 - api/ に tsconfig.json / lint 設定が存在しない
-- Vercel プロジェクトが2つ存在(voikerchat / voikerchat-x621)。用途の切り分けが未確認
+- Vercel プロジェクトが2つ存在(voikerchat / voikerchat-x621)。**`voikerchat.com`/`www.voikerchat.com`は`voikerchat-x621`にのみ割り当て済み(2026-08-03、`vercel domains inspect`で確認)だが、pushの都度両プロジェクトへデプロイが走る構成のまま**。`voikerchat`側は`voikerchat.vercel.app`のみで本番トラフィックには使われていない。完走後に整理すべき技術的負債(不要なデプロイ・Secretsの重複等)
+- `lib/screens/ai_data_consent_screen.dart`のAI同意画面本文`Column`が`SingleChildScrollView`でラップされておらず、オーバーフロー対策が無い(2026-08-03発見、PR #36)。iPad Air 11-inchでの実機確認は未実施(未検証)。過去にPaywallの同種レイアウト(Build 15)がオーバーフローで問題化した前例があるため要注意
 - linux/ macos/ windows/ の自動生成ファイルが checkout のたびに差分として出る
 - lib/services/revenuecat_service.dart:5 が dart:io の Platform を kIsWeb ガードなしで参照している。web 実行時の潜在バグ(2026-07-31発見、PR #33のスコープ外として保留)
 - `Documents/voikerchat`(別チェックアウト、2026-06-29時点の古い状態)の git remote URL に GitHub PAT が平文で埋め込まれている(2026-08-01にCCが発見)。対応候補: 該当PATのrevoke、不要チェックアウトの削除、fine-grained PATへの移行。現行PATはclassic/repoスコープ/有効期限なしのため漏洩時の影響が最大
