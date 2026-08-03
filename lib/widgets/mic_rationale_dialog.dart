@@ -5,34 +5,33 @@ import 'package:flutter/material.dart';
 /// いきなりOSの許可ダイアログを出すのではなく、なぜマイクが必要かを先に伝えることで、
 /// ユーザーが文脈を理解した上で許可でき、誤って拒否されるのを防ぐ。
 ///
-/// 文言はすべて引数で受け取りハードコードしない（l10n対応）。
-/// 呼び出し側は戻り値が true のときだけ speechService.initialize()/start() を呼ぶ想定。
+/// App Store Guideline 5.1.1(iv)対応(2026-08-03リジェクト): このメッセージを
+/// 表示した後は必ずOSの権限リクエストへ進まなければならず、途中で離脱できる
+/// ボタンを置いてはならない。そのためボタンは1つのみとし、バリアタップ・
+/// 端末の戻る操作のいずれでも閉じられないようにしている。
 ///
-/// 戻り値: 「続ける」で true / キャンセルまたは画面外タップで false。
-Future<bool> showMicRationaleDialog(
+/// 文言はすべて引数で受け取りハードコードしない（l10n対応）。
+/// 呼び出し側はこのダイアログが閉じたら必ず speechService.initialize() を呼ぶこと。
+Future<void> showMicRationaleDialog(
   BuildContext context, {
   required String message,
-  required String allowLabel,
-  required String cancelLabel,
+  required String continueLabel,
 }) async {
-  final result = await showDialog<bool>(
+  await showDialog<void>(
     context: context,
-    barrierDismissible: true,
-    builder: (dialogContext) => AlertDialog(
-      icon: const Icon(Icons.mic_none),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: Text(cancelLabel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text(allowLabel),
-        ),
-      ],
+    barrierDismissible: false,
+    builder: (dialogContext) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        icon: const Icon(Icons.mic_none),
+        content: Text(message),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(continueLabel),
+          ),
+        ],
+      ),
     ),
   );
-  // barrierDismissible により外側タップ時は null が返るため、未許可(false)として扱う。
-  return result ?? false;
 }
