@@ -432,6 +432,26 @@
   "@privacyPolicy": {
     "description": "Link label to Privacy Policy"
   },
+  "aiConsentTitle": "About AI Conversations",
+  "@aiConsentTitle": {
+    "description": "AI data consent screen title"
+  },
+  "aiConsentBody": "This app's conversation feature sends the text you type or speak, along with your conversation history, to Anthropic to generate AI responses. If you use the voice read-aloud feature, the text being read is also sent to OpenAI.",
+  "@aiConsentBody": {
+    "description": "AI data consent screen body text explaining what data is sent and to whom"
+  },
+  "aiConsentAccept": "Agree and Continue",
+  "@aiConsentAccept": {
+    "description": "AI data consent screen accept button"
+  },
+  "aiConsentDecline": "I Don't Agree",
+  "@aiConsentDecline": {
+    "description": "AI data consent screen decline button"
+  },
+  "aiConsentDeclineExplanation": "AI conversation is a core feature of this app. Without your agreement, you won't be able to use the app.",
+  "@aiConsentDeclineExplanation": {
+    "description": "Shown when the user taps \"I Don't Agree\" on the AI data consent screen"
+  },
   "subscribeCta": "Subscribe",
   "@subscribeCta": {
     "description": "Paywall primary subscribe button"

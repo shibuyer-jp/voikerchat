@@ -9,6 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart'
   if (dart.library.html) 'package:voikerchat/stubs/mobile_ads_stub.dart';
 import 'models/diagnostic.dart';
 import 'models/onboarding.dart';
+import 'screens/ai_data_consent_screen.dart';
 import 'screens/onboarding/diagnostic_test_screen_enhanced.dart';
 import 'screens/onboarding/level_result_screen.dart';
 import 'screens/home_screen.dart';
@@ -297,11 +298,19 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     final firstLaunch = prefs.getBool(_kFirstLaunchKey) ?? true;
     final levelName = prefs.getString(_kUserLevelKey);
+    final consentAccepted = prefs.getBool(kAiDataConsentAcceptedKey) ?? false;
 
-    if (!firstLaunch && levelName != null) {
-      return HomeScreen(userLevel: _parseLevel(levelName));
+    final Widget nextScreen = (!firstLaunch && levelName != null)
+        ? HomeScreen(userLevel: _parseLevel(levelName))
+        : const OnboardingFlowScreen();
+
+    // is_first_launch とは独立に判定する。既存ユーザー(consentAccepted=false)
+    // にも次回起動時にこの画面を表示するため(App Store Guideline
+    // 5.1.1(i)/5.1.2(i)対応、2026-08-03リジェクト)。
+    if (!consentAccepted) {
+      return AiDataConsentScreen(nextScreen: nextScreen);
     }
-    return const OnboardingFlowScreen();
+    return nextScreen;
   }
 
   @override

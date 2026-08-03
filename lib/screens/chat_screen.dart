@@ -403,16 +403,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
 
     // 初回のみ: OS標準の権限プロンプトを出す「前」に理由を説明する(G6)。
-    // 「続ける」を選んだときだけ initialize()（＝OS権限プロンプト）へ進む。
+    // Guideline 5.1.1(iv)対応: このダイアログを閉じたら必ず initialize()
+    // （＝OS権限プロンプト）へ進む。離脱できるボタンは置かない。
     if (!_sttInitAttempted) {
       final l = AppLocalizations.of(context);
-      final proceed = await showMicRationaleDialog(
+      await showMicRationaleDialog(
         context,
         message: l.micRationaleMessage,
-        allowLabel: l.micRationaleContinue,
-        cancelLabel: l.cancel,
+        continueLabel: l.micRationaleContinue,
       );
-      if (!proceed) return; // 説明ダイアログでキャンセル → 権限要求せず何もしない
       if (!mounted) return;
 
       final sttOk = await _speechService.initialize(); // ここでOS権限プロンプト
