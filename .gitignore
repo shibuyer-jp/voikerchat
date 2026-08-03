@@ -43,3 +43,6 @@ credentials.json
 lib/l10n/app_localizations*.dart
 .vercel
 .env*
+
+# Claude Code local settings
+.claude/
