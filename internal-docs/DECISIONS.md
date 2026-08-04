@@ -276,3 +276,16 @@ Build 16 のリリースノート初版に3件の不正確な記載があり、C
 
 **handoff運用の是正**
 2026-08-03分のセッション記録`shibuyer-ops/memory/handoff_20260803.md`が、実際にはリポジトリへcommit&pushされておらず失われていたことが本セッション冒頭で判明(`shibuyer-ops`を`git pull`・検索しても不在を確認)。当日の作業内容自体は本ファイルの2026-08-03エントリ・STATE.mdには記録済みだったため実害はなかったが、再発防止のため`shibuyer-ops/memory/handoff_20260804.md`の「運用ルール」節に(1)handoffは必ずcommit&pushまで完了させる (2)セッション終了時に前回分が実際に保存されているか確認する (3)次スレ開始時はまずhandoffの実在を確認してから作業する、を明記した。あわせて「ドキュメント(.md)編集は必ずClaude Codeが行い、Takatoh本人には.md編集・git操作・gh CLI操作を依頼しない(Takatohに依頼してよいのはCCが実行できない作業=ブラウザ操作・目視確認・意思決定・外部連絡のみ)」というルールも追記した
+
+### 2026-08-04(続々) AI同意画面のオーバーフロー対策完了(PR #40)とBuild 16への未反映を確認
+
+**調査の経緯**
+実機(Xiaomi 23073RPBFG、Android 15)でアプリデータを消去して起動したところ、通知許可ダイアログは出るがAI同意画面(`AiDataConsentScreen`)が出ないと報告があり調査した。`lib/main.dart`の`RootScreen._resolveInitialScreen()`(main.dart:297-314)を確認した結果、判定ロジック自体(`SharedPreferences`の`kAiDataConsentAcceptedKey`のみで判定、Supabase側の永続化なし)には問題がなかった。Supabaseの`user_profiles`テーブル定義にも同意関連カラムは存在しないことを確認し、A(Supabase永続化による誤判定)は否定。呼び出し元(`lib/main.dart:311`)も正しく呼ばれておりB(デッドコード)も否定。
+
+原因は**ビルドのタイミング**だった。`ai_data_consent_screen.dart`を新設したPR #36は2026-08-03 11:07 JSTにマージされたが、Android向けBuild 16のビルド元コミット(`0279eda`, `chore: bump version to 1.0.0+16`)は前日2026-08-02 08:59 JSTのもので、PR #36より前。`git show 0279eda:lib/screens/ai_data_consent_screen.dart`で該当ファイルがそのコミットに存在しないことを確認済み。一方iOS向けBuild 17(`0c790cf`, 2026-08-03 11:19 JST)はPR #36マージ後のコミットで、`git merge-base --is-ancestor`でPR #36マージコミットの子孫であることを確認済み。**つまりBuild 16(現在配信中のAndroid版)にはこの画面のコードが物理的に存在しない**。
+
+**影響**
+現在Androidクローズドテストで稼働中のテスターは、AIデータ利用への同意画面を一度も経由せずアプリを利用している状態にある。ストアのデータセーフティ申告(App Store Guideline 5.1.1(i)/5.1.2(i)対応で追加した開示内容)との整合は未確認。次回Android配信(Build 18)ではPR #36以降のコミットが反映されるため解消される見込み。
+
+**対応(PR #40)**
+`ai_data_consent_screen.dart`のオーバーフロー対策自体(本文を`SingleChildScrollView`に、同意/非同意ボタンを`Scaffold.bottomNavigationBar`へ分離、Paywall PR #30と同じ方針)を実施し、実機(Xiaomi 23073RPBFG、Android 15、フォントサイズ最大)で確認した。レイアウト崩れなし、「同意して続ける」→次画面遷移は正常動作を確認。「同意しない」ボタンの動作(同一Columnの兄弟要素のため関連性が高いと判断)とiPad Air 11-inch(iOS)での確認は未実施のまま残る(STATE.md「技術的負債」参照)。上記のBuild 16未反映問題は、この画面自体の実装不備ではなくビルド計画上の既知の制約として別途記録した

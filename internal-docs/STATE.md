@@ -99,13 +99,12 @@
    - 担当: 人間(配偶者経由で依頼済み、2026-07-31)
    - 検証: `internal-docs/TESTER-FEEDBACK.md`に日付・内容・対応方針が記録されていること
    - 期限: 2026-08-10
-
-8. **`ai_data_consent_screen.dart`のオーバーフロー対策**
-   - 内容: AI同意画面本文の`Column`を`SingleChildScrollView`でラップする(2026-08-03、PR #36で新設時から未対応のまま。「技術的負債」節参照)
-   - 担当: CC
-   - 検証: iPad Air 11-inch等の小画面実機/シミュレータでオーバーフローが発生しないこと
-   - 期限: 未定(次回のAndroid/iOSビルド着手前が望ましい)
    - 目的: 本番申請の設問「フィードバックに基づく改善」の回答材料
+
+8. **`ai_data_consent_screen.dart`のオーバーフロー対策** ✅ 完了(PR #40、実機確認2026-08-04)
+   - 内容: AI同意画面本文の`Column`を`SingleChildScrollView`でラップする(2026-08-03、PR #36で新設時から未対応のまま。「技術的負債」節参照)
+   - 担当: CC(実装)+人間(実機確認)、いずれも完了
+   - 検証: Android実機(Xiaomi 23073RPBFG、Android 15、フォントサイズ最大)でオーバーフローが発生しないこと → 2026-08-04確認済み。「同意しない」ボタンの動作、iPad Air 11-inch(iOS)での確認は未実施(「技術的負債」節参照)
 
 ## バックログ(テスト完走後)
 
@@ -196,7 +195,8 @@
 - recap_service.dart / vocab_summary_service.dart に 429 分岐がなく、上限到達が「一時的な失敗」として表示される
 - api/ に tsconfig.json / lint 設定が存在しない
 - Vercel プロジェクトが2つ存在(voikerchat / voikerchat-x621)。**`voikerchat.com`/`www.voikerchat.com`は`voikerchat-x621`にのみ割り当て済み(2026-08-03、`vercel domains inspect`で確認)だが、pushの都度両プロジェクトへデプロイが走る構成のまま**。`voikerchat`側は`voikerchat.vercel.app`のみで本番トラフィックには使われていない。完走後に整理すべき技術的負債(不要なデプロイ・Secretsの重複等)
-- `lib/screens/ai_data_consent_screen.dart`のAI同意画面本文`Column`が`SingleChildScrollView`でラップされておらず、オーバーフロー対策が無い(2026-08-03発見、PR #36)。iPad Air 11-inchでの実機確認は未実施(未検証)。過去にPaywallの同種レイアウト(Build 15)がオーバーフローで問題化した前例があるため要注意
+- `lib/screens/ai_data_consent_screen.dart`のAI同意画面オーバーフロー対策(2026-08-03発見、PR #36) → **解決済(PR #40、実機確認 2026-08-04 / Android 15、フォントサイズ最大)**。本文を`SingleChildScrollView`に、同意/非同意ボタンを`Scaffold.bottomNavigationBar`へ分離しPaywall(PR #30)と同じ方針に統一。実機(Xiaomi 23073RPBFG、Android 15、フォントサイズ最大)でレイアウト崩れが無いこと、「同意して続ける」→次画面遷移が正常動作することを確認済み。**「同意しない」ボタンの動作は未検証**(同一Column内の兄弟要素のため今回は確認を省略、DECISIONS.md参照)。iPad Air 11-inch(iOS)での確認はまだ実施していない
+- Build 16(現在Androidクローズドテストで配信中のビルド)には、PR #36で新設したAIデータ利用同意画面が含まれていない(Build 16のビルド元コミットがPR #36マージより前のため、DECISIONS.md 2026-08-04参照)。**現在稼働中のAndroidテスターは同意画面を一度も経由せずアプリを利用している**。Build 18の配信で解消予定。ストアのデータセーフティ申告(App Store Guideline 5.1.1(i)/5.1.2(i)対応で追加した開示内容)との整合は**[未確認]**。製品版申請前に必ず確認すること
 - linux/ macos/ windows/ の自動生成ファイルが checkout のたびに差分として出る
 - lib/services/revenuecat_service.dart:5 が dart:io の Platform を kIsWeb ガードなしで参照している。web 実行時の潜在バグ(2026-07-31発見、PR #33のスコープ外として保留)
 - `Documents/voikerchat`(別チェックアウト、2026-06-29時点の古い状態)の git remote URL に GitHub PAT が平文で埋め込まれている(2026-08-01にCCが発見)。対応候補: 該当PATのrevoke、不要チェックアウトの削除、fine-grained PATへの移行。現行PATはclassic/repoスコープ/有効期限なしのため漏洩時の影響が最大
