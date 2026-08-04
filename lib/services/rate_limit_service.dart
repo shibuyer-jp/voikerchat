@@ -65,7 +65,7 @@ class RateLimitService {
   ///
   /// サーバー(api/ad-reward.ts、service role)経由で更新する。クライアントから
   /// rate_limits を直接書き換える経路は廃止済み(RLSで禁止、
-  /// docs/migrations/2026-07-17_lock_rate_limits_client_write.sql 参照)。
+  /// internal-docs/migrations/2026-07-17_lock_rate_limits_client_write.sql 参照)。
   /// これにより usage_logs.ad_reward の記録とセットで、偽装・改ざんを防ぐ。
   Future<void> grantAdBonus(String userId) async {
     final token = _supabase.auth.currentSession?.accessToken;

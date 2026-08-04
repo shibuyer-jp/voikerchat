@@ -1,5 +1,5 @@
 /**
- * usage_logs の locale / platform は CHECK 制約付き(docs/Database-Schema-v1.0.md 参照)。
+ * usage_logs の locale / platform は CHECK 制約付き(internal-docs/Database-Schema-v1.0.md 参照)。
  * 許容値以外を渡すと insert 自体が失敗するため、書込み前に必ずここでサニタイズする。
  */
 

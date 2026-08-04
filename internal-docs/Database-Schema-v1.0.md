@@ -183,7 +183,7 @@ CREATE TABLE public.usage_logs (
 ```
 
 ### 8. content_reports
-AI生成コンテンツの報告(2026-07-24、Google Play ポリシー必須要件対応)。詳細: `docs/migrations/2026-07-24_create_content_reports.sql`
+AI生成コンテンツの報告(2026-07-24、Google Play ポリシー必須要件対応)。詳細: `internal-docs/migrations/2026-07-24_create_content_reports.sql`
 
 ```sql
 CREATE TABLE public.content_reports (
@@ -222,7 +222,7 @@ CREATE TABLE public.user_streaks (
 -- 期待されるが、実ポリシーは未検証。
 ```
 
-クライアント側の読み書きロジック(タイムスタンプ比較同期・ギャップ判定によるリセット)は`lib/services/streak_service.dart`参照。日付境界は端末ローカルタイム基準、`last_updated`は複数端末間の新旧比較用に絶対時刻(UTC)のまま(Build 13、`docs/DECISIONS.md` 2026-07-27参照)。
+クライアント側の読み書きロジック(タイムスタンプ比較同期・ギャップ判定によるリセット)は`lib/services/streak_service.dart`参照。日付境界は端末ローカルタイム基準、`last_updated`は複数端末間の新旧比較用に絶対時刻(UTC)のまま(Build 13、`internal-docs/DECISIONS.md` 2026-07-27参照)。
 
 ---
 

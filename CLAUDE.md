@@ -90,8 +90,8 @@ CI が最終ゲートだが、**push 前に必ずローカルで緑を確認す�
 
 ## 状態管理の絶対ルール(このファイルの範囲)
 - **このCLAUDE.mdには「不変の指針」のみを書く。プロジェクトの現在状態・課題・作業予定は書かない**
-- 現在状態は `docs/STATE.md` を参照。**セッション開始時に必ず読み、セッション終了時に必ず更新してコミットする**(更新漏れ=次セッションの不具合原因)
-- 設計・仕様の決定は `docs/DECISIONS.md` に1行追記(追記専用・削除禁止。「いつ・何を・なぜ」)
+- 現在状態は `internal-docs/STATE.md` を参照。**セッション開始時に必ず読み、セッション終了時に必ず更新してコミットする**(更新漏れ=次セッションの不具合原因)
+- 設計・仕様の決定は `internal-docs/DECISIONS.md` に1行追記(追記専用・削除禁止。「いつ・何を・なぜ」)
 - Git identity: `shibuyer-jp` / `262262561+shibuyer-jp@users.noreply.github.com`(Vercel連携リポジトリで他のメールを使うとデプロイがブロックされる)
 
 ## モデル運用(2026-07-07以降)
@@ -112,4 +112,4 @@ lib/
 ```
 
 ## Phase A 品質ゲート(2026-07-16〜)
-リリース前改善タスクを自走する場合は、まず `docs/tasks/RUNBOOK.md` と `docs/tasks/PROGRESS.md` を読むこと。タスク仕様は `docs/tasks/T-3x_*.md`、全体計画は `docs/Release-Master-Plan-v2.0.md`。
+リリース前改善タスクを自走する場合は、まず `internal-docs/tasks/RUNBOOK.md` と `internal-docs/tasks/PROGRESS.md` を読むこと。タスク仕様は `internal-docs/tasks/T-3x_*.md`、全体計画は `internal-docs/Release-Master-Plan-v2.0.md`。

@@ -1,6 +1,6 @@
 # 通知機能 実機検証キット(2026-07-26)
 
-> **後継ドキュメントあり**: `docs/verification/release_verification_session_20260726.md` に、本ドキュメントの内容と
+> **後継ドキュメントあり**: `internal-docs/verification/release_verification_session_20260726.md` に、本ドキュメントの内容と
 > daily_limitの動作検証を1本化した統合セッションを用意しています。今後の実機検証は統合版を使用してください
 > (このファイルは経緯の記録として残していますが、内容は統合版に含まれています)。
 

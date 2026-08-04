@@ -138,8 +138,8 @@
 ### ディレクトリ構造
 ```
 voikerchat/
-├── docs/
-│   └── Tutorial-Design-v1.0.md  ← このファイル
+├── internal-docs/
+│   └── Tutorial-Design-v1.0.md  ← このファイル(2026-08-04: docs/から移動)
 ├── src/
 │   ├── screens/
 │   │   ├── Step1Welcome.tsx

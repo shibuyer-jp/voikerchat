@@ -1,7 +1,9 @@
 # Vercel Deployment Guide for Voikerchat
 
-**Last Updated**: 2026-06-19  
+**Last Updated**: 2026-06-19(2026-08-04: docs/内部ドキュメント公開問題への対応でFolder Structure節を更新)
 **Status**: ✅ Production Verified
+
+**2026-08-04 追記**: `docs/`配下は設計・運用ドキュメントが平文で公開URLからアクセス可能になっていたため、内部専用ドキュメント52件を`internal-docs/`(リポジトリルート直下、Vercelの`outputDirectory`外)へ移動した。`docs/`直下には公開必須のHTML 7件(`index.html`・`support.html`・`Privacy-Policy-v1.0*.html`・`Terms-of-Service-v1.0*.html`・`legal-notice.html`)のみが残る。`vercel.json`の`outputDirectory: "docs"`自体は変更していない(このファイルの記載は引き続き正)。
 
 ## Quick Start
 
@@ -77,13 +79,18 @@ git push
 
 ```
 voikerchat/
-├── docs/                    # Static HTML (served directly)
+├── docs/                    # Static HTML (served directly, PUBLIC — outputDirectory)
 │   ├── index.html
-│   ├── Terms-of-Service-v1.0.html
-│   ├── Privacy-Policy-v1.0.html
+│   ├── support.html
+│   ├── legal-notice.html
+│   ├── Terms-of-Service-v1.0.html / -en.html
+│   └── Privacy-Policy-v1.0.html / -en.html
+├── internal-docs/           # 内部専用ドキュメント(公開対象外、Vercelがデプロイしない)
 │   ├── Tutorial-Design-v1.0.md
 │   ├── Persona-Design-v1.0.md
-│   └── Onboarding-Flow-v1.0.md
+│   ├── Onboarding-Flow-v1.0.md
+│   ├── STATE.md / DECISIONS.md 等
+│   └── tasks/ / migrations/ / verification/
 ├── vercel.json              # Deployment config
 └── .gitignore
 ```

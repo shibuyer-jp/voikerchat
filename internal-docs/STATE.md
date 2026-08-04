@@ -22,7 +22,7 @@
 | Supabaseエラーログ化 | ✅ 完了 | `.error` を全 insert/update/select で読む(`72246cf`) |
 | premium_upsell_service i18n | ✅ 完了 | commit `35553aa` |
 | notification_scheduler i18n | ✅ 完了 | commit `2456098`。B案=`lookupAppLocalizations(Locale)`。en/ja/fil 21キー実訳入り(2026-07-08 現物検証済)。2026-07-26(PR #17): アプリ内言語切替(`LocaleService`)を`_resolveLocale()`が考慮していなかった不具合を修正し、切替時にも再スケジュールされるよう`main.dart`側でリスナー結線(循環import回避のため)。ただし`notification_history`の既存レコードは配信時点の言語のまま(仕様、DECISIONS.md 2026-07-26参照)。**2026-07-27(Build 13、PR #28)**: TestFlight Build 12実機で「言語切替後も通知履歴3件が変わらない」と報告あり再調査。バックエンド(予約通知の再スケジュール)自体はPR #17で既に正しく動作するはずと判断したが、`notification_history_screen.dart`にロケール変更を検知して一覧を再読み込みする仕組みが無く(`_setupRealtimeListener()`がTODOのまま未実装)、画面が古いキャッシュを表示し続けていた可能性が高いと判断。`LocaleService.currentLocale`のリスナーを同画面に追加した(DECISIONS.md 2026-07-27参照)。ただし実機再検証は未実施 |
-| **通知機能一式(ローカルリマインダー/マイルストーン/ON-OFFトグル/履歴)** | ✅ 完了・main反映 | PR #10(土台+タイムゾーン/Android権限バグ修正)・PR #11(設定トグル)・PR #12(履歴書き込み案B+C)・PR #17(言語切替時の再スケジュール)。実機/エミュレータでの最終検証は`docs/verification/release_verification_session_20260726.md`(旧`notification_verification_20260726.md`をdaily_limit検証と統合)参照 |
+| **通知機能一式(ローカルリマインダー/マイルストーン/ON-OFFトグル/履歴)** | ✅ 完了・main反映 | PR #10(土台+タイムゾーン/Android権限バグ修正)・PR #11(設定トグル)・PR #12(履歴書き込み案B+C)・PR #17(言語切替時の再スケジュール)。実機/エミュレータでの最終検証は`internal-docs/verification/release_verification_session_20260726.md`(旧`notification_verification_20260726.md`をdaily_limit検証と統合)参照 |
 | **ストリーク端末間整合性** | ✅ 完了・main反映 | PR #13: 端末変更/再インストールでストリークが消える不具合(ローカル優先読み込みがSupabase復元パスを持っていなかった)と、fire-and-forget同期の競合による値巻き戻りを修正(タイムスタンプ比較方式)。マルチデバイス同時書き込みのロスト更新は明示的にスコープ外(DECISIONS.md 2026-07-25参照) |
 | **ストリークのリセット実装(案A)** | ✅ 完了・PR #28(main反映済み) | `resetStreak()`が定義済みだが呼び出し箇所ゼロで、サボっても減らない(単調増加)不具合を修正。`incrementStreak()`に前回学習日からのギャップ判定(today/continuing/broken)を実装、前日継続なら+1・一昨日以前(または記録無し)なら1にリセット。`_restoreStreakFromSupabase()`にも同じ判定を適用(復元直後の初回表示から正確な値に)。あわせて日付境界をUTC→端末ローカルタイムへ変更(フィリピン/日本の朝型ユーザーでの日付ズレ回避)。テスト用に`nowProvider`(現在時刻の差し替え)を追加し`test/services/streak_service_test.dart`で日付境界を9ケース自動検証(DECISIONS.md 2026-07-27参照) |
 | **アプリ内UI言語切替(設定画面)** | ✅ 完了・main反映 | PR #8。`LocaleService`(SharedPreferences永続化、`ValueNotifier<Locale?>`)。ja/en/fil対応 |
@@ -32,12 +32,12 @@
 | badges | ✅ 実装済 | service/model/screen あり |
 | **音声会話(PTT+TTS)** | ✅ 完了・main反映 | PR #2 squash merge `17ee53e`(2026-07-10)。STT `speech_to_text ^7.4.0` / TTS `flutter_tts ^4.2.2`。G6事前説明→OS権限、silent-stop途中送信防止、Android rate2倍換算修正(`defaultRate=0.45`)。テスト: Androidエミュレーター+iOS実機(iOS 26.5.2)全項目合格。iOS 26は約1分自動停止が発生しない(端末内認識化と推測)が保護コードは旧iOS/Android用に有効 |
 | lefthook pre-push | ✅ 稼働 | analyze/test(`371b1ea`) |
-| プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
+| プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(internal-docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
 | AdMob リワード広告 | ✅ コード完了・実ID設定済 / ⚠️ No Fill(公開後に再検証) | `ad_config.dart`の`_prod*`は実ID設定済(`useTestAds=false`)、`GADApplicationIdentifier`・`SKAdNetworkItems`(PR #16、Google推奨50件)も設定済み。TestFlight Build 8〜10で継続的に`onAdFailedToLoad: code=1 No Fill`(コード側は正常、AdMobサーバーへのリクエスト自体は成功=responseId取得済み)。AdMobコンソール確認の結果、**原因はアプリがApp Store未公開であること**と判断(DECISIONS.md 2026-07-26)。App Store公開後に再検証すること(次タスク参照) |
 | fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
-| **Androidクローズドテスト配布** | ✅ **Build 16(versionCode 16)配布中**(2026-08-03 10:27 JST「選択したテスターに公開されました」) | 2026-08-03、Build 16の審査提出・配布が完了。**usage_logsのplatform/localeはBuild 16配信より前から記録が存在していた**(android/ja=4件、android/en=2件、最終記録00:27 UTC、NULLは233件残存。どのPRで実装されたかは未特定、要追跡)。旧: Alphaトラック「公開」、配布中は**Build 13(versionCode 13)**。main(`1.0.0+15`)より2世代古く、PR #29(価格期間表記)・PR #30(Paywallフッター)が未反映。※実機確認ではBuild 13でも `$12.99/月` は表示されていた(要因未確定)。**次に使えるversionCodeは15**(7・13は使用済で永久予約)。テスター: リスト名「Voikerchat Closed Test - PH」に**確定11名+開発者自身=12アカウント**を登録済み。メールアドレス要確認3名(Kenn Generala / Lorevie Barraca / Reyna Antonio)は妻の回答後に追加。**確保可能な上限が15名しかなく、要件(12名以上が14日間連続オプトイン)に対して余裕が2名分しかない**。オプトインURL: `https://play.google.com/apps/testing/jp.shibuyer.voikerchat`(Play Consoleの「リンクをコピー」はストア掲載URLを返すためこちらを使用。実機で表示確認済み)。国/地域: フィリピン・日本の2か国。**タイマーの起点は登録ではなくオプトイン**。新AAB配信でタイマーはリセットされない。募集文面(英語/タガログ語)作成済み、タガログ語は妻のネイティブ確認後に送付(DECISIONS.md 2026-07-29参照) |
-| **daily_limitの日次リセット漏れ修正** | ✅ コード完了・main反映(PR #19) / ⚠️ 実地検証**必須・未実施** | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。api/*.ts自動テストを追加していないため、`docs/verification/release_verification_session_20260726.md`のPART B(daily_limit動作検証)実施が必須(省略可の任意項目ではない。DECISIONS.md 2026-07-26参照)。既存データの是正・動作検証は同ドキュメントに統合済み(旧ファイルは実行禁止マーク済み・記録用) |
-| **ストア掲載文の数値非依存化(v1.3→v1.4)** | ✅ 完了・main反映(PR #20) | `docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。ストア本番反映(コンソールへの貼付)はPR #20本文のコピペ用テキストを使用(人間が実行、要)(DECISIONS.md 2026-07-26) |
+| **Androidクローズドテスト配布** | ✅ **Build 16(versionCode 16)配布中**(2026-08-03 10:27 JST「選択したテスターに公開されました」) | 2026-08-03、Build 16の審査提出・配布が完了。**usage_logsのplatform/localeはBuild 16配信より前から記録が存在していた**(android/ja=4件、android/en=2件、最終記録00:27 UTC、NULLは233件残存。どのPRで実装されたかは未特定、要追跡)。旧: Alphaトラック「公開」、配布中は**Build 13(versionCode 13)**。main(`1.0.0+15`)より2世代古く、PR #29(価格期間表記)・PR #30(Paywallフッター)が未反映。※実機確認ではBuild 13でも `$12.99/月` は表示されていた(要因未確定)。**次に使えるversionCodeは15**(7・13は使用済で永久予約)。テスター: リスト名「Voikerchat Closed Test - PH」に**確定11名+開発者自身=12アカウント**を登録済み。メールアドレス要確認3名(K.G. / L.B. / R.A.、2026-08-04匿名化)は妻の回答後に追加。**確保可能な上限が15名しかなく、要件(12名以上が14日間連続オプトイン)に対して余裕が2名分しかない**。オプトインURL: `https://play.google.com/apps/testing/jp.shibuyer.voikerchat`(Play Consoleの「リンクをコピー」はストア掲載URLを返すためこちらを使用。実機で表示確認済み)。国/地域: フィリピン・日本の2か国。**タイマーの起点は登録ではなくオプトイン**。新AAB配信でタイマーはリセットされない。募集文面(英語/タガログ語)作成済み、タガログ語は妻のネイティブ確認後に送付(DECISIONS.md 2026-07-29参照) |
+| **daily_limitの日次リセット漏れ修正** | ✅ コード完了・main反映(PR #19) / ⚠️ 実地検証**必須・未実施** | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。api/*.ts自動テストを追加していないため、`internal-docs/verification/release_verification_session_20260726.md`のPART B(daily_limit動作検証)実施が必須(省略可の任意項目ではない。DECISIONS.md 2026-07-26参照)。既存データの是正・動作検証は同ドキュメントに統合済み(旧ファイルは実行禁止マーク済み・記録用) |
+| **ストア掲載文の数値非依存化(v1.3→v1.4)** | ✅ 完了・main反映(PR #20) | `internal-docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。ストア本番反映(コンソールへの貼付)はPR #20本文のコピペ用テキストを使用(人間が実行、要)(DECISIONS.md 2026-07-26) |
 | **プレミアム案内文の数値除去** | ✅ 完了・PR #28(main反映済み) | `featureAnimeDesc`の「13」(実態18シーンと既に不一致だった)を数字なしの表現に変更(3言語)。`badgeBasicMasterDesc`/`badgeAnimeMasterDesc`は数字を残しつつ`{count}`プレースホルダー化し、`SceneService`の実件数を動的に埋め込む方式に変更(DECISIONS.md 2026-07-27参照) |
 | **Paywall文言監査(2026-07-28)** | ✅ 完了(未pushのローカル修正) | TestFlightで「13 engaging scenes」が見えた件を調査した結果、`featureAnimeDesc`の数字除去は既にPR #28でmain反映済みで、観測ビルド(Build 12)がその前のビルドだったための表示遅延と判明(コード修正不要)。横断監査で`app_fil.arb`の`featureAnimeTitle`/`featureStatsTitle`が英語のまま未翻訳だった別件を新たに発見・修正("Mga Eksenang Anime" / "Dashboard ng Estadistika")。他にja/en/filのキー欠落・数字混入は無し(DECISIONS.md 2026-07-28参照) |
 | **Paywall価格表示の更新期間追加(Build 14)** | ✅ 完了・main反映(PR #29) | App Store Guideline 3.1.2監査(価格/EULA/プライバシーポリシーのPaywall内表示)の結果、EULA・プライバシーポリシーのリンクは既に充足していたが、RevenueCat設定済み時に優先表示される`_dynamicPrice`(`storeProduct.priceString`)に更新期間表記が無い欠落を検出(iOS TestFlight Build 12実機で「$12.99」のみの表示を確認、裏付け済み)。ARBキー`pricePerMonth`(価格+期間の合成済み固定文字列)を廃止し、`premiumPriceFallback`(価格のみ)+`premiumPriceWithPeriod({price})`(ロケール別の期間サフィックス、en:"{price}/month"/ja:"{price}／月"/fil:"{price}/buwan")に分割。`paywall_screen.dart`はRevenueCat取得値・フォールバック値のどちらでも必ずこのテンプレートを通すよう統一し、経路によらず期間表記が付くようにした(DECISIONS.md 2026-07-28参照) |
@@ -50,7 +50,7 @@
 - APIエンドポイント(api/): chat / rate-limit / analytics / revenuecat-webhook / delete-account
 - フリーミアム: 無料5回/日(広告+5、最大10、当日限り)/ プレミアム$12.99月(50回/日・全18シーン・広告なし)。値の唯一の定義元は`api/_constants.ts`(サーバー)/`lib/constants/rate_limit_constants.dart`(クライアントfallback)。シーン数はT-34で13→18に拡張済み(基本8+アニメ5+実用5、`lib/services/scene_service.dart`)
 - サポート: voikerchat.support@gmail.com(forward→takatoh01@gmail.com)。kizunavi.support は非運用 / APNs `.p8`: Drive `00_Project_Credentials`(`1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)
-- 設計書: repo `docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
+- 設計書: repo `internal-docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
 
 ## 進行中
 
@@ -95,7 +95,7 @@
 
 7. **テスターフィードバックの収集**
    - 担当: 人間(配偶者経由で依頼済み、2026-07-31)
-   - 検証: `docs/TESTER-FEEDBACK.md`に日付・内容・対応方針が記録されていること
+   - 検証: `internal-docs/TESTER-FEEDBACK.md`に日付・内容・対応方針が記録されていること
    - 期限: 2026-08-10
    - 目的: 本番申請の設問「フィードバックに基づく改善」の回答材料
 
@@ -205,11 +205,11 @@
 - **チャット画面AppBarのシーン名/レベル省略修正**(PR #9): `ShrinkToFitText`ウィジェット新設
 - **通知機能一式**(PR #10・#11・#12): ローカルリマインダー/マイルストーンの実接続+タイムゾーン・Android 13+権限バグ修正、設定画面ON/OFFトグル、通知履歴の書き込み(案B: 先行INSERT+起動時確定 / 案C: 即時INSERT)。実装中に`NotificationHistory`モデルの`user_id`/`is_read`列マッピング漏れ(既存バグ、`saveNotification`が今回まで一度も呼ばれておらず未発覚)も修正
 - **ストリーク端末間整合性修正**(PR #13): 端末変更/再インストールでの消失、fire-and-forget同期競合を解消
-- **iOS APNsエンティトルメント実装**(PR #14): `docs/DECISIONS.md`記載の理由により**マージ保留**(Phase2まで)
+- **iOS APNsエンティトルメント実装**(PR #14): `internal-docs/DECISIONS.md`記載の理由により**マージ保留**(Phase2まで)
 - **AdMob広告No Fill調査**: 診断ログ追加(PR #15、ビルド`1.0.0+9`)→実機ログでcode=1(No Fill)を確認→診断ログ削除+`SKAdNetworkItems`50件追加(PR #16、ビルド`1.0.0+10`)→再検証でも改善せず→AdMobコンソール確認の結果、原因はApp Store未公開と判断(DECISIONS.md参照)
 - **アプリ内言語切替時の通知再スケジュール修正**(PR #17): `_resolveLocale()`がアプリ内言語切替を考慮していなかった不具合を修正。循環import回避のため`main.dart`側でリスナー結線
 - **iOSビルド番号進行**: `1.0.0+7` → `+8`(通知機能一式)→ `+9`(診断ログ)→ `+10`(SKAdNetwork対応)。いずれも`ios-release.yml`経由でApp Store Connectへアップロード成功
-- **実機検証キット新設**: `docs/verification/notification_verification_20260726.md`(通知トグル/履歴書き込み/ストリーク回帰/言語切替再スケジュールの統合チェックリスト)
+- **実機検証キット新設**: `internal-docs/verification/notification_verification_20260726.md`(通知トグル/履歴書き込み/ストリーク回帰/言語切替再スケジュールの統合チェックリスト)
 - Android署名fail-fast(PR #5)は前セッションから引き続き**マージ保留**(Windows Laptopでのgradle検証待ち)
 
 ## 完了(直近・2026-07-16)

@@ -26,7 +26,7 @@ Voikerchat(Flutter)への作り直し時に移植されなかったことを 202
 - 実装: 会話終了時に1回だけ `mode: "vocab_summary"` でAI抽出(クライアント側の形態素解析は導入しない)
 - 将来の拡張(保存・復習リスト化)は Phase 2 バックログへ
 
-## スコープ外(docs/tasks/BACKLOG-Phase2.md へ)
+## スコープ外(internal-docs/tasks/BACKLOG-Phase2.md へ)
 スコアバッジ(10点採点)、文法フィードバックレポート、EN質問モード、リアルタイム音声(Gemini Live)、発音採点、カメラ機能
 
 ## 受け入れ基準

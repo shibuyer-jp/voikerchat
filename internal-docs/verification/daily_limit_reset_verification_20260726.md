@@ -1,8 +1,8 @@
 # daily_limit 日次リセット 実地検証(2026-07-26)
 
 > ## 【実行禁止】このファイルは記録用です。実行しないでください。
-> 実行するのは `docs/verification/daily_limit_20260726_all_in_one.sql`
-> (または統合版 `docs/verification/release_verification_session_20260726.md`)
+> 実行するのは `internal-docs/verification/daily_limit_20260726_all_in_one.sql`
+> (または統合版 `internal-docs/verification/release_verification_session_20260726.md`)
 > のみです。このファイルに含まれるSQLを重ねて実行すると、UPDATEが
 > 二重に走ります。
 
@@ -11,7 +11,7 @@
 
 ## 実行順序について
 
-- 本検証は**専用のテストユーザー(自分の匿名テストアカウント)**に対してのみ実施すること。実際に影響を受けた既存ユーザーの是正には `docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql` を使う(別ファイル・別対象)。
+- 本検証は**専用のテストユーザー(自分の匿名テストアカウント)**に対してのみ実施すること。実際に影響を受けた既存ユーザーの是正には `internal-docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql` を使う(別ファイル・別対象)。
 - 本検証はコード修正のデプロイ**後**に実施すること(デプロイ前だと修正が効かず、意図的に「まだ直っていない」結果になる)。
 - 本検証で使うバックアップテーブル名(`_rate_limits_verification_backup`)は、補正SQL側のバックアップテーブル(`_rate_limits_daily_limit_backup_20260726`)と別名のため、**どちらを先に実行しても競合しない**。ただし分かりやすさのため「補正SQL(既存データの是正)→ 本検証(新規動作の確認)」の順で実施することを推奨する。
 

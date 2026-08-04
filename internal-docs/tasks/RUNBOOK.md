@@ -5,20 +5,20 @@
 ## Claude Code へのキックオフプロンプト(そのまま貼り付け)
 
 ```
-voikerchat リポジトリで作業します。まず git pull し、docs/tasks/RUNBOOK.md と
-docs/Release-Master-Plan-v2.0.md を読んでください。
-docs/tasks/ の T-30 → T-33 → T-34 → T-32 → T-31 → T-35 の順で、未完了の
+voikerchat リポジトリで作業します。まず git pull し、internal-docs/tasks/RUNBOOK.md と
+internal-docs/Release-Master-Plan-v2.0.md を読んでください。
+internal-docs/tasks/ の T-30 → T-33 → T-34 → T-32 → T-31 → T-35 の順で、未完了の
 最初のタスクに着手してください。各タスクの仕様書に従い、「人間の判断が必要な点」
 だけ私に質問し、それ以外は完了まで自走してください。
 タスク完了ごとに: 検証(analyze/test)→コミット→push→CI緑確認→
-docs/tasks/PROGRESS.md に完了記録を追記→次タスクへ。
+internal-docs/tasks/PROGRESS.md に完了記録を追記→次タスクへ。
 セッション終了時は必ず PROGRESS.md に現在地と次アクションを書いてください。
 ```
 
 ## 自走ルール
 1. **CLAUDE.md の絶対ルールを厳守**(push前ローカル検証: pub get → gen-l10n → analyze → test 全緑)。
 2. 1タスク = 複数コミット可。ただしタスク途中で日をまたぐ場合も必ず push しておく(GitHub が唯一の真実)。
-3. 進捗台帳は `docs/tasks/PROGRESS.md`(このリポジトリ)に一元化。書式:
+3. 進捗台帳は `internal-docs/tasks/PROGRESS.md`(このリポジトリ)に一元化。書式:
    `- [x] T-30 完了 2026-07-XX commit abc1234 / 備考`
 4. 仕様書に無い設計判断が必要になったら: 軽微なら自分で決めて PROGRESS.md に判断理由を記録、重大(課金・データ・外部API契約に関わる)なら人間に質問して停止。
 5. ストア(App Store Connect / Play Console)のブラウザ操作、実機テスト、画像生成の実行、API契約は人間の担当。Claude Code は「人間へのお願いリスト」を PROGRESS.md に書き出す。

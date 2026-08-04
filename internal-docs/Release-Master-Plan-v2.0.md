@@ -15,16 +15,16 @@
 
 | ID | タスク | 仕様書 | 主担当 | 人間の判断が必要な点 |
 |----|--------|--------|--------|----------------------|
-| T-30 | ブランドカラー確定とテーマ刷新 | docs/tasks/T-30_brand-theme.md | Claude Code | ブランドカラーの最終選択 |
-| T-32 | シーンカードにキャラクター画像 | docs/tasks/T-32_character-images.md | Claude Code + 画像生成 | 画像スタイルの承認・生成実行 |
-| T-33 | プレミアム購入フロー(ペイウォール) | docs/tasks/T-33_premium-paywall.md | Claude Code | Sandbox 実機購入テスト |
-| T-34 | プレミアム専門シーン5本 + Kaigotalk データ設計 | docs/tasks/T-34_premium-pro-scenes.md | Claude Code | シーン内容の最終確認 |
-| T-31 | 単語タップ辞書機能 | docs/tasks/T-31_word-lookup.md | Claude Code | なし(UX確認のみ) |
-| T-35 | 高品質TTS(3段構成: 端末/広告日/プレミアム) | docs/tasks/T-35_premium-tts.md | Claude Code | OpenAI APIキー設定・実機聴感確認 |
-| T-36 | 学習サポート移植(ふりがな/ヒント/単語まとめ) | docs/tasks/T-36_learner-support-carryover.md | Claude Code | なし(UX確認のみ) |
+| T-30 | ブランドカラー確定とテーマ刷新 | internal-docs/tasks/T-30_brand-theme.md | Claude Code | ブランドカラーの最終選択 |
+| T-32 | シーンカードにキャラクター画像 | internal-docs/tasks/T-32_character-images.md | Claude Code + 画像生成 | 画像スタイルの承認・生成実行 |
+| T-33 | プレミアム購入フロー(ペイウォール) | internal-docs/tasks/T-33_premium-paywall.md | Claude Code | Sandbox 実機購入テスト |
+| T-34 | プレミアム専門シーン5本 + Kaigotalk データ設計 | internal-docs/tasks/T-34_premium-pro-scenes.md | Claude Code | シーン内容の最終確認 |
+| T-31 | 単語タップ辞書機能 | internal-docs/tasks/T-31_word-lookup.md | Claude Code | なし(UX確認のみ) |
+| T-35 | 高品質TTS(3段構成: 端末/広告日/プレミアム) | internal-docs/tasks/T-35_premium-tts.md | Claude Code | OpenAI APIキー設定・実機聴感確認 |
+| T-36 | 学習サポート移植(ふりがな/ヒント/単語まとめ) | internal-docs/tasks/T-36_learner-support-carryover.md | Claude Code | なし(UX確認のみ) |
 
 **推奨実施順**: T-30 → T-33 → T-34 → T-36 → T-31 → T-32 → T-35
-(T-32 は画像アセット(Gemini生成)待ちのため後方へ。Gemini 分担は docs/tasks/GEMINI-DELEGATION.md)
+(T-32 は画像アセット(Gemini生成)待ちのため後方へ。Gemini 分担は internal-docs/tasks/GEMINI-DELEGATION.md)
 (T-30 が全画面に影響するため最初。T-35 は外部API契約が絡むため独立して進行可)
 
 ## 2. Phase B: 検証・アセット再作成
@@ -46,9 +46,9 @@
 
 ## 4. スコープ外(Phase 2 / リリース後)
 
-正式台帳: `docs/tasks/BACKLOG-Phase2.md`(Web版仕様書v1.9との突合済み・出典トレーサビリティ付き)。ダークモード、Kaigotalk本体企画もPhase 2。
+正式台帳: `internal-docs/tasks/BACKLOG-Phase2.md`(Web版仕様書v1.9との突合済み・出典トレーサビリティ付き)。ダークモード、Kaigotalk本体企画もPhase 2。
 
 ## 5. Claude Code への委任
 
-運用手順・キックオフプロンプトは `docs/tasks/RUNBOOK.md` を参照。
+運用手順・キックオフプロンプトは `internal-docs/tasks/RUNBOOK.md` を参照。
 原則: **ストア操作・実機テスト・画像生成の実行・API契約・聴き比べ判断以外は全て Claude Code が自走する。**

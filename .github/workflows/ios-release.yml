@@ -14,7 +14,7 @@ name: iOS Release (Archive & Upload to App Store Connect)
 # Xcodeプロジェクト側のCODE_SIGN_STYLE=Automaticの組み合わせにより、
 # archive毎にApple Developer Portal上へ新規Development証明書が自動作成
 # され続け、証明書の上限到達でarchiveが失敗する不具合があった。詳細は
-# docs/DECISIONS.md 2026-07-26参照)。
+# internal-docs/DECISIONS.md 2026-07-26参照)。
 on:
   workflow_dispatch:
     inputs:

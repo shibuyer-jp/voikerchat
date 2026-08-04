@@ -1,7 +1,7 @@
 -- ============================================================
 -- 【実行禁止】このファイルは記録用です。実行しないでください。
--- 実行するのは docs/verification/daily_limit_20260726_all_in_one.sql
--- (または docs/verification/release_verification_session_20260726.md)
+-- 実行するのは internal-docs/verification/daily_limit_20260726_all_in_one.sql
+-- (または internal-docs/verification/release_verification_session_20260726.md)
 -- のみです。このファイルを重ねて実行すると、UPDATEが二重に走ります。
 -- ============================================================
 --

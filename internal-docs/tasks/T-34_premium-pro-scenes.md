@@ -24,7 +24,7 @@
 既存 `usage_logs`(append-only、owner-scoped RLS)の範囲内で完結させ、**スキーマ変更・新規テーブルは作らない**:
 - `session_start` / `message_sent` の `metadata` に `{ scene: "kaigo", turns, duration_sec, user_level }` を記録(既存イベントの範囲)
 - 見たい指標: 介護/医療シーンの選択率・完走率・リピート率・平均ターン数(→ Kaigotalk の需要仮説検証)
-- 集計は Supabase ダッシュボードの SQL で月次確認(クエリ例を `docs/` にメモとして残す)
+- 集計は Supabase ダッシュボードの SQL で月次確認(クエリ例を `internal-docs/` にメモとして残す)
 - **プライバシー**: 会話本文は保存しない現行方針を維持。集計目的の利用がプライバシーポリシーの記載範囲か Phase B で確認
 
 ## 受け入れ基準

@@ -11,7 +11,7 @@ const openaiApiKey = process.env.OPENAI_API_KEY || '';
 // voice: 13声(alloy/ash/ballad/coral/echo/fable/nova/onyx/sage/shimmer/verse/marin/cedar)から選択。
 // instructions: 話し方の指示。キャラの年齢・性別・トーンを反映し「シーンキャラと声の
 // イメージ不一致」(Build 6検証NG)を解消する。すべて "native Japanese speaker" を明示し
-// 外国語訛りを抑制する。出典: docs/Persona-Design-v1.0.md / T-34_premium-pro-scenes.md
+// 外国語訛りを抑制する。出典: internal-docs/Persona-Design-v1.0.md / T-34_premium-pro-scenes.md
 type VoiceProfile = { voice: string; instructions: string };
 
 const JP = 'You are a native Japanese speaker with natural, fluent Japanese pronunciation and pitch accent. ';

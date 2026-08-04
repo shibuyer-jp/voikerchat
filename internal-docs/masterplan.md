@@ -43,7 +43,7 @@
   
 | 文書 | 役割 | 正本の置き場所（NEXUS移行後） | 現在の置き場所（GDrive整理済） |  
 |---|---|---|---|  
-| `masterplan.md`(本ファイル) | 全体戦略のハブ。フォーカス管理・現状・ロードマップ | NEXUS_KnowledgeSystem/03_Projects/ | Shibuyer_Management/ + GitHub docs/ |  
+| `masterplan.md`(本ファイル) | 全体戦略のハブ。フォーカス管理・現状・ロードマップ | NEXUS_KnowledgeSystem/03_Projects/ | Shibuyer_Management/ + GitHub internal-docs/ |  
 | `NEXUS_masterplan.md`(v2.1) | 個人情報管理システムの仕様・TODO | NEXUS_KnowledgeSystem/03_Projects/ | NEXUS_KnowledgeSystem/ |  
 | `Voikerchat_仕様書`(v1.9・docx) | 日本語学習アプリの仕様・課金/セキュリティ要件 | NEXUS_KnowledgeSystem/03_Projects/Voikerchat/ | Voikerchat_Development/01_Specs/ |  
 | `事業計画書_Shibuyer導線ツール戦略.md` | 書類チェッカー+プラン生成ツールの計画 | NEXUS_KnowledgeSystem/03_Projects/Shibuyer/ | Shibuyer_Management/ |  
