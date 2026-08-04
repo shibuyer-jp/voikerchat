@@ -65,10 +65,9 @@ class AiDataConsentScreen extends StatelessWidget {
     final l = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Icon(Icons.privacy_tip_outlined, size: 48),
@@ -88,7 +87,20 @@ class AiDataConsentScreen extends StatelessWidget {
                   child: Text(l.privacyPolicy),
                 ),
               ),
-              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+      // Paywall(paywall_screen.dart、PR #30)と同じ方針: 同意/非同意のCTAは
+      // スクロール本文の外の固定フッターに置き、端末のテキストサイズ設定や
+      // 画面高によらず常に見える位置に固定する。
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               FilledButton(
                 onPressed: () => _accept(context),
                 child: Text(l.aiConsentAccept),
