@@ -7,7 +7,7 @@ v1.1 は方針ドラフトだったため、**そのままコピー&ペースト
 - 詳細説明（英語版/日本語版）の「無料版とプレミアム」段落から、無料枠の具体的回数（5回/日、広告視聴+5回）の記載を削除。
   アプリ側は既に `callsRemainingToday` 等で残り回数を動的表示しており、ストア掲載文に固定数値を残すと、
   サーバー側の日次リセット処理を修正した際などにストア掲載文とアプリの実際の挙動がズレるリスクがあるため
-  （経緯は `docs/DECISIONS.md` 2026-07-26参照）。
+  （経緯は `internal-docs/DECISIONS.md` 2026-07-26参照）。
   - 英語版: "The free plan includes 5 conversations per day, and you can watch a short ad to unlock 5 more." →
     "The free plan lets you practice every day, and you can watch a short ad to unlock additional conversations."
   - 日本語版: 「無料版は1日5回まで会話できます。広告を視聴するとさらに5回追加されます。」→

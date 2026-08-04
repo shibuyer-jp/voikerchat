@@ -13,7 +13,7 @@
    - RevenueCat `getOfferings()` から現地価格を動的表示(価格のハードコード禁止。$12.99 は定数としてフォールバック表示のみ)
    - 訴求内容: 50会話/日・全シーン解放(専門シーン含む)・広告なし・高品質音声(T-35)・学習統計
    - 「購入する」「購入を復元」ボタン、利用規約/プライバシーポリシーへのリンク(App Store 審査要件)
-2. `revenuecat_service.dart` に `purchasePremium()` / `restorePurchases()` を追加(既存の entitlement 判定を再利用、エラーは docs/Premium-Purchase-Error-Handling.md に準拠)。
+2. `revenuecat_service.dart` に `purchasePremium()` / `restorePurchases()` を追加(既存の entitlement 判定を再利用、エラーは internal-docs/Premium-Purchase-Error-Handling.md に準拠)。
 3. `_showLockedMessage` を廃止し、ロック中シーンタップ → PaywallScreen へ遷移。既存の `premium_upsell_widgets.dart` / `premium_upsell_service.dart` の導線(quota到達時アップセル等)も PaywallScreen へ接続。
 4. ARB 3言語(ja/en/fil): `premiumComingSoon` を削除し、ペイウォール文言一式を追加。ホーム下部の「プレミアム機能(近日実装)」バナーも購入導線に差し替え。
 5. 購入成功時: entitlement 再取得 → シーン解放・広告非表示・上限50/日が即時反映されることを確認。`usage_logs` に `upsell_converted` を記録(既存 event type)。

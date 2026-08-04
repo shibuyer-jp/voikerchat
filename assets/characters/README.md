@@ -2,7 +2,7 @@
 
 `scene_preview_card.dart` がシーンごとに読み込む画像。ファイル名は zero-padded 2桁の
 シーンIDで固定(`scene_01.webp` 〜 `scene_18.webp`)。仕様は
-`docs/tasks/T-32_character-images.md` 参照(生成プロンプト雛形あり)。
+`internal-docs/tasks/T-32_character-images.md` 参照(生成プロンプト雛形あり)。
 
 - 形式: WebP(透過)、512×512px、1枚あたり50KB目安(`cwebp -q 80`)
 - 未生成のシーンはファイルを置かない(`ScenePreviewCard` がキャライニシャル+

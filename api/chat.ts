@@ -255,8 +255,8 @@ async function checkAndIncrementRateLimit(
 
 /**
  * シーン別システムプロンプト
- * 出典: docs/Persona-Design-v1.0.md（確定版、シーン1〜13）
- *       + docs/tasks/T-34_premium-pro-scenes.md（シーン14〜18、実用プレミアム）
+ * 出典: internal-docs/Persona-Design-v1.0.md（確定版、シーン1〜13）
+ *       + internal-docs/tasks/T-34_premium-pro-scenes.md（シーン14〜18、実用プレミアム）
  * キーはアプリの数値 sceneId（"1"〜"18"）。
  */
 const COMMON_RULES = `You are a helpful Japanese language conversation partner for a Filipino learner. Your role is to:

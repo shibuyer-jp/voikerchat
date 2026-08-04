@@ -1,7 +1,7 @@
 /// キャラクター(sceneId)ごとの OpenAI TTS 音声ID割当表(T-35)。
 ///
 /// OpenAI の標準音声(alloy/echo/fable/onyx/nova/shimmer)の範囲で、
-/// docs/Persona-Design-v1.0.md / docs/tasks/T-34_premium-pro-scenes.md の
+/// internal-docs/Persona-Design-v1.0.md / internal-docs/tasks/T-34_premium-pro-scenes.md の
 /// キャラクター性別・トーンに合わせて割り当てる。声の数よりキャラクターが
 /// 多いため一部重複するが、キャラごとの明確な描写に影響はない。
 ///

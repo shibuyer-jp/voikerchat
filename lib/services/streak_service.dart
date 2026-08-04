@@ -296,7 +296,7 @@ class StreakService {
   /// incrementStreak()を呼ぶ)によるロスト更新は、本比較だけでは
   /// 解消しない(最後にDBへ書き込んだ方が勝つ)。発生頻度が低く、
   /// 解消には別途キューイング等の設計が必要なため、現時点ではスコープ外
-  /// とする(docs/DECISIONS.md参照)。
+  /// とする(internal-docs/DECISIONS.md参照)。
   Future<void> _syncStreakFromSupabaseIfNewer(String userId, String sceneId) async {
     try {
       final updatedAtKey = 'streak_${userId}_${sceneId}_updated_at';

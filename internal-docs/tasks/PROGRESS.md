@@ -23,7 +23,7 @@
   実機/シミュレータで会話し、口調・語彙レベルが仕様通りか確認(受け入れ基準の手動確認項目)
 - T-31: AIメッセージのテキスト選択→「意味を調べる」→ボトムシート表示のUXを実機/シミュレータで
   一度確認(受け入れ基準「2秒以内表示」「入力欄・TTS再生が壊れない」の体感確認)
-- [x] ~~T-35: `docs/migrations/2026-07-17_lock_rate_limits_client_write.sql` をSupabase SQL Editorで実行~~
+- [x] ~~T-35: `internal-docs/migrations/2026-07-17_lock_rate_limits_client_write.sql` をSupabase SQL Editorで実行~~
   **完了 2026-07-17**(ユーザーがSQL Editorで手動実行、"Success. No rows returned"を確認)。
   `rate_limits` へのクライアント直接UPDATEを許可していたRLSポリシー("System can update rate limits")を削除。
   以後、広告視聴ボーナス付与は `api/ad-reward.ts`(service role)経由のみで可能。
@@ -35,7 +35,7 @@
   `00_Project_Credentials` への保管が未実施(人間の残作業)。
 - T-35: 実機での聴感・レイテンシ確認、3段切替(端末→広告視聴→即日クラウド→日付変更で端末に戻る)の動作確認、
   機内モードでのフォールバック確認、`curl`でのAPI直叩き拒否確認(仕様書の受け入れ基準)
-- 広告視聴のAdMob SSV(真正性検証)は今回未対応。docs/tasks/BACKLOG-Phase2.md #11 参照(Phase2で検討)
+- 広告視聴のAdMob SSV(真正性検証)は今回未対応。internal-docs/tasks/BACKLOG-Phase2.md #11 参照(Phase2で検討)
 - (継続) セキュリティ注意: `C:\Users\takat\Documents\voikerchat` のgit remote URLに
   GitHub PATが平文で埋め込まれている件は、クローンをユーザー側で削除する方針・トークンローテーションは見送りで対応済み(2026-07-17)
 - T-36: ふりがな表示(トグルON時)・ヒントボタン・単語まとめ(3往復以上で会話終了/消去時に表示)の
@@ -52,9 +52,9 @@
 - T-33 home_screen.dart のバグ修正: `HomeScreen(userLevel: ...)` 呼び出し側(main.dart)が `isPremiumUser` を一切渡しておらず常に `false` だった(=購入済みユーザーでもシーンがロック表示されたままになる不具合)。RevenueCatServiceの実エンタイトルメントから取得するよう変更。
 - T-33 chat_screen.dart 内蔵の購入ダイアログ/処理(`_showPremiumDialog`/`_purchasePremium`等)は全てPaywallScreen遷移に統一し削除(仕様書の「既存導線もPaywallScreenへ接続」に対応)。
 - T-34 プレミアムシーンの実用/アニメ2分類は `SceneService` に `id>=14` の判定を集約(UI層に直書きしない)。
-- T-34 Kaigotalkデータ設計: `usage_logs.session_id` が現状クライアントから送信されておらず常にNULLのため、正確な「完走率・平均ターン数」はセッション単位集計ができない。日次のuser×scene集計で近似するSQLをdocs/Kaigotalk-Data-Queries.mdに記録し、正確な計測が必要になった場合はsession_id送信の追加実装が別途要ることを明記(新規テーブル/スキーマ変更はしない方針を優先)。
+- T-34 Kaigotalkデータ設計: `usage_logs.session_id` が現状クライアントから送信されておらず常にNULLのため、正確な「完走率・平均ターン数」はセッション単位集計ができない。日次のuser×scene集計で近似するSQLをinternal-docs/Kaigotalk-Data-Queries.mdに記録し、正確な計測が必要になった場合はsession_id送信の追加実装が別途要ることを明記(新規テーブル/スキーマ変更はしない方針を優先)。
 - T-32 `assets/characters/` が空だと `flutter build`(Gradle)が `unable to find directory entry` を出す(pub getは通るがbuildは出る)ことを実機検証で確認。命名規約を記したREADME.mdを配置してディレクトリを非空に保つことで回避(新規判断・軽微)。
-- T-31 辞書機能の日次クォータは `usage_logs` の既存 `event`('message_sent')を再利用し `metadata.feature='define'` で識別する設計にした(仕様書の「event typeは既存の汎用のものを使いスキーマ変更はしない」指示に従う)。ただし `docs/Kaigotalk-Data-Queries.md` のシーン別ターン数集計クエリは、辞書呼び出しが `message_sent` としてカウントされるため、`metadata->>'feature'` が `'define'` でない行に絞る必要がある(未反映、次回T-34クエリ見直し時に対応)。
+- T-31 辞書機能の日次クォータは `usage_logs` の既存 `event`('message_sent')を再利用し `metadata.feature='define'` で識別する設計にした(仕様書の「event typeは既存の汎用のものを使いスキーマ変更はしない」指示に従う)。ただし `internal-docs/Kaigotalk-Data-Queries.md` のシーン別ターン数集計クエリは、辞書呼び出しが `message_sent` としてカウントされるため、`metadata->>'feature'` が `'define'` でない行に絞る必要がある(未反映、次回T-34クエリ見直し時に対応)。
 - T-31 api/define.ts は既存 api/chat.ts の mode追加ではなく新規ファイルとした(1エンドポイント1ファイルの既存アーキテクチャに合わせるため。認証/エラーハンドリングの一部処理はchat.tsと重複するが、chat.tsの動作実績あるコードに手を入れるリスクを避けた)。
 - T-35 着手前に発見した設計上の懸念点はユーザー確認の上で対応: `grantAdBonus()`(rate_limit_service.dart)を
   クライアント直接Supabase書き込みから `api/ad-reward.ts`(service role)経由に変更し、
@@ -67,7 +67,7 @@
 - T-35 キャラクター音声(18キャラ→OpenAI音声ID)の割当は `lib/constants/character_voice_map.dart` に集約し
   `api/tts.ts` 側にも同じ表を複製(サーバーがvoiceを決定するため。声の数(6種)よりキャラが多いため一部重複)。
 - T-35 usage_logs.event の再利用により、T-31(`feature:'define'`)・T-35(`feature:'cloud_tts'`)ともに
-  `message_sent` として記録される。docs/Kaigotalk-Data-Queries.md の集計クエリに
+  `message_sent` として記録される。internal-docs/Kaigotalk-Data-Queries.md の集計クエリに
   `metadata->>'feature' is null` フィルタを追加し、会話ターン数を誤集計しないよう修正済み。
 - T-32 キャラ画像18枚: Google Driveに置かれていた元ファイルは拡張子が`.webp`でも中身は
   全て2048×2048のPNG(1枚3〜5MB、18枚合計約65MB)で、仕様書の目標(512×512 WebP、
@@ -89,7 +89,7 @@
   会話終了フローでは、単語まとめボトムシート表示中(長いawait)にオプションシートのcontextが
   破棄される問題があったため、NavigatorState参照を先に確保してから使い回す実装にした。
 - T-36 単語まとめ(vocab_summary)・T-35クラウドTTS(cloud_tts)・T-31辞書(define)・T-36ヒント(hint)は
-  いずれも`event='message_sent'`を再利用するため、docs/Kaigotalk-Data-Queries.mdの
+  いずれも`event='message_sent'`を再利用するため、internal-docs/Kaigotalk-Data-Queries.mdの
   `metadata->>'feature' is null`フィルタは4機能すべてを包括的に除外できている(機能追加のたびに
   フィルタ側の修正は不要な設計)。
 
@@ -109,7 +109,7 @@
   (詳細は「人間へのお願い」「判断記録」参照)。
 - 2026-07-17: OpenAI APIキーをVercel(voikerchat-x621)のProduction/Preview/Developmentに設定し
   最新デプロイをredeploy。api/tts.tsがServer misconfigurationを返さないことをcurlで確認。
-- 2026-07-17: ユーザーがSupabase SQL Editorで `docs/migrations/2026-07-17_lock_rate_limits_client_write.sql`
+- 2026-07-17: ユーザーがSupabase SQL Editorで `internal-docs/migrations/2026-07-17_lock_rate_limits_client_write.sql`
   を実行完了("Success. No rows returned")。T-35の前提となるセキュリティ強化(サーバー経由化+RLS制限)が
   コード・DB両面で完了。※このPROGRESS.md編集はAPI切断でローカル未pushのまま残り、次セッション冒頭で
   commit `a71f294` として回収・push。
@@ -127,4 +127,4 @@ T-35を実際に動かすための人間側の前提作業(OpenAIキー設定・
   上記リストから消化していくフェーズ。特に **Play Console クローズドテスト開始**(14日タイマー)は
   他の作業をブロックする律速要因のため優先度が高い。
 - 実機確認が一通り終わったら、Phase B(スクリーンショット再撮影・プライバシーポリシー確認)→
-  Phase C(提出)へ進む(docs/Release-Master-Plan-v2.0.md参照)。
+  Phase C(提出)へ進む(internal-docs/Release-Master-Plan-v2.0.md参照)。

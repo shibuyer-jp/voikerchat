@@ -15,7 +15,7 @@ const supabaseKey =
  * 従来 grantAdBonus() はクライアント(Flutter)から Supabase の
  * rate_limits を直接 UPDATE していたが、この経路は usage_logs.ad_reward
  * の記録を伴わず、クライアントが直接書き換え可能な穴だった
- * (docs/migrations/2026-07-17_lock_rate_limits_client_write.sql 参照)。
+ * (internal-docs/migrations/2026-07-17_lock_rate_limits_client_write.sql 参照)。
  * 本エンドポイントは service role key で rate_limits 更新 + usage_logs
  * ad_reward 記録の両方をサーバー側だけで行う。
  *

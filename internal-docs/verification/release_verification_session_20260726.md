@@ -10,7 +10,7 @@
 > 自動的に daily_limit=5 へ回復する。
 > さらに4件とも2〜7日放置された開発用アカウントであり、
 > クローズドテスト参加者は含まれない。
-> docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql
+> internal-docs/migrations/2026-07-26_fix_daily_limit_reset_correction.sql
 > は実行しない(テスト期間中の本番DB操作を避けるため。
 > ファイル自体は経緯の記録として保持)。
 >
@@ -28,8 +28,8 @@
 
 対象PR: #10・#11・#12(通知機能一式)・#13(ストリーク修正)・#17(言語切替時の再スケジュール)・#19(daily_limit日次リセット修正)。
 
-これまで別々に用意していた `docs/verification/notification_verification_20260726.md`(通知/ストリーク系)と
-`docs/verification/daily_limit_20260726_all_in_one.sql`(daily_limit是正+動作検証)を、
+これまで別々に用意していた `internal-docs/verification/notification_verification_20260726.md`(通知/ストリーク系)と
+`internal-docs/verification/daily_limit_20260726_all_in_one.sql`(daily_limit是正+動作検証)を、
 **1回の実機セッションで完結するよう1本に統合**したものです。以後の実機検証はこのファイルのみを使ってください
 (元の2ファイルは経緯の記録として残していますが、参照のみで結構です)。
 
@@ -214,7 +214,7 @@ ORDER BY created_at DESC;
 
 ## STEP 3: daily_limit PART B【必須・省略不可】— 修正コードの動作検証
 
-> api/*.tsにはTypeScript側の自動テストを追加しない判断をしている(`docs/DECISIONS.md` 2026-07-26参照)。
+> api/*.tsにはTypeScript側の自動テストを追加しない判断をしている(`internal-docs/DECISIONS.md` 2026-07-26参照)。
 > その判断の前提は「代わりに実地検証(このSTEP)で動作を確認する」ことにあるため、**このSTEPを省略すると
 > daily_limitの日次リセットロジックが一切検証されないままリリースされることになり、判断の前提が崩れる**。
 > シナリオB1(無料ユーザー)は必須。シナリオB2(Premiumユーザー)のみ、テスト用Premiumアカウントが無い場合に限り省略可。
@@ -401,7 +401,7 @@ HAVING COUNT(*) > 1;
 
 | # | 手順 | 期待結果 |
 |---|---|---|
-| B4-5 | ★ここでアプリを操作: 通知履歴タブ(Mga Abiso)を開く | 言語切替**より前**に受信した過去のレコードは**日本語のまま**表示される(仕様通り。`docs/DECISIONS.md` 2026-07-26参照。「直っていない」ではない) |
+| B4-5 | ★ここでアプリを操作: 通知履歴タブ(Mga Abiso)を開く | 言語切替**より前**に受信した過去のレコードは**日本語のまま**表示される(仕様通り。`internal-docs/DECISIONS.md` 2026-07-26参照。「直っていない」ではない) |
 
 - [ ] B4-5: 過去レコードは日本語のまま(想定通り)であることを確認(ここでfilになっていたら逆に想定外)
 

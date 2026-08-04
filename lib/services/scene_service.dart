@@ -206,7 +206,7 @@ class SceneService {
 
 
   /// シーン別オープニング第一声（AIキャラクターの最初の発話）。
-  /// 出典キャラクター設定: docs/Persona-Design-v1.0.md
+  /// 出典キャラクター設定: internal-docs/Persona-Design-v1.0.md
   /// 会話コンテンツ（練習対象の日本語）のため i18n(ARB) 対象外。
   static const Map<int, String> openingLines = {
     1: 'あ、おまたせ！来てくれてありがとう。最近どう？なにか楽しいことあった？',

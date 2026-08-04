@@ -1,6 +1,6 @@
 -- 2026-07-25: notification_history の現行RLSポリシー確認用クエリ。
 --
--- 背景: notification_history テーブルは docs/migrations/ 導入前(T-21, 6/23頃)に
+-- 背景: notification_history テーブルは internal-docs/migrations/ 導入前(T-21, 6/23頃)に
 -- Supabase側で直接作成されており、本リポジトリに作成時のCREATE TABLE/RLS SQLが
 -- 残っていない。Claude CodeはDBに直接アクセスできないため、通知履歴書き込み機能
 -- (PR-3, 案B+C)の実装前に、以下をSupabase SQL Editorで実行し、結果を貼り戻して

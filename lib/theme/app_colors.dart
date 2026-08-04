@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Voikerchat ブランドカラー定数(T-30)。
 ///
 /// [brand] はアプリアイコン(assets/icon/app_icon_1024.png)の主要色を
-/// 抽出して決定(2026-07-17、docs/tasks/PROGRESS.md 判断記録参照)。
+/// 抽出して決定(2026-07-17、internal-docs/tasks/PROGRESS.md 判断記録参照)。
 class AppColors {
   AppColors._();
 
