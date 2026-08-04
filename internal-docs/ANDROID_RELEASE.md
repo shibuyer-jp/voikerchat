@@ -72,15 +72,19 @@ Select-String -Path pubspec.yaml -Pattern "^version:"
 
 `lib/`配下の`String.fromEnvironment`/`bool.fromEnvironment`呼び出し(`lib/main.dart`・`lib/services/ad_config.dart`・`lib/services/revenuecat_service.dart`)を全て洗い出した結果、渡すべき/渡してはいけない値は以下の通り。
 
+**⚠️ 渡し忘れ厳禁(versionCode 7の再発防止)**: 前回のversionCode 7ビルドでは`SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY`を渡し忘れたまま、アプリはクラッシュせず「チャット機能(中核機能)だけが動作しない不良ビルド」としてPlay Consoleに投入されかけた事例がある(`internal-docs/DECISIONS.md` 2026-07-27参照)。`REVENUECAT_ANDROID_KEY`も同じ性質を持つ: 渡し忘れても`lib/services/revenuecat_service.dart`の設計上`Purchases.configure()`が黙ってスキップされるだけでアプリはクラッシュせず、ビルド・アップロード・審査を全て素通りしてから「テスターが購読ボタンを押しても反応しない」という形で初めて発覚する、**サイレント失敗**になる。ビルド実行前に必ずコマンド全文を目視し、`<YOUR_ANDROID_KEY>`が実キーに置き換わっていることを確認すること。
+
 ```powershell
 flutter build appbundle --release `
   --dart-define=SUPABASE_URL=https://rfwbwwhqclabhnbsrygw.supabase.co `
-  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_jirMoWsnc0AtQc4c2tUJ6Q_3uc43qHT
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_jirMoWsnc0AtQc4c2tUJ6Q_3uc43qHT `
+  --dart-define=REVENUECAT_ANDROID_KEY=<YOUR_ANDROID_KEY>
 ```
+
+`<YOUR_ANDROID_KEY>`は、2026-08-04にRevenueCatダッシュボードへ登録したGoogle Playアプリ(App ID: `appf7acdb482b`、Package name: `jp.shibuyer.voikerchat`)に対して発行されたAndroid用Public API Keyに置き換える。**キーの値自体はこの手順書を含むリポジトリには一切記載しない**(開発者が手元で管理)。
 
 **含めない(意図的)**:
 - `USE_TEST_ADS`: 渡さない。デフォルト`false`(本番広告)。`lib/services/ad_config.dart`のコメントに「ストア提出ビルドでは絶対にtrueにしないこと」と明記されている。
-- `REVENUECAT_ANDROID_KEY`: 渡さない(渡せない)。RevenueCatダッシュボードにGoogle Playアプリが未登録のため有効なキーが存在しない。未指定の場合、アプリは`Purchases.configure()`をスキップし、プレミアム機能のみ無効化された状態で安全に動作する(購読ボタンも自動的に無効化表示される、Build 13で対応済み)。RevenueCat側の登録が完了し次第、このコマンドに`--dart-define=REVENUECAT_ANDROID_KEY=...`を追加すること。
 - `REVENUECAT_IOS_KEY`: iOS専用のため無関係。
 
 初回ビルドはGradleの依存解決等で数分かかる。2回目以降はキャッシュが効き短縮される。
@@ -121,6 +125,15 @@ SHA1:   D1:0A:DD:50:75:F8:BF:53:76:02:6C:80:65:2F:23:65:DD:F6:5B:80
 SHA256: 32:6E:51:4F:85:70:30:1E:92:3A:10:53:B5:D4:69:29:04:3C:9E:60:8E:7E:D5:2F:6E:BD:B0:D7:95:F4:EC:F1
 ```
 
+### 5-3. Paywall / RevenueCat Offering取得の確認(必須、REVENUECAT_ANDROID_KEYを渡したビルドのみ)
+
+実機(クローズドテスト経由でインストールしたビルド)でPaywall画面(`lib/screens/paywall_screen.dart`)を開き、以下を確認する。3-2でのdart-define渡し忘れは実行時エラーを一切出さないため、**この画面確認が渡し忘れを検知できる唯一の手段**。
+
+1. 「購読する」ボタンがグレーアウトしていないこと(`_purchasingAvailable`= `revenueCatService.isConfigured`。falseだと自動的にグレーアウトする設計)
+2. 表示価格がARBのフォールバック値`$12.99`(`premiumPriceFallback`、`lib/l10n/app_ja.arb`)固定表示ではなく、Google Play Consoleで設定した現地価格(例: 日本ならJPY 2,120)になっていること。フォールバック値のまま表示される場合は`Purchases.getOfferings()`が失敗しているか、RevenueCatダッシュボード側のOffering/Product未マッピングを疑う
+
+いずれかを満たさない場合、購入テストには進まず、まず3-2のコマンドで`REVENUECAT_ANDROID_KEY`を渡し忘れていないか、次に`internal-docs/STATE.md`の「RevenueCat Android有効化」進捗(Offering/Productマッピング完了状況)を確認する。
+
 ---
 
 ## 6. Play Consoleへのアップロード手順(ブラウザ操作・人間作業)
@@ -147,11 +160,12 @@ SHA256: 32:6E:51:4F:85:70:30:1E:92:3A:10:53:B5:D4:69:29:04:3C:9E:60:8E:7E:D5:2F:
 | `flutter analyze`/`flutter test`が赤 | `flutter gen-l10n`未実行(ARB生成物が古い/存在しない) | `flutter gen-l10n`を実行してから再度analyze/test |
 | アプリ起動後チャット画面で`Supabase.instance`関連のAssertionError | `--dart-define=SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY`を渡し忘れた(3-2参照。前回Build 7で実際に発生したリスク) | 3-2のコマンド全文をそのまま使用し、dart-defineを渡し忘れていないか再確認 |
 | Play Consoleでアップロード時に「バージョンコードは既に使用されています」エラー | pubspec.yamlのビルド番号を上げ忘れたまま過去に一度アップロード済みのversionCodeで再ビルドした | pubspec.yamlの`version:`を1つ上げてから再ビルド(iOS/Android共通のビルド番号のため、iOS側で既に番号を消費していないかも確認) |
-| Paywall画面で購読ボタンが押せない(グレーアウト) | 意図した動作。RevenueCatのAndroidキー未注入のため(3-2参照) | 不具合ではない。RevenueCat側でGoogle Playアプリ登録・キー発行が完了するまでの既知の制限。テスターへの事前告知を推奨 |
+| Paywall画面で購読ボタンが押せない(グレーアウト) | **2026-08-04以降**: RevenueCat Androidキーは発行済みのため、このボタンがグレーアウトしている場合は不具合の可能性が高い(3-2の`REVENUECAT_ANDROID_KEY`渡し忘れ、または5-3のOffering未取得)。**2026-08-04より前のビルド(Build 17以前)**では意図した動作(キー未発行のため) | 3-2のビルドコマンドに`REVENUECAT_ANDROID_KEY`が含まれているか再確認し、5-3の手順で原因を切り分ける |
 
 ---
 
 ## 参照
 - keystore作成・初回AABビルドの経緯: `shibuyer-ops/memory/handoff_20260723_4.md`
 - Android署名fail-fast化(未マージ): PR #5
-- RevenueCat Androidキー未設定のリスク調査: 本セッションの調査結果(Build 13関連)
+- RevenueCat Android設定の進捗(Service Credentials/Real-Time Developer Notifications等): `internal-docs/STATE.md`「RevenueCat Android有効化」参照
+- RevenueCat Androidキー未設定時のコード動作調査(Build 13関連、`isConfigured`ガード等の設計根拠): 過去セッションの調査結果
