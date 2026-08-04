@@ -233,7 +233,7 @@ Response:
 
 ### シーン一覧（18シーン）
 
-id14〜18は実用プレミアム5シーン(T-34、2026-07-29以降追加)。詳細は`docs/tasks/T-34_premium-pro-scenes.md`・`lib/services/scene_service.dart:160-204`参照。
+id14〜18は実用プレミアム5シーン(T-34、2026-07-29以降追加)。詳細は`internal-docs/tasks/T-34_premium-pro-scenes.md`・`lib/services/scene_service.dart:160-204`参照。
 
 | # | シーン名 | 推奨レベル | アイコン |
 |----|---------|----------|---------|
