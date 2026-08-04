@@ -1,7 +1,8 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
 > **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。ただしPlay Console/App Store Connect等の外部サービスの配布状況は、必ず実画面で確認してから記録すること(2026-07-27、Android versionCode 7の配布状況誤認を教訓に追記)。
-> 最終更新: 2026-08-03(Build 16をAndroidクローズドテストへ配布・10:27 JST「選択したテスターに公開されました」。iOS 2回目リジェクト(Submission ID `94530390-d70e-4942-b6fc-9c709f735099`、審査対象Build 15/iPad Air 11-inch M3、Guideline 5.1.1(iv)+5.1.1(i)/5.1.2(i))を受け、Build 17(PR #36: マイク権限ダイアログのCancel削除+AIデータ同意画面新設+プライバシーポリシー修正)を14:38 JSTに再提出・審査待ち。詳細はDECISIONS.md 2026-08-03参照)
+> 最終更新: 2026-08-04(RevenueCat Android有効化がほぼ完了。①Google Play定期購入商品作成〈7/29完了〉→②RevenueCatにAndroidアプリ登録+Google Playサービスアカウント認証〈本日完了〉→③Offering/Productマッピング〈本日完了、Entitlement `Premium`にAttach〉まで完了、残るのはReal-Time Developer Notifications接続〈8/6以降〉と④ビルドへの`REVENUECAT_ANDROID_KEY`投入〈テスト完走後〉のみ。あわせて`docs/`配下の内部ドキュメント公開URL露出を是正(PR #38、内部専用52件を`internal-docs/`へ移動)、シーン数記載を実装(18)に統一(PR #37)。Androidクローズドテストは8/4時点で「12人が4日間連続」表示、14日到達見込みを8/14前後に修正(前回の8/13から)。詳細はDECISIONS.md 2026-08-04参照、当日の完全な記録は`shibuyer-ops/memory/handoff_20260804.md`)
+> 旧: 2026-08-03(Build 16をAndroidクローズドテストへ配布・10:27 JST「選択したテスターに公開されました」。iOS 2回目リジェクト(Submission ID `94530390-d70e-4942-b6fc-9c709f735099`、審査対象Build 15/iPad Air 11-inch M3、Guideline 5.1.1(iv)+5.1.1(i)/5.1.2(i))を受け、Build 17(PR #36: マイク権限ダイアログのCancel削除+AIデータ同意画面新設+プライバシーポリシー修正)を14:38 JSTに再提出・審査待ち。詳細はDECISIONS.md 2026-08-03参照)
 > 旧: 2026-07-31(PR #33マージ: usage_logsのlocale/platform記録漏れを修正。Androidクローズドテスト14日タイマーが2026-07-30 19:31 JSTに起算(完走見込み2026-08-13以降)。オプトイン不通の原因はSNS内蔵ブラウザと特定・解消済み。詳細はDECISIONS.md参照。「次タスク」を「進行中/未完了項目/バックログ」の3分類に再編)
 > 旧: 2026-07-29 夜(Google Play の定期購入商品を作成・有効化しP3の①を完了。`voikerchat_premium_monthly:monthly-autorenew`、174か国、JPY 2,120 / PHP 895.00。**Play Console 側の設定作業はこれで全て完了**。アプリのコンテンツ10件は7/14に申告済み、ポリシー違反ゼロ。テスターは16アカウント確保見込みで要件12に対し余裕4)
 > 旧: 2026-07-29 夕方(Play Console 実画面確認。Billing Library 8 未対応のポリシー違反は 07-28 18:43 に解消済みと判明(P6クローズ)、Build 13 の対象SDKは 36 で 2026-08-31 期限の要件を充足済みと確認)
@@ -51,10 +52,11 @@
 - フリーミアム: 無料5回/日(広告+5、最大10、当日限り)/ プレミアム$12.99月(50回/日・全18シーン・広告なし)。値の唯一の定義元は`api/_constants.ts`(サーバー)/`lib/constants/rate_limit_constants.dart`(クライアントfallback)。シーン数はT-34で13→18に拡張済み(基本8+アニメ5+実用5、`lib/services/scene_service.dart`)
 - サポート: voikerchat.support@gmail.com(forward→takatoh01@gmail.com)。kizunavi.support は非運用 / APNs `.p8`: Drive `00_Project_Credentials`(`1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)
 - 設計書: repo `internal-docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
+- RevenueCat: App ID(Android) `appf7acdb482b` / Product `voikerchat_premium_monthly:monthly-autorenew` / Entitlement `Premium`(iOS/Android併存) / Offering `default`(2026-08-04設定完了)
 
 ## 進行中
 
-- **Androidクローズドテスト**: 14日タイマー進行中(起算 2026-07-30 19:31 JST、完走見込み 2026-08-13以降。オプトイン不通問題(SNS内蔵ブラウザ起因)は特定・解消済み。詳細はDECISIONS.md 2026-07-30参照)
+- **Androidクローズドテスト**: 14日タイマー進行中(起算 2026-07-30 19:31 JST)。**2026-08-04時点でPlay Consoleは「12人が4日間連続」と表示**[確認済 2026-08-04、Play Console実画面]。14日到達(完走)見込みを**2026-08-14前後**に修正(起算日は変わらず、完走見込み日の記載精度を修正。旧: 2026-08-13以降)。オプトイン不通問題(SNS内蔵ブラウザ起因)は特定・解消済み。詳細はDECISIONS.md 2026-07-30参照。**運用知見**: Play Consoleの「12人」表示は仕様上の固定表示で実数ではなく、実際は毎日16〜19アカウントが稼働(テスター管理業者〈ココナラ経由〉からの回答、2026-08-04)。統計情報が「データを使用できません」と出るのは反映に約1週間かかるためで、配信開始7/30起点なら8/6頃から表示され始める見込み(同回答)
 - **iOS**: 2回目リジェクト後、Build 17(`1.0.0+17`)を2026-08-03 14:38 JSTに再提出・審査待ち。Submission ID `94530390-d70e-4942-b6fc-9c709f735099`。アプリ本体・サブスクリプショングループ・サブスクリプション商品の3項目とも「審査待ち」。詳細はDECISIONS.md 2026-08-03参照(旧: `1.0.0+15`/commit `7c9687c`、2026-07-29 10:50 JST提出は2回目リジェクトで終了)
 
 ## 未完了項目(クローズドテスト期間中に対応)
@@ -73,13 +75,13 @@
 3. **API原価の実測**
    - 担当: 人間(Anthropic / OpenAIダッシュボード)
    - 検証: 1ユーザー1日あたりのAPI原価が算出されていること
-   - 期限: 2026-08-13
+   - 期限: 2026-08-14
    - 現況: Claude Haikuは7/25-7/30累計で$0.084(6日間)。1ユーザー1日あたり約$0.006で、価格設計の制約要因にならない水準。OpenAI TTSはusage_logsに記録が無いためダッシュボードの合計値でしか把握できない
 
 4. **統計情報の共有(外部サービス保証条件)**
    - 担当: 人間
    - 検証: 出品者へPlay Console統計を共有済みであること
-   - 期限: 2026-08-13
+   - 期限: 2026-08-14
 
 5. **本番環境へのアクセス申請**
    - 担当: 人間
@@ -97,13 +99,19 @@
    - 担当: 人間(配偶者経由で依頼済み、2026-07-31)
    - 検証: `internal-docs/TESTER-FEEDBACK.md`に日付・内容・対応方針が記録されていること
    - 期限: 2026-08-10
+
+8. **`ai_data_consent_screen.dart`のオーバーフロー対策**
+   - 内容: AI同意画面本文の`Column`を`SingleChildScrollView`でラップする(2026-08-03、PR #36で新設時から未対応のまま。「技術的負債」節参照)
+   - 担当: CC
+   - 検証: iPad Air 11-inch等の小画面実機/シミュレータでオーバーフローが発生しないこと
+   - 期限: 未定(次回のAndroid/iOSビルド着手前が望ましい)
    - 目的: 本番申請の設問「フィードバックに基づく改善」の回答材料
 
 ## バックログ(テスト完走後)
 
-旧「次タスク」の未完了分。下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手はテスト完走(2026-08-13目安)後。
+旧「次タスク」の未完了分。下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手はテスト完走(2026-08-14目安)後。
 
-- **RevenueCat Android有効化**(〜2026-08-12目安。順序厳守: ①Google Play Consoleで定期購入商品を作成($12.99/月相当、**配信国全てに価格が入っているか必ず確認**。App Storeで同型の取りこぼしがあった、DECISIONS.md 2026-07-29参照) → ②RevenueCatにAndroidアプリ登録+Google Playサービスアカウント認証 → ③Offering/Productをマッピング(**Entitlement識別子を`Premium`または`voikerchat_premium`に厳密一致させる。大小文字区別**) → ④ビルドに`REVENUECAT_ANDROID_KEY`を渡す)。**キーだけ先行投入は禁止**(DECISIONS.md 2026-07-29)。コード側の`app_user_id`結線は確認済みで修正不要。クローズドテスト期間中に有効化すると、テスターへ送った「購入ボタンはOFF」という案内と実態がズレるため、テスト完走後(8/13以降)が望ましい。担当: 人間。期限: 2026-08-12目安
+- **RevenueCat Android有効化**(ほぼ完了、残作業のみ。①②③は完了、④のみテスト完走後): ①Google Play Consoleで定期購入商品を作成 ✅完了(2026-07-29、`voikerchat_premium_monthly:monthly-autorenew`、174か国) → ②RevenueCatにAndroidアプリ登録+Google Playサービスアカウント認証 ✅完了(2026-08-04)[本人報告、Claude Code未検証]。Google Cloudプロジェクト`voikerchat`(Firebaseと同一)でPlay Android Developer API/Play Developer Reporting API/Cloud Pub/Sub APIを有効化、サービスアカウント`revenuecat@voikerchat.iam.gserviceaccount.com`(ロール: Pub/Sub編集者+モニタリング閲覧者)を作成しPlay Consoleへ招待(アプリ情報閲覧/売上データ/注文と定期購入の管理)。RevenueCatにPlay StoreアプリをApp ID `appf7acdb482b`で追加、Productインポート成功(Published) → ③Offering/Productをマッピング ✅完了(2026-08-04)。Entitlement `Premium`にAttach(App Store版と併存)、Offering `default`の`$rc_monthly`に追加。**Entitlement識別子の大小文字厳密一致は結果的に`Premium`で確定** → ④ビルドに`REVENUECAT_ANDROID_KEY`を渡す **未着手・テスト完走後(8/14頃)まで意図的に保留**。**キーだけ先行投入は禁止**(DECISIONS.md 2026-07-29)。コード側の`app_user_id`結線は確認済みで修正不要。**残作業**: Real-Time Developer Notifications接続(2026-08-06以降、RevenueCat側の認証情報反映待ち。トラック設定変更を伴わないためテスト期間中でも着手可)。担当: 人間(ダッシュボード作業)+人間(ビルド実行、④のみ完走後)。期限: RTDN接続は8/6以降、④ビルド投入は完走後(8/14頃)
 - **Push通知 Phase2**(submission非必須・機能拡張・「道2」でスコープ外継続): Apple Developer Portal側のcapability有効化・プロファイル再作成は2026-07-26確認時点で既に完了済み(DECISIONS.md参照)。残る手順: APNsキー(`26PUZTM353`、.p8、Drive `00_Project_Credentials`、file ID `1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)をFirebase Console → Cloud Messagingにアップロード → PR #14(iOS APNsエンティトルメント追加、実装済み・App Store公開待ちでマージ保留中)をマージ → 実機でのプッシュ受信テスト。担当: 人間+CC。期限: 未定(App Store公開後)
 - **AdMob公開後タスク**(承認状況「要審査」。ストア公開が前提のため公開後に再確認): リワード広告No Fillの再検証(公開直後は在庫が薄い場合があるため数日様子見)/ AdMobコンソールにApp Storeのストアリンクを登録 / `voikerchat.com`に`app-ads.txt`を設置 / AdMobの「準備状況」レビューを確認。担当: 人間。期限: App Store公開後
 - **Android署名fail-fast**(PR #5、実装済み・マージ保留中): key.properties不在時のdebug鍵フォールバック廃止。Windows Laptopでのローカルgradle検証待ち。担当: 人間。期限: 未定
@@ -111,17 +119,17 @@
 - **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)。担当: 人間。期限: 未定(1.0.0+15審査提出時点での申告状況は本ドキュメント上未確認のため要確認)
 - **fil訳ネイティブレビュー**(妻に依頼) → 本番化: 既存21キー(notification_scheduler)に加え、言語切替UI(PR #8)・通知トグル(PR #11)の新規キーも機械翻訳のまま未レビュー。担当: 人間(妻)。期限: 本番化前
 - **PR #20ストアコピペ反映**: PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映。担当: 人間。期限: 未定
-- **release_verification_session_20260726.mdの残タスク(STEP2/STEP4/STEP5/Phase D/Phase E)**: STEP1(本番データ是正、不要と判断)・STEP3(daily_limit動作検証、実質完了)は2026-07-31に解消済み(DECISIONS.md参照)。残るSTEP2/4/5とPhase D/Eは実機での破壊的操作(アンインストール・端末日時変更)を伴い、テスター61名が稼働中に行うと結果の解釈が困難になるため、クローズドテスト完走(2026-08-13見込み)以降に実施する(検証doc自体の冒頭に方針追記済み)。担当: 人間。期限: 完走後
+- **release_verification_session_20260726.mdの残タスク(STEP2/STEP4/STEP5/Phase D/Phase E)**: STEP1(本番データ是正、不要と判断)・STEP3(daily_limit動作検証、実質完了)は2026-07-31に解消済み(DECISIONS.md参照)。残るSTEP2/4/5とPhase D/Eは実機での破壊的操作(アンインストール・端末日時変更)を伴い、テスター61名が稼働中に行うと結果の解釈が困難になるため、クローズドテスト完走(2026-08-14見込み)以降に実施する(検証doc自体の冒頭に方針追記済み)。担当: 人間。期限: 完走後
 - **通知履歴の表示時ローカライズ改修**(任意・優先度低): 現状「配信時点の言語で保持」が仕様(DECISIONS.md 2026-07-26)。ユーザーから改善要望が出た場合のみ着手。担当: 未定。期限: 未定
 - **api/*.tsのテスト基盤整備**(任意): jest/vitest等のTSテスト基盤・tsconfig.json・testスクリプトが皆無。前提としてこのMacへのNode.jsインストールも必要。改善候補「技術的負債」の`api/にtsconfig.json/lint設定が存在しない`と同一課題。担当: 未定。期限: 未定
 - **シーンのお気に入り機能**(任意・条件付きバックログ): 未完成のまま放置されていたハートボタンは削除済み(DECISIONS.md 2026-07-26)。再検討条件: (a) シーン数が20を超えた段階、(b) 実装する場合は「一覧・絞り込み」までセットで設計、(c) 代替案(「最近使ったシーン」)も比較対象、(d) 判断は公開後のusage_logs(scene_idの分布)を確認してから。担当: 未定。期限: 未定
 - **小タスク: G6ダイアログを権限取得済み時はスキップする改善**(任意)。担当: 未定。期限: 未定
-- **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-13以降)
+- **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-14以降)
 - **Google Play Console 定期購入の特典テキスト修正(「Access to all 13 scenes」→18)**: 2026-08-04、シーン数記載監査でコード実装(18シーン)とストア/ドキュメント側の記載乖離を確認した際に発見。`docs/support.html`・`internal-docs/Persona-Design-v1.0.md`・`internal-docs/Onboarding-Flow-v1.0.md`・`internal-docs/Tutorial-Design-v1.0.md`・`internal-docs/T-20-Onboarding-Enhancement-v1.0.md`はリポジトリ側で18に修正済み(PR参照)だが、**Google Play Consoleの定期購入商品(`voikerchat_premium_monthly`)特典テキストの「Access to all 13 scenes」表記はストア側の設定でありコード修正の対象外**。トラック設定変更の運用ルール(本ファイル「運用ルール」節)により、クローズドテスト完走(2026-08-14頃)後に手動で修正すること。担当: 人間。期限: 2026-08-14頃(完走後)
 
 ## 運用ルール
 
-- 2026-08-13の完走まで、Play Consoleのトラック設定を一切変更しない(テスターリスト、国/地域、リリース構成)。既存オプトインの切断リスクがあるため
+- 2026-08-14の完走まで、Play Consoleのトラック設定を一切変更しない(テスターリスト、国/地域、リリース構成)。既存オプトインの切断リスクがあるため
 - Build 16のリリースのみ例外
 
 ## 改善候補(テスト期間中〜リリース後)
@@ -192,6 +200,9 @@
 - linux/ macos/ windows/ の自動生成ファイルが checkout のたびに差分として出る
 - lib/services/revenuecat_service.dart:5 が dart:io の Platform を kIsWeb ガードなしで参照している。web 実行時の潜在バグ(2026-07-31発見、PR #33のスコープ外として保留)
 - `Documents/voikerchat`(別チェックアウト、2026-06-29時点の古い状態)の git remote URL に GitHub PAT が平文で埋め込まれている(2026-08-01にCCが発見)。対応候補: 該当PATのrevoke、不要チェックアウトの削除、fine-grained PATへの移行。現行PATはclassic/repoスコープ/有効期限なしのため漏洩時の影響が最大
+- 過去のVercelデプロイURL(`*.vercel.app`、プレビュー/旧本番デプロイ分)から、`internal-docs/`分離前の旧`docs/`配下ファイルのスナップショットにアクセスできる可能性がある(2026-08-04発見、未確認)。Deployment Protectionの導入を検討
+- RevenueCatダッシュボードに未使用のEntitlement `Voikerchat Pro`、Offeringの`$rc_annual`/`$rc_lifetime`が残存(2026-08-04のAndroid有効化作業中に発見。実店舗製品との紐付けなし)。完走後に整理
+- voikerchat.comトップページの訴求文言とストア掲載情報の間にズレが残っている可能性(2026-08-04、未確認。次回精査対象)
 
 ## 市場・競合メモ
 
