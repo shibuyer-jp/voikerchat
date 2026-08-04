@@ -117,6 +117,7 @@
 - **シーンのお気に入り機能**(任意・条件付きバックログ): 未完成のまま放置されていたハートボタンは削除済み(DECISIONS.md 2026-07-26)。再検討条件: (a) シーン数が20を超えた段階、(b) 実装する場合は「一覧・絞り込み」までセットで設計、(c) 代替案(「最近使ったシーン」)も比較対象、(d) 判断は公開後のusage_logs(scene_idの分布)を確認してから。担当: 未定。期限: 未定
 - **小タスク: G6ダイアログを権限取得済み時はスキップする改善**(任意)。担当: 未定。期限: 未定
 - **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-13以降)
+- **Google Play Console 定期購入の特典テキスト修正(「Access to all 13 scenes」→18)**: 2026-08-04、シーン数記載監査でコード実装(18シーン)とストア/ドキュメント側の記載乖離を確認した際に発見。`docs/support.html`・`internal-docs/Persona-Design-v1.0.md`・`internal-docs/Onboarding-Flow-v1.0.md`・`internal-docs/Tutorial-Design-v1.0.md`・`internal-docs/T-20-Onboarding-Enhancement-v1.0.md`はリポジトリ側で18に修正済み(PR参照)だが、**Google Play Consoleの定期購入商品(`voikerchat_premium_monthly`)特典テキストの「Access to all 13 scenes」表記はストア側の設定でありコード修正の対象外**。トラック設定変更の運用ルール(本ファイル「運用ルール」節)により、クローズドテスト完走(2026-08-14頃)後に手動で修正すること。担当: 人間。期限: 2026-08-14頃(完走後)
 
 ## 運用ルール
 
