@@ -247,3 +247,32 @@ Build 16 のリリースノート初版に3件の不正確な記載があり、C
 
 **未対応(記録のみ)**
 - `voikerchat`/`voikerchat-x621`の2つのVercelプロジェクトへのデプロイ後、両方で旧`docs/`配下の内部ファイルパス(例: `/STATE.md`)が404になることの確認は、デプロイ環境がこのセッションから直接操作できないため人間側での確認が必要(STATE.md参照)
+
+### 2026-08-04(続) RevenueCat Android有効化の実施、PR #37/#38のマージ、handoff運用の是正
+
+**RevenueCat Android有効化(①②③完了、④のみテスト完走後に保留)**
+[本人作業・2026-08-04、Google Cloud Console/Play Console/RevenueCatダッシュボードでの直接作業。Claude Codeによる未検証]
+- Google Cloudプロジェクト`voikerchat`(Firebaseと同一)でPlay Android Developer API/Play Developer Reporting API/Cloud Pub/Sub APIを有効化
+- サービスアカウント`revenuecat@voikerchat.iam.gserviceaccount.com`を作成(ロール: Pub/Sub編集者+モニタリング閲覧者)、JSONキーをDrive/Project_Credentials/API_Keys/に保管(秘密情報のため値はここに記載しない)
+- Play Consoleにサービスアカウントを招待(アプリ情報閲覧/売上データ/注文と定期購入の管理)
+- RevenueCatにPlay StoreアプリをApp ID `appf7acdb482b`で追加(Custom URL Scheme `rc-f7acdb482b`は自動生成・未使用)
+- Product `voikerchat_premium_monthly:monthly-autorenew`のインポート成功(Published)、Entitlement `Premium`にAttach(App Store版と併存)、Offering `default`の`$rc_monthly`に追加
+- 残: Real-Time Developer Notifications接続(2026-08-06以降、RevenueCat側の認証情報反映待ち。Play Consoleのトラック設定変更を伴わないためテスト期間中でも着手可)。④ビルドへの`REVENUECAT_ANDROID_KEY`投入は2026-07-29の決定どおりテスト完走後まで保留
+
+**PR #37(シーン数18統一)・PR #38(docs公開URL是正)のマージ**
+- PR #38を先にマージ(マージコミット`181b831`)。両PRとも`docs/`配下を編集する変更のため、ファイル移動を伴う#38を先に確定させ、後続の#37は移動後のパスに追従させる方針を取った(逆順だと#38側で同種のコンフリクトが発生していた可能性が高い)
+- PR #37を最新`main`へ`git rebase`したところ、ファイル移動先へのパッチ適用はgitの自動リネーム検出で無コンフリクト解決された。ただしPR #37の本文が新規追記した`docs/tasks/T-34_premium-pro-scenes.md`等の文字列としてのパス参照(4箇所、リネーム検出の対象外)は手動修正が必要だった。CI全緑を確認後マージ(マージコミット`b787cc3`)
+
+**運用知見(2026-08-04)**
+- Play Consoleダッシュボードの「12人のテスターがN日間連続でオプトインしています」の12人は**仕様上の固定表示であり実数ではない**[ココナラ出品者回答、2026-08-04]。実際は毎日16〜19アカウントが稼働
+- 統計情報が「データを使用できません」となるのは反映に約1週間かかるため[同回答]。配信開始2026-07-30起点なら8/6頃から表示され始める見込み
+- テスター管理業者(ココナラ経由)は製品版申請の結果が出るまでテストを継続する契約[同回答]。テスター追加・補充は不要
+- Google CloudのIAMロール検索は日本語表示名では引けない。`pubsub.editor`のようにロールIDで検索すること(「Pub/Sub Lite編集者」という紛らわしい類似ロールを誤選択しやすい)
+- RevenueCatの「認証情報は36時間で反映」はReal-Time Developer Notifications接続にのみ適用。Productインポートは即日成功した
+- Vercelのデプロイ反映後もブラウザキャッシュが残るため、確認は強制リロードまたはシークレットウィンドウで行うこと
+
+**Play Console定期購入商品の存在再確認**
+`voikerchat_premium_monthly`/`monthly-autorenew`/174か国/有効を再確認[本人報告・2026-08-04]。2026-07-29に作成・有効化済みだったが明示的なクローズ記録がなかったため、STATE.mdバックログの当該項目を正式にクローズした
+
+**handoff運用の是正**
+2026-08-03分のセッション記録`shibuyer-ops/memory/handoff_20260803.md`が、実際にはリポジトリへcommit&pushされておらず失われていたことが本セッション冒頭で判明(`shibuyer-ops`を`git pull`・検索しても不在を確認)。当日の作業内容自体は本ファイルの2026-08-03エントリ・STATE.mdには記録済みだったため実害はなかったが、再発防止のため`shibuyer-ops/memory/handoff_20260804.md`の「運用ルール」節に(1)handoffは必ずcommit&pushまで完了させる (2)セッション終了時に前回分が実際に保存されているか確認する (3)次スレ開始時はまずhandoffの実在を確認してから作業する、を明記した。あわせて「ドキュメント(.md)編集は必ずClaude Codeが行い、Takatoh本人には.md編集・git操作・gh CLI操作を依頼しない(Takatohに依頼してよいのはCCが実行できない作業=ブラウザ操作・目視確認・意思決定・外部連絡のみ)」というルールも追記した
