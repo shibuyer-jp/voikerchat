@@ -961,15 +961,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                           )
                                         : _buildAssistantMessageText(message),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      message.formattedTime,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isUser
-                                            ? Colors.white70
-                                            : Colors.grey.shade600,
-                                      ),
-                                    ),
+                                    isUser
+                                        ? Text(
+                                            message.formattedTime,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white70,
+                                            ),
+                                          )
+                                        : _buildAssistantFooterRow(message),
                                   ],
                                 ),
                               ),
@@ -1298,6 +1298,109 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           buttonItems: buttonItems,
         );
       },
+    );
+  }
+
+  /// AIメッセージの時刻表示行(既存の長押し導線に加えて、辞書機能への
+  /// もう一つの入口を提供する)。抽出できる単語が無い場合(ふりがなOFFで
+  /// 送信されたターン等)はボタンごと出さず、時刻のみ表示する。
+  Widget _buildAssistantFooterRow(Message message) {
+    final words = _extractFuriganaWords(message.content);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          message.formattedTime,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        if (words.isNotEmpty) ...[
+          const SizedBox(width: 10),
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => _showWordListSheet(message, words),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.menu_book_outlined,
+                      size: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    AppLocalizations.of(context).wordLookupButtonLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// メッセージ本文からふりがな付き漢字語を抽出する(重複除去、出現順)。
+  /// lib/services/voice/tts_text_cleaner.dart が読み上げ時に同じパターンで
+  /// 「漢字(かんじ)」の括弧部分を除去しているのと同一の正規表現を流用し、
+  /// 今回は逆に括弧の前(漢字側)を辞書ボタンの候補語として取り出す。
+  List<String> _extractFuriganaWords(String content) {
+    final matches =
+        RegExp(r'([一-鿿]+)[（(]([぀-ゟ]+)[）)]').allMatches(content);
+    final seen = <String>{};
+    final words = <String>[];
+    for (final match in matches) {
+      final word = match.group(1)!;
+      if (seen.add(word)) {
+        words.add(word);
+      }
+    }
+    return words;
+  }
+
+  /// 抽出した単語の一覧を選択肢として表示し、選んだ語で既存の
+  /// WordLookupSheet(長押し導線と同じ)を開く。
+  void _showWordListSheet(Message message, List<String> words) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: words
+                    .map(
+                      (word) => ActionChip(
+                        label: Text(word),
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _showWordLookup(word, message.content);
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(sheetContext),
+                  child: Text(AppLocalizations.of(sheetContext).close),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
