@@ -8,7 +8,7 @@
   "@premiumUnlimited": {
     "description": "Label shown to premium users instead of a usage limit"
   },
-  "callsRemainingToday": "{remaining} / {total} calls remaining today",
+  "callsRemainingToday": "{remaining} / {total} messages left today",
   "@callsRemainingToday": {
     "description": "Daily remaining message count for free tier users",
     "placeholders": {
@@ -310,11 +310,11 @@
   "@dailyLimitReachedTitle": {
     "description": "Rate limit dialog title"
   },
-  "dailyLimitReachedBody": "You have used all your free daily calls.",
+  "dailyLimitReachedBody": "You have used all your free daily messages.",
   "@dailyLimitReachedBody": {
     "description": "Rate limit dialog body"
   },
-  "dailyLimitDetail": "Limit: {limit} calls/day",
+  "dailyLimitDetail": "Limit: {limit} messages/day",
   "@dailyLimitDetail": {
     "description": "Rate limit detail",
     "placeholders": {
@@ -323,11 +323,11 @@
       }
     }
   },
-  "dailyLimitReachedBodyPremium": "You have reached today's limit (50/day). It resets tomorrow.",
+  "dailyLimitReachedBodyPremium": "You have reached today's limit (50 messages/day). It resets tomorrow.",
   "@dailyLimitReachedBodyPremium": {
     "description": "Rate limit dialog body shown to Premium users who hit their daily cap"
   },
-  "goPremiumUnlockCta": "✨ Go Premium for up to 50 calls a day!",
+  "goPremiumUnlockCta": "✨ Go Premium for up to 50 messages a day!",
   "@goPremiumUnlockCta": {
     "description": "Rate limit dialog premium CTA"
   },
@@ -339,13 +339,13 @@
   "@premiumSheetSubtitle": {
     "description": "Premium dialog subtitle"
   },
-  "featureUnlimitedTitle": "Up to 50 Calls/Day",
+  "featureUnlimitedTitle": "Up to 50 Messages/Day",
   "@featureUnlimitedTitle": {
-    "description": "Premium feature: 50 calls/day title"
+    "description": "Premium feature: 50 messages/day title"
   },
-  "featureUnlimitedDesc": "10x the free tier, plenty of room to practice",
+  "featureUnlimitedDesc": "5x the free tier, plenty of room to practice",
   "@featureUnlimitedDesc": {
-    "description": "Premium feature: 50 calls/day desc"
+    "description": "Premium feature: 50 messages/day desc"
   },
   "featureAnimeTitle": "Anime Scenes",
   "@featureAnimeTitle": {
