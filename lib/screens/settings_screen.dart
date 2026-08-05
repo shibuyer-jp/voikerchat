@@ -5,11 +5,13 @@ import 'package:firebase_messaging/firebase_messaging.dart'
 import 'package:voikerchat/l10n/app_localizations.dart';
 import 'package:voikerchat/main.dart' show RootScreen;
 
+import '../models/diagnostic.dart';
 import '../services/account_service.dart';
 import '../services/learner_preferences_service.dart';
 import '../services/locale_service.dart';
 import '../services/notification_scheduler.dart';
 import '../services/remote_notification_service.dart';
+import 'onboarding/diagnostic_test_screen_enhanced.dart';
 
 /// 設定画面。ストア必須の「アカウント削除」導線と、学習サポート設定を提供する。
 class SettingsScreen extends StatefulWidget {
@@ -49,6 +51,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _toggleFurigana(bool value) async {
     setState(() => _furiganaEnabled = value);
     await _learnerPreferencesService.setFuriganaEnabled(value);
+  }
+
+  /// 施策③: 診断テストをいつでも受け直せる常設導線。
+  Future<void> _retakeLevelTest() async {
+    final result = await Navigator.of(context).push<DiagnosticResult>(
+      MaterialPageRoute(
+        builder: (routeContext) => DiagnosticTestScreenEnhanced(
+          onTestComplete: (r) => Navigator.of(routeContext).pop(r),
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    await _learnerPreferencesService.setUserDiagnosticLevel(result.level);
+    await _learnerPreferencesService.setDiagnosticTestCompleted(true);
+
+    if (!mounted) return;
+    final l = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l.resultScore(result.totalScore))),
+    );
   }
 
   Future<void> _toggleNotifications(bool value) async {
@@ -230,6 +253,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: Text(l.furiganaToggleSubtitle),
                 value: _furiganaEnabled,
                 onChanged: _toggleFurigana,
+              ),
+              ListTile(
+                leading: const Icon(Icons.quiz_outlined),
+                title: Text(l.settingsRetakeLevelTest),
+                onTap: _retakeLevelTest,
               ),
               ListTile(
                 leading: const Icon(Icons.language),
