@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:logging/logging.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -187,9 +188,28 @@ class RevenueCatService {
           };
         }
       } catch (e) {
+        // 既に購入済み(ITEM_ALREADY_OWNED / ProductAlreadyPurchasedError)の場合、
+        // エラー文言だけで判断せず、実際にentitlementがactiveであることを
+        // 確認してから成功として扱う(施策: プレミアム再購入時のシーンロック
+        // 解除不具合対応)。entitlementが実際には見つからない異常系は、
+        // 下の汎用エラー分類にフォールスルーする。
+        if (e is PlatformException &&
+            PurchasesErrorHelper.getErrorCode(e) ==
+                PurchasesErrorCode.productAlreadyPurchasedError) {
+          final alreadyActive = await _confirmActiveEntitlement();
+          if (alreadyActive) {
+            logger.info(
+                '[RevenueCat] Already purchased; entitlement confirmed active');
+            return {
+              'success': true,
+              'message': 'Welcome to Voikerchat Premium!',
+            };
+          }
+        }
+
         // エラーハンドリング（汎用）
         final errorString = e.toString().toLowerCase();
-        
+
         if (errorString.contains('cancel')) {
           return {
             'success': false,
@@ -242,6 +262,25 @@ class RevenueCatService {
         'message': 'Unexpected error: $e',
         'retryable': true,
       };
+    }
+  }
+
+  /// 「既に購入済み」エラー受信時、実際にentitlementがactiveかを
+  /// RevenueCatへ直接問い合わせて確認する(エラー文言だけで判断しない)。
+  Future<bool> _confirmActiveEntitlement() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      final entitlements = customerInfo.entitlements;
+      _isPremium = entitlements.active.containsKey('Premium') ||
+          entitlements.active.containsKey('voikerchat_premium');
+      if (_isPremium) {
+        await _prefs.setBool('isPremium', true);
+      }
+      return _isPremium;
+    } catch (e) {
+      logger.info(
+          '[RevenueCat] Failed to confirm entitlement after already-purchased error: $e');
+      return false;
     }
   }
 

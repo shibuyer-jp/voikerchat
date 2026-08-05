@@ -47,6 +47,9 @@ class SceneSelectionScreen extends StatelessWidget {
           sceneId: scene.id.toString(),
           sceneName: sceneName(l10n, scene.id),
           sceneData: scene.toSceneData(),
+          // チャット画面内(レート制限到達時等)での購入成功も
+          // シーンロック表示に反映できるようにする。
+          onPremiumUnlocked: onPremiumUnlocked,
         ),
       ),
     );
