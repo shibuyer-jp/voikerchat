@@ -32,6 +32,11 @@ Given a Japanese term (possibly inflected/conjugated) and the full sentence it a
 - example_ja: one short, natural Japanese example sentence using the term (different from the given sentence)
 - example_en: English translation of example_ja
 
+Tagalog quality guard (meaning_fil):
+- Never invent a Tagalog word that does not actually exist. If you are not confident in a natural, real Tagalog equivalent, use a short, common, everyday Tagalog word or phrase instead of a longer or more literal one
+- Do not force a word-for-word translation of Japanese honorific/formal expressions (keigo, humble/respectful forms, etc.) into Tagalog. Express only the core meaning in plain, simple Tagalog rather than trying to reproduce the nuance
+- meaning_en must stay accurate and precise regardless of how meaning_fil turns out. meaning_en is the primary reference; meaning_fil is a supplementary aid
+
 Output ONLY the JSON object. No markdown, no code fences, no explanation, no extra text.`;
 
 // 文単位モード(mode: 'sentence')。シーンの推奨レベルに応じて難語の基準を
@@ -76,6 +81,11 @@ For each selected word:
 - meaning_fil: short, simple Tagalog meaning of the term AS USED in the given sentence
 - example_ja: one short, natural Japanese example sentence using the term (different from the given sentence)
 - example_en: English translation of example_ja
+
+Tagalog quality guard (meaning_fil):
+- Never invent a Tagalog word that does not actually exist. If you are not confident in a natural, real Tagalog equivalent, use a short, common, everyday Tagalog word or phrase instead of a longer or more literal one
+- Do not force a word-for-word translation of Japanese honorific/formal expressions (keigo, humble/respectful forms, etc.) into Tagalog. Express only the core meaning in plain, simple Tagalog rather than trying to reproduce the nuance
+- meaning_en must stay accurate and precise regardless of how meaning_fil turns out. meaning_en is the primary reference; meaning_fil is a supplementary aid
 
 Output ONLY the JSON object described above. No markdown, no code fences, no explanation, no extra text. If no word qualifies, output exactly {"words":[]}.`;
 }
