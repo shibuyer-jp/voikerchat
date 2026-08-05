@@ -12,8 +12,10 @@ import 'models/onboarding.dart';
 import 'screens/ai_data_consent_screen.dart';
 import 'screens/onboarding/diagnostic_test_screen_enhanced.dart';
 import 'screens/onboarding/level_result_screen.dart';
+import 'screens/onboarding/onboarding_slides_screen.dart';
 import 'screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/learner_preferences_service.dart';
 import 'services/revenuecat_service.dart';
 import 'services/local_notification_service.dart';
 import 'services/locale_service.dart';
@@ -329,6 +331,9 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
   }
 }
 
+/// オンボーディングの表示ステップ(施策③: スライド追加+診断テスト任意化)。
+enum _OnboardingStep { loading, slides, diagnostic, result }
+
 class OnboardingFlowScreen extends StatefulWidget {
   const OnboardingFlowScreen({super.key});
 
@@ -338,17 +343,55 @@ class OnboardingFlowScreen extends StatefulWidget {
 
 class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
   late OnboardingState currentState;
+  final _learnerPreferencesService = LearnerPreferencesService();
+  _OnboardingStep _step = _OnboardingStep.loading;
 
   @override
   void initState() {
     super.initState();
     currentState = OnboardingState();
+    _resolveInitialStep();
+  }
+
+  /// スライドを既に見終えている(前回セッションで完了/スキップ済みだが、
+  /// アプリ再起動等でオンボーディングフローに戻ってきた)場合は、
+  /// スライドを再表示せず診断テストから再開する。
+  Future<void> _resolveInitialStep() async {
+    final slidesCompleted =
+        await _learnerPreferencesService.isOnboardingSlidesCompleted();
+    if (!mounted) return;
+    setState(() {
+      _step = slidesCompleted ? _OnboardingStep.diagnostic : _OnboardingStep.slides;
+    });
+  }
+
+  void _handleSlidesDone() {
+    setState(() => _step = _OnboardingStep.diagnostic);
   }
 
   void _handleDiagnosticComplete(DiagnosticResult result) {
     setState(() {
       currentState = currentState.withDiagnosticResult(result);
+      _step = _OnboardingStep.result;
     });
+  }
+
+  /// 施策③: 診断テストの「あとで受ける」。beginner をデフォル値として
+  /// 保存しつつ、diagnostic_test_completed は false のまま(未受験である
+  /// ことを区別する)にして HomeScreen へ進む。
+  Future<void> _handleDiagnosticSkip() async {
+    const level = UserDiagnosticLevel.beginner;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kUserLevelKey, level.name);
+    await prefs.setBool(_kFirstLaunchKey, false);
+    await _learnerPreferencesService.setDiagnosticTestCompleted(false);
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => const HomeScreen(userLevel: level),
+      ),
+    );
   }
 
   Future<void> _handleLevelResultContinue() async {
@@ -359,6 +402,7 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kUserLevelKey, result.level.name);
     await prefs.setBool(_kFirstLaunchKey, false);
+    await _learnerPreferencesService.setDiagnosticTestCompleted(true);
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -370,17 +414,21 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 診断テスト完了状態
-    if (currentState.diagnosisDone && currentState.diagnosticResult != null) {
-      return LevelResultScreen(
-        result: currentState.diagnosticResult!,
-        onContinue: _handleLevelResultContinue,
-      );
+    switch (_step) {
+      case _OnboardingStep.loading:
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      case _OnboardingStep.slides:
+        return OnboardingSlidesScreen(onDone: _handleSlidesDone);
+      case _OnboardingStep.diagnostic:
+        return DiagnosticTestScreenEnhanced(
+          onTestComplete: _handleDiagnosticComplete,
+          onSkip: _handleDiagnosticSkip,
+        );
+      case _OnboardingStep.result:
+        return LevelResultScreen(
+          result: currentState.diagnosticResult!,
+          onContinue: _handleLevelResultContinue,
+        );
     }
-
-    // 診断テスト画面（enhanced 版：解説・ヒント・スコア表示付き）
-    return DiagnosticTestScreenEnhanced(
-      onTestComplete: _handleDiagnosticComplete,
-    );
   }
 }

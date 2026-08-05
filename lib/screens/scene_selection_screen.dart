@@ -4,6 +4,7 @@ import 'package:voikerchat/l10n/label_helpers.dart';
 import '../models/diagnostic.dart';
 import '../services/learner_preferences_service.dart';
 import '../services/scene_service.dart';
+import '../widgets/level_test_card.dart';
 import '../widgets/scene_preview_card.dart';
 import 'chat_screen.dart';
 import 'paywall_screen.dart';
@@ -24,11 +25,16 @@ class SceneSelectionScreen extends StatelessWidget {
   /// ペイウォールでの購入/復元が成功した時に呼ばれる(Premium状態の再取得を促す)。
   final VoidCallback? onPremiumUnlocked;
 
+  /// レベルテストカードでの受験、または設定画面での再受験によって
+  /// レベルが更新された可能性がある際に呼ばれる(施策③)。
+  final VoidCallback? onLevelUpdated;
+
   const SceneSelectionScreen({
     super.key,
     required this.userLevel,
     this.isPremiumUser = false,
     this.onPremiumUnlocked,
+    this.onLevelUpdated,
   });
 
   /// 無料シーンを開いてチャット画面へ遷移
@@ -262,10 +268,13 @@ class SceneSelectionScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l.settingsTitle,
-            onPressed: () {
-              Navigator.of(context).push(
+            onPressed: () async {
+              // 設定画面でレベルテストを再受験した可能性があるため、
+              // 戻ってきたら無条件にレベル再取得を促す(害はなく安全側)。
+              await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
+              onLevelUpdated?.call();
             },
           ),
         ],
@@ -275,6 +284,7 @@ class SceneSelectionScreen extends StatelessWidget {
         children: [
           _buildResumeBanner(context),
           _buildRecentScenesSection(context),
+          LevelTestCard(onLevelUpdated: onLevelUpdated),
 
           if (recommended.isNotEmpty) ...[
             _buildSectionHeader(context, l.sceneSectionRecommended),

@@ -15,10 +15,16 @@ class DiagnosticTestScreenEnhanced extends StatefulWidget {
   final Function(DiagnosticResult) onTestComplete;
   final OnboardingService? analyticsService;
 
+  /// 施策③: テスト全体を任意化するための「あとで受ける」導線。
+  /// null の場合はボタンを表示しない(設定画面等からの任意受験時は
+  /// 既に一度受けているか自発的に開いているため不要)。
+  final VoidCallback? onSkip;
+
   const DiagnosticTestScreenEnhanced({
     super.key,
     required this.onTestComplete,
     this.analyticsService,
+    this.onSkip,
   });
 
   @override
@@ -203,6 +209,20 @@ class _DiagnosticTestScreenEnhancedState
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
+      // leading(戻る矢印)はFlutterの既定動作: Navigator.canPop(context)が
+      // trueの場合(設定画面等からpushされた任意受験)のみ自動表示され、
+      // オンボーディング直下(push無し)では表示されない。
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        actions: [
+          if (widget.onSkip != null)
+            TextButton(
+              onPressed: widget.onSkip,
+              child: Text(l10n.diagSkipTest),
+            ),
+        ],
+      ),
       // SafeArea: ステータスバー（時計・電池表示）とコンテンツの重なりを防ぐ
       body: SafeArea(
         child: SingleChildScrollView(

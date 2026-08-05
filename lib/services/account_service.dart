@@ -22,6 +22,16 @@ class AccountService {
   static const String _kFirstLaunchKey = 'is_first_launch';
   static const String _kUserLevelKey = 'user_diagnostic_level';
 
+  // 施策③で追加したオンボーディング関連フラグ(learner_preferences_service.dart
+  // と同一のキー文字列)。消し忘れると、削除後の新規ユーザーなのに
+  // スライド既読/テスト受験済み扱いになってしまう。
+  static const String _kOnboardingSlidesCompletedKey =
+      'onboarding_slides_completed';
+  static const String _kDiagnosticTestCompletedKey =
+      'diagnostic_test_completed';
+  static const String _kLevelTestCardDismissedDateKey =
+      'level_test_card_dismissed_date';
+
   /// 本人のアカウントを完全削除する。
   ///
   /// 成功時: サーバ側でデータ削除 → ローカルセッション破棄 → ローカル状態初期化
@@ -71,6 +81,9 @@ class AccountService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_kFirstLaunchKey);
       await prefs.remove(_kUserLevelKey);
+      await prefs.remove(_kOnboardingSlidesCompletedKey);
+      await prefs.remove(_kDiagnosticTestCompletedKey);
+      await prefs.remove(_kLevelTestCardDismissedDateKey);
     } catch (_) {
       // ローカル設定の消去に失敗してもアカウント削除自体は成功している。
     }

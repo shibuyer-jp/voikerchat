@@ -795,6 +795,38 @@
   "@diagDontKnow": {
     "description": "Diagnostic 'I don't know' answer option"
   },
+  "diagSkipTest": "Take this later",
+  "@diagSkipTest": {
+    "description": "Button to skip the whole diagnostic test and use the default (beginner) level"
+  },
+  "onboardingSlidesSkip": "Skip",
+  "@onboardingSlidesSkip": {
+    "description": "Onboarding slides: skip button (top-right, always visible)"
+  },
+  "onboardingSlidesNext": "Next",
+  "@onboardingSlidesNext": {
+    "description": "Onboarding slides: next button (non-final slide)"
+  },
+  "onboardingSlidesStart": "Get Started",
+  "@onboardingSlidesStart": {
+    "description": "Onboarding slides: button on the final slide"
+  },
+  "levelTestCardTitle": "Take the level test",
+  "@levelTestCardTitle": {
+    "description": "Scene selection screen: level test card title (shown until the diagnostic test is completed)"
+  },
+  "levelTestCardSubtitle": "3 questions, about 1 minute. We'll recommend scenes that fit you.",
+  "@levelTestCardSubtitle": {
+    "description": "Scene selection screen: level test card subtitle"
+  },
+  "levelTestCardTakeButton": "Try it",
+  "@levelTestCardTakeButton": {
+    "description": "Scene selection screen: level test card primary button"
+  },
+  "settingsRetakeLevelTest": "Retake the level test",
+  "@settingsRetakeLevelTest": {
+    "description": "Settings screen: menu item to retake the diagnostic test at any time"
+  },
   "sceneCharacterLabel": "Character: {name}",
   "@sceneCharacterLabel": {
     "description": "Scene preview character label",
