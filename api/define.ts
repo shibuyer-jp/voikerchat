@@ -17,6 +17,8 @@ const claudeApiKey =
 // Premium は無制限。usage_logs(event='message_sent',
 // metadata.feature in ('define','hint'))の本日合計件数で判定する
 // (rate_limits のスキーマ変更はしない)。
+// 単語単位モード・文単位モードのいずれも metadata.feature は 'define' で
+// 統一し、このバケットを共有する(モードで分けると上限が実質無効化する)。
 const FREE_DAILY_DEFINE_HINT_LIMIT = 30;
 
 const DEFINE_SYSTEM_PROMPT = `You are a Japanese dictionary assistant helping a Filipino learner understand a word or phrase from a conversation.
@@ -32,12 +34,59 @@ Given a Japanese term (possibly inflected/conjugated) and the full sentence it a
 
 Output ONLY the JSON object. No markdown, no code fences, no explanation, no extra text.`;
 
+// 文単位モード(mode: 'sentence')。シーンの推奨レベルに応じて難語の基準を
+// 調整する(施策②: ふりがな抽出方式の廃止、AI側に難語選定を委ねる)。
+const VALID_SCENE_LEVELS = new Set(['beginner', 'intermediate', 'advanced']);
+
+const SCENE_LEVEL_GUIDANCE: { [level: string]: string } = {
+  beginner:
+    'This is a beginner-level scene: flag common everyday words that are still non-trivial for a beginner (basic verbs, adjectives, adverbs), not just rare or advanced vocabulary. A simple hiragana word like たのしい or だいじょうぶ is a valid choice if a beginner may not know it.',
+  intermediate:
+    'This is an intermediate-level scene: flag words a bit above basic daily conversation (compound verbs, less common adjectives/adverbs, moderately formal expressions).',
+  advanced:
+    'This is an advanced-level scene: flag only genuinely difficult or specialized vocabulary (idioms, formal/business expressions, uncommon kanji compounds).',
+};
+
+function buildSentenceSystemPrompt(sceneLevel: string): string {
+  const guidance = SCENE_LEVEL_GUIDANCE[sceneLevel] || SCENE_LEVEL_GUIDANCE.beginner;
+  return `You are a Japanese vocabulary coach helping a Filipino learner understand a sentence spoken by an AI conversation partner in a roleplay app.
+
+Given a Japanese sentence, select UP TO 3 words or short phrases that this learner would likely NOT understand, and that not understanding them would make it hard to follow the conversation. Do not favor kanji words over hiragana/katakana words — treat all word types equally: a hiragana adjective or adverb the learner doesn't know is just as valid a choice as a kanji word or a katakana loanword.
+
+${guidance}
+
+Do NOT select:
+- Particles (は, が, を, に, で, と, etc.) or auxiliary verbs/endings (です, ます, ました, etc.) in isolation
+- Fixed, well-known greetings and set phrases (こんにちは, ありがとう, おはよう, さようなら, etc.)
+- Numbers and counters
+- Proper nouns that need no explanation (character names, well-known place names)
+
+Selection rules:
+- Return at most 3 words, ordered by how much they would block understanding (most important first)
+- If fewer than 3 words qualify, return only those that do. Do not pad the list with easy words just to reach 3
+- If no word qualifies, return an empty list
+
+Respond with ONLY a single-line minified JSON object with exactly this shape:
+{"words":[{"term":"...","reading":"...","meaning_en":"...","meaning_fil":"...","example_ja":"...","example_en":"..."}]}
+
+For each selected word:
+- term: the word or short phrase exactly as it appears in the sentence
+- reading: hiragana reading of the term (empty string if the term has no kanji)
+- meaning_en: short, simple English meaning of the term AS USED in the given sentence
+- meaning_fil: short, simple Tagalog meaning of the term AS USED in the given sentence
+- example_ja: one short, natural Japanese example sentence using the term (different from the given sentence)
+- example_en: English translation of example_ja
+
+Output ONLY the JSON object described above. No markdown, no code fences, no explanation, no extra text. If no word qualifies, output exactly {"words":[]}.`;
+}
+
 /**
  * POST /api/define
  *
- * AIメッセージ内で選択した語句の意味を調べる(T-31)。
+ * AIメッセージ内の語句の意味を調べる(T-31)。
  * 会話回数(rate_limits)は消費しない。
  *
+ * mode 未指定(既定): 単語単位モード。ユーザーが選択した1語の意味を返す。
  * Request body:
  * {
  *   "token": "supabase access token (JWT)",
@@ -45,6 +94,20 @@ Output ONLY the JSON object. No markdown, no code fences, no explanation, no ext
  *   "context": "その語句が含まれるメッセージ全文",
  *   "sceneId": "1" (optional)
  * }
+ * Response: { reading, meaning_en, meaning_fil, example_ja, example_en }
+ *
+ * mode: 'sentence' : 文単位モード。メッセージ全文を渡すと、AIが学習者に
+ * とって難しい語を最大3つ選び、それぞれの詳細をまとめて返す(施策②)。
+ * Request body:
+ * {
+ *   "token": "supabase access token (JWT)",
+ *   "mode": "sentence",
+ *   "context": "AIメッセージ全文",
+ *   "sceneId": "1" (optional),
+ *   "sceneLevel": "beginner" | "intermediate" | "advanced" (optional、既定 beginner)
+ * }
+ * Response: { words: [{ term, reading, meaning_en, meaning_fil, example_ja, example_en }, ...] }
+ * (0〜3件。該当語が無ければ words: [] を返す。エラーにはしない)
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -68,16 +131,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const anthropic = new Anthropic({ apiKey: claudeApiKey, maxRetries: 4 });
 
   try {
-    const { token, term, context, sceneId, locale, platform } = req.body || {};
+    const { token, term, context, sceneId, sceneLevel, locale, platform, mode } =
+      req.body || {};
+    const isSentenceMode = mode === 'sentence';
 
     if (!token) {
       return res.status(401).json({ error: 'Missing authentication token' });
     }
-    if (typeof term !== 'string' || !term.trim() || term.length > 50) {
-      return res.status(400).json({ error: 'Invalid term' });
-    }
-    if (typeof context !== 'string' || context.length > 2000) {
-      return res.status(400).json({ error: 'Invalid context' });
+    if (isSentenceMode) {
+      // 文単位モード: context のみ必須(term は使用しない)。
+      if (typeof context !== 'string' || !context.trim() || context.length > 2000) {
+        return res.status(400).json({ error: 'Invalid context' });
+      }
+    } else {
+      // 単語単位モード(既存、変更なし)。
+      if (typeof term !== 'string' || !term.trim() || term.length > 50) {
+        return res.status(400).json({ error: 'Invalid term' });
+      }
+      if (typeof context !== 'string' || context.length > 2000) {
+        return res.status(400).json({ error: 'Invalid context' });
+      }
     }
 
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
@@ -86,7 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const userId = userData.user.id;
 
-    // Premium ステータス取得(会話と同じ判定元)
+    // Premium ステータス取得(会話と同じ判定元。両モード共通)
     let isPremium = false;
     try {
       const { data, error } = await supabase
@@ -101,7 +174,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('Error checking premium status:', err);
     }
 
-    // 辞書専用の軽い日次上限(Premiumは無制限)
+    // 辞書専用の軽い日次上限(Premiumは無制限)。両モード共通のバケット
+    // (metadata.feature = 'define')を消費する。
     if (!isPremium) {
       const startOfDayUtc = new Date();
       startOfDayUtc.setUTCHours(0, 0, 0, 0);
@@ -122,17 +196,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 200,
-      system: DEFINE_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: `Term: ${term}\nContext sentence: ${context}`,
-        },
-      ],
-    });
+    let response;
+    let level = 'beginner';
+    if (isSentenceMode) {
+      const requestedLevel =
+        typeof sceneLevel === 'string' ? sceneLevel.trim().toLowerCase() : '';
+      level = VALID_SCENE_LEVELS.has(requestedLevel) ? requestedLevel : 'beginner';
+
+      response = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        system: buildSentenceSystemPrompt(level),
+        messages: [
+          {
+            role: 'user',
+            content: `Sentence: ${context}`,
+          },
+        ],
+      });
+    } else {
+      response = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        system: DEFINE_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: `Term: ${term}\nContext sentence: ${context}`,
+          },
+        ],
+      });
+    }
 
     const content = response.content[0];
     const rawText = content.type === 'text' ? content.text : '';
@@ -148,7 +242,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (start !== -1 && end > start) jsonText = jsonText.slice(start, end + 1);
     }
 
-    let parsed: Record<string, string>;
+    let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(jsonText);
     } catch (parseErr) {
@@ -158,6 +252,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 使用ログ(失敗しても本処理は止めない)。既存の event 種別のみ使用し、
     // metadata.feature で辞書機能を識別する(usage_logs のスキーマ変更はしない)。
+    // 両モードとも feature='define' で統一(上限バケットを共有するため)。
     try {
       const { error: logError } = await supabase.from('usage_logs').insert({
         user_id: userId,
@@ -168,13 +263,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         output_tokens: response.usage.output_tokens,
         platform: sanitizePlatform(platform),
         locale: sanitizeLocale(locale),
-        metadata: { feature: 'define', scene: sceneId ?? null, term },
+        metadata: isSentenceMode
+          ? { feature: 'define', scene: sceneId ?? null, mode: 'sentence', sceneLevel: level }
+          : { feature: 'define', scene: sceneId ?? null, term },
       });
       if (logError) {
         console.error('usage_logs insert failed:', logError.code, logError.message);
       }
     } catch (err) {
       console.error('Failed to log define usage:', err);
+    }
+
+    if (isSentenceMode) {
+      const rawWords = Array.isArray((parsed as { words?: unknown }).words)
+        ? ((parsed as { words: unknown[] }).words as Array<Record<string, unknown>>)
+        : [];
+      const words = rawWords.slice(0, 3).map((w) => ({
+        term: typeof w.term === 'string' ? w.term : '',
+        reading: typeof w.reading === 'string' ? w.reading : '',
+        meaning_en: typeof w.meaning_en === 'string' ? w.meaning_en : '',
+        meaning_fil: typeof w.meaning_fil === 'string' ? w.meaning_fil : '',
+        example_ja: typeof w.example_ja === 'string' ? w.example_ja : '',
+        example_en: typeof w.example_en === 'string' ? w.example_en : '',
+      }));
+      return res.status(200).json({ words });
     }
 
     return res.status(200).json({

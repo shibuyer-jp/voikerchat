@@ -31,6 +31,7 @@ import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import '../widgets/word_lookup_sheet.dart';
+import '../widgets/word_list_sheet.dart';
 import '../widgets/content_report_sheet.dart';
 import '../widgets/hint_sheet.dart';
 import '../widgets/vocab_summary_sheet.dart';
@@ -961,15 +962,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                           )
                                         : _buildAssistantMessageText(message),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      message.formattedTime,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isUser
-                                            ? Colors.white70
-                                            : Colors.grey.shade600,
-                                      ),
-                                    ),
+                                    isUser
+                                        ? Text(
+                                            message.formattedTime,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white70,
+                                            ),
+                                          )
+                                        : _buildAssistantFooterRow(message),
                                   ],
                                 ),
                               ),
@@ -1298,6 +1299,61 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           buttonItems: buttonItems,
         );
       },
+    );
+  }
+
+  /// AIメッセージの時刻表示行。既存の長押し導線に加えて、辞書機能への
+  /// もう一つの入口(単語一覧)を常時表示する。ふりがなの有無や漢字の
+  /// 有無に関わらず表示する(施策②: サーバー側のAIが難語選定を行うため、
+  /// クライアント側で事前に対象語の有無を判定する必要が無くなった)。
+  Widget _buildAssistantFooterRow(Message message) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          message.formattedTime,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        const SizedBox(width: 10),
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => _showWordListSheet(message),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.menu_book_outlined,
+                    size: 14, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Text(
+                  AppLocalizations.of(context).wordLookupButtonLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// メッセージ全文をサーバーへ送り、AIが選んだ難語最大3件の詳細を
+  /// まとめて表示する(施策②)。読み込み中・0件・エラーの表示は
+  /// WordListSheet 内部(FutureBuilder)で行う。
+  void _showWordListSheet(Message message) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => WordListSheet(
+        messageContent: message.content,
+        sceneId: widget.sceneId,
+        sceneLevel: widget.sceneData['level'] as String?,
+      ),
     );
   }
 

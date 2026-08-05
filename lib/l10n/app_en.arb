@@ -249,9 +249,9 @@
   "@premiumDialogBody": {
     "description": "Upsell dialog body"
   },
-  "premiumBenefitUnlimited": "✓ Up to 50 conversations/day",
+  "premiumBenefitUnlimited": "✓ Up to 50 messages/day",
   "@premiumBenefitUnlimited": {
-    "description": "Premium benefit: 50 calls/day"
+    "description": "Premium benefit: 50 messages/day"
   },
   "premiumBenefitAllScenes": "✓ All anime scenes unlocked",
   "@premiumBenefitAllScenes": {
@@ -335,7 +335,7 @@
   "@premiumSheetTitle": {
     "description": "Premium dialog title"
   },
-  "premiumSheetSubtitle": "Unlock up to 50 conversations a day",
+  "premiumSheetSubtitle": "Unlock up to 50 messages a day",
   "@premiumSheetSubtitle": {
     "description": "Premium dialog subtitle"
   },
@@ -396,7 +396,7 @@
   "@processingPurchase": {
     "description": "Purchase in-progress dialog"
   },
-  "welcomePremium": "✨ Welcome to Premium! Enjoy up to 50 conversations a day!",
+  "welcomePremium": "✨ Welcome to Premium! Enjoy up to 50 messages a day!",
   "@welcomePremium": {
     "description": "Purchase success message"
   },
@@ -527,6 +527,18 @@
   "wordLookupQuotaReached": "You've reached today's dictionary lookup limit.",
   "@wordLookupQuotaReached": {
     "description": "Word lookup sheet: daily quota exceeded message"
+  },
+  "wordLookupButtonLabel": "Look up",
+  "@wordLookupButtonLabel": {
+    "description": "Short label for the dictionary button shown under every assistant message bubble"
+  },
+  "wordListEmpty": "No words to look up in this message.",
+  "@wordListEmpty": {
+    "description": "Word list sheet: shown when the AI found no difficult words in this message"
+  },
+  "wordListError": "Couldn't load words for this message. Please try again.",
+  "@wordListError": {
+    "description": "Word list sheet: generic error (network/server) message"
   },
   "hintButtonTooltip": "Hint: what could I say next?",
   "@hintButtonTooltip": {
