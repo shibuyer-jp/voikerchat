@@ -49,12 +49,18 @@ class ChatScreen extends StatefulWidget {
   final Map<String, dynamic> sceneData;
   final String? conversationId; // From notification (pattern B)
 
+  /// チャット画面内(レート制限ダイアログ・段階的アップセル等)から購入が
+  /// 成功した場合に呼ばれる。呼び出し元(SceneSelectionScreen経由で
+  /// HomeScreen)がPremium状態を再取得し、シーンロック表示に反映するために使う。
+  final VoidCallback? onPremiumUnlocked;
+
   const ChatScreen({
     super.key,
     required this.sceneId,
     required this.sceneName,
     required this.sceneData,
     this.conversationId,
+    this.onPremiumUnlocked,
   });
 
   @override
@@ -1244,6 +1250,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (unlocked == true && mounted) {
       setState(() => _isPremium = true);
       _showSuccess(AppLocalizations.of(context).welcomePremium);
+      // シーン選択画面(呼び出し元)にもPremium状態を伝播し、
+      // ロック済みシーンの表示をこの場で更新できるようにする。
+      widget.onPremiumUnlocked?.call();
     }
   }
 
