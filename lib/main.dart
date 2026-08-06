@@ -172,6 +172,22 @@ Future<_SupabaseInitResult> _initSupabaseAndSignIn() async {
   }
 }
 
+/// 課金状態に応じて premium_users トピックの購読を同期する
+/// （Premiumなら購読、非Premium/解約済みなら解除）。
+/// checkPremiumStatus() の結果を updatePremiumTopicSubscription() に渡す
+/// 1つの処理のため、呼び出し側では分割せずこの関数ごとawaitしないこと
+/// (2026-08-06: UI表示に影響しない副次処理のため、起動チェーンをブロック
+/// させない。内部の2呼び出しは個別に8秒のタイムアウト済みで、オフライン時に
+/// 逐次で最大16秒起動が伸びていた不具合の修正。DECISIONS.md参照)。
+Future<void> _syncPremiumTopicSubscription(RevenueCatService revenueCat) async {
+  try {
+    final isPremium = await revenueCat.checkPremiumStatus();
+    await RemoteNotificationService().updatePremiumTopicSubscription(isPremium);
+  } catch (e) {
+    logger.info('[main] Premium topic sync skipped: $e');
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -233,14 +249,10 @@ void main() async {
   final revenueCat = revenueCatService!;
 
   // Wave 2: Wave 1の結果に依存する処理。
-  // 課金状態に応じて premium_users トピックの購読を同期
-  // （Premiumなら購読、非Premium/解約済みなら解除）。
-  try {
-    final isPremium = await revenueCat.checkPremiumStatus();
-    await RemoteNotificationService().updatePremiumTopicSubscription(isPremium);
-  } catch (e) {
-    logger.info('[main] Premium topic sync skipped: $e');
-  }
+  // 課金状態に応じた premium_users トピックの購読同期はUI表示に影響しない
+  // 副次処理のため、awaitせずバックグラウンドで行う(起動チェーンをブロック
+  // しない)。
+  _syncPremiumTopicSubscription(revenueCat);
 
   if (supabaseResult == _SupabaseInitResult.success) {
     try {
@@ -260,8 +272,7 @@ void main() async {
       if (userId != null) {
         final linked = await revenueCat.loginWithUserId(userId);
         if (linked) {
-          final isPremium = await revenueCat.checkPremiumStatus();
-          await RemoteNotificationService().updatePremiumTopicSubscription(isPremium);
+          _syncPremiumTopicSubscription(revenueCat);
         }
       }
     } catch (e) {
