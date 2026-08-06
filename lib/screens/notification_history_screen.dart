@@ -115,6 +115,11 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
   /// 実際に削除できた場合のみ true を返し、そのときだけ Dismissible に
   /// スワイプ除去させる。false を返すとタイルは自動的に元の位置へ戻り、
   /// ローカル表示とサーバー状態が乖離しない（2026-07-31調査）。
+  ///
+  /// 削除件数0(対象行が既に存在しない)はエラーではなく成功として扱う
+  /// (2026-08-06、RLS DELETEポリシー不備の調査で判明: ユーザーの目的は
+  /// 「その通知を消す」ことであり、既に消えているなら目的は達成済みの
+  /// ため。DECISIONS.md 2026-08-06参照)。
   Future<bool> _deleteNotification(NotificationHistory notification) async {
     if (_deletingIds.contains(notification.id)) {
       // 既に削除処理中の同じタイルへの再スワイプ。二重送信を防ぐため
@@ -125,10 +130,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
 
     final l10n = AppLocalizations.of(context);
     try {
-      final deletedCount = await _service.deleteNotification(notification.id);
-      if (deletedCount == 0) {
-        throw Exception('Notification already deleted');
-      }
+      await _service.deleteNotification(notification.id);
       return true;
     } catch (e) {
       if (mounted) {
