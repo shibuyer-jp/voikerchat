@@ -181,6 +181,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       await _loadStreak();
 
       setState(() => _isLoading = false);
+      await _maybeShowWordLookupHint();
     } catch (e) {
       _showError('Failed to initialize chat: $e');
       // 初期化に失敗してもローディングを解除し、画面が無限に
@@ -1254,6 +1255,24 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  /// 辞書機能(なぞり選択→意味を調べる)の存在を、初回入室時に一度だけ
+  /// SnackBarで案内する(Build 17)。2回目以降は表示しない。
+  Future<void> _maybeShowWordLookupHint() async {
+    final alreadySeen = await _learnerPreferencesService.hasSeenWordLookupHint();
+    if (alreadySeen) return;
+    await _learnerPreferencesService.setHasSeenWordLookupHint(true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).wordLookupHint),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    });
   }
 
   /// AIメッセージ本文(T-31): 範囲選択 + コンテキストメニューに

@@ -119,6 +119,7 @@
   "wordLookupError": "Hindi mahanap ang kahulugan. Pakisubukan muli.",
   "wordLookupQuotaReached": "Naabot mo na ang limitasyon sa paghahanap ngayong araw.",
   "wordLookupButtonLabel": "Tingnan",
+  "wordLookupHint": "Pindutin nang matagal ang isang salita para malaman ang kahulugan nito.",
   "wordListEmpty": "Walang salitang kailangang tingnan sa mensaheng ito.",
   "wordListError": "Hindi makuha ang mga salita para sa mensaheng ito. Pakisubukan muli.",
   "hintButtonTooltip": "Hint: ano ang masasabi ko?",
