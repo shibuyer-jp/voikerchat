@@ -153,4 +153,20 @@ class LearnerPreferencesService {
       DateTime.now().toIso8601String(),
     );
   }
+
+  // ---- なぞり選択・辞書機能の案内(Build 17) ----
+
+  static const String _hasSeenWordLookupHintKey = 'has_seen_word_lookup_hint';
+
+  /// チャット画面で「言葉を長押しすると意味を調べられる」ワンショット案内
+  /// (SnackBar)を表示済みか。一度表示したら再表示しないためのフラグ。
+  Future<bool> hasSeenWordLookupHint() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hasSeenWordLookupHintKey) ?? false;
+  }
+
+  Future<void> setHasSeenWordLookupHint(bool seen) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hasSeenWordLookupHintKey, seen);
+  }
 }

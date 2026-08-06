@@ -119,6 +119,7 @@
   "wordLookupError": "意味を取得できませんでした。もう一度お試しください。",
   "wordLookupQuotaReached": "本日の辞書検索回数の上限に達しました。",
   "wordLookupButtonLabel": "意味を調べる",
+  "wordLookupHint": "言葉を長押しすると、意味を調べられます",
   "wordListEmpty": "この返答に調べる言葉はありません。",
   "wordListError": "単語を取得できませんでした。もう一度お試しください。",
   "hintButtonTooltip": "ヒント: 次に何て言おう?",

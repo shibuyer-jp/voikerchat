@@ -532,6 +532,10 @@
   "@wordLookupButtonLabel": {
     "description": "Short label for the dictionary button shown under every assistant message bubble"
   },
+  "wordLookupHint": "Long-press a word to look up its meaning.",
+  "@wordLookupHint": {
+    "description": "One-shot SnackBar shown the first time a user opens the chat screen, hinting that long-pressing text opens the dictionary lookup (Build 17)"
+  },
   "wordListEmpty": "No words to look up in this message.",
   "@wordListEmpty": {
     "description": "Word list sheet: shown when the AI found no difficult words in this message"
