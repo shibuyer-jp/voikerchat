@@ -121,11 +121,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 5. Claude Haiku 呼び出し
+    const sanitizedMessages = sanitizeMessages(messages);
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: Math.min(maxTokens, 500),
       system: buildSystemPrompt(sceneId, furiganaEnabled === true, difficultyHint),
-      messages: sanitizeMessages(messages),
+      messages: sanitizedMessages,
     });
 
     // 6. 使用ログ（成功）— usage_logs 新スキーマ準拠（event ベース）
@@ -136,6 +137,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       isPremium,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
+      cacheReadInputTokens: response.usage.cache_read_input_tokens,
+      cacheCreationInputTokens: response.usage.cache_creation_input_tokens,
+      turnNumber: sanitizedMessages.length,
       locale,
       platform,
       metadata: sceneId ? { scene: sceneId } : {},
@@ -386,6 +390,9 @@ async function logUsage(
     isPremium?: boolean;
     inputTokens?: number;
     outputTokens?: number;
+    cacheReadInputTokens?: number | null;
+    cacheCreationInputTokens?: number | null;
+    turnNumber?: number;
     locale?: unknown;
     platform?: unknown;
     metadata?: Record<string, unknown>;
@@ -404,6 +411,9 @@ async function logUsage(
       is_premium: params.isPremium ?? false,
       input_tokens: params.inputTokens ?? null,
       output_tokens: params.outputTokens ?? null,
+      cache_read_input_tokens: params.cacheReadInputTokens ?? null,
+      cache_creation_input_tokens: params.cacheCreationInputTokens ?? null,
+      turn_number: params.turnNumber ?? null,
       metadata: params.metadata ?? {},
     });
     if (error) {

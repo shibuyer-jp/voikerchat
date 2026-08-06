@@ -155,31 +155,42 @@ CREATE POLICY "System can update rate limits"
 Audit trail for all API usage (analytics).
 
 ```sql
--- 実テーブル定義（本番 rfwbwwhqclabhnbsrygw / 2026-07-02 時点）。
+-- 実テーブル定義（本番 rfwbwwhqclabhnbsrygw / 2026-07-02 時点、
+-- cache_read_input_tokens/cache_creation_input_tokens/turn_numberは2026-08-06追加）。
 -- append-only の分析イベントログ。クォータ強制は rate_limits が担当し、
 -- usage_logs は非同期の記録専用（書込み失敗は握り潰す）。
 CREATE TABLE public.usage_logs (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID NOT NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  event         TEXT NOT NULL CHECK (event IN (
-                  'session_start','message_sent','ad_reward','quota_reached',
-                  'upsell_shown','upsell_clicked','upsell_converted')),
-  scene_id      SMALLINT CHECK (scene_id >= 1 AND scene_id <= 13),
-  session_id    UUID,
-  model         TEXT,
-  platform      TEXT CHECK (platform IN ('ios','android','web')),
-  locale        TEXT CHECK (locale IN ('ja','en','fil')),
-  is_premium    BOOLEAN NOT NULL DEFAULT false,
-  input_tokens  INTEGER CHECK (input_tokens >= 0),
-  output_tokens INTEGER CHECK (output_tokens >= 0),
-  metadata      JSONB NOT NULL DEFAULT '{}'::jsonb
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                      UUID NOT NULL,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  event                        TEXT NOT NULL CHECK (event IN (
+                                  'session_start','message_sent','ad_reward','quota_reached',
+                                  'upsell_shown','upsell_clicked','upsell_converted')),
+  scene_id                     SMALLINT CHECK (scene_id >= 1 AND scene_id <= 13),
+  session_id                   UUID,
+  model                        TEXT,
+  platform                     TEXT CHECK (platform IN ('ios','android','web')),
+  locale                       TEXT CHECK (locale IN ('ja','en','fil')),
+  is_premium                   BOOLEAN NOT NULL DEFAULT false,
+  input_tokens                 INTEGER CHECK (input_tokens >= 0),
+  output_tokens                INTEGER CHECK (output_tokens >= 0),
+  cache_read_input_tokens      INTEGER CHECK (cache_read_input_tokens >= 0),
+  cache_creation_input_tokens  INTEGER CHECK (cache_creation_input_tokens >= 0),
+  turn_number                  SMALLINT CHECK (turn_number >= 0),
+  metadata                     JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
 -- RLS: owner-scoped（insert / select は自分の行のみ。update/delete 不可＝append-only）。
 -- Index: (user_id, created_at) と (event, created_at)。
 -- 注意: scene_id は smallint(1..13)。アプリのシーンは文字列IDのため、API 側は
 --       scene_id を NULL とし、文字列シーン名を metadata.scene に格納している。
+-- cache_read/cache_creation_input_tokens: プロンプトキャッシュ未導入のため現状は
+--       0またはNULL。将来のキャッシュ導入効果測定の比較基準線として先行して用意。
+--       api/chat.ts / define.ts / recap.ts が記録する（api/hint.ts・api/vocab-summary.tsは
+--       Claude呼び出し・トークンログ自体は既存で行っているが、この2列の追加は未実施＝要検討）。
+-- turn_number: api/chat.ts のみが送信（Claudeへ送るmessages配列の要素数）。
+--       define/recap/hint/vocab_summaryは会話ターンではないため常にNULL。
+--       集計例は internal-docs/Token-Cost-Queries.md 参照。
 ```
 
 ### 8. content_reports
