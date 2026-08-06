@@ -186,8 +186,8 @@ CREATE TABLE public.usage_logs (
 --       scene_id を NULL とし、文字列シーン名を metadata.scene に格納している。
 -- cache_read/cache_creation_input_tokens: プロンプトキャッシュ未導入のため現状は
 --       0またはNULL。将来のキャッシュ導入効果測定の比較基準線として先行して用意。
---       api/chat.ts / define.ts / recap.ts が記録する（api/hint.ts・api/vocab-summary.tsは
---       Claude呼び出し・トークンログ自体は既存で行っているが、この2列の追加は未実施＝要検討）。
+--       Claudeを呼ぶ全エンドポイント(api/chat.ts・define.ts・recap.ts・hint.ts・
+--       vocab-summary.ts)が記録する。
 -- turn_number: api/chat.ts のみが送信（Claudeへ送るmessages配列の要素数）。
 --       define/recap/hint/vocab_summaryは会話ターンではないため常にNULL。
 --       集計例は internal-docs/Token-Cost-Queries.md 参照。

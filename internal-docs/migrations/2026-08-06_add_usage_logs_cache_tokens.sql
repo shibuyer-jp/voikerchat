@@ -23,7 +23,8 @@ ALTER TABLE public.usage_logs
   ADD COLUMN IF NOT EXISTS cache_creation_input_tokens INTEGER CHECK (cache_creation_input_tokens >= 0),
   ADD COLUMN IF NOT EXISTS turn_number SMALLINT CHECK (turn_number >= 0);
 
--- turn_number は api/chat.ts のみが送信する(会話ターンの往復数という意味を
--- 持つのは chat.ts 経由の event='message_sent' のみのため)。api/define.ts
--- (辞書検索) / api/recap.ts (単語まとめ) は cache系2列のみ送信し、
--- turn_number は常に NULL のままになる。
+-- cache_read/cache_creation_input_tokens は Claude を呼ぶ全エンドポイント
+-- (api/chat.ts・api/define.ts・api/recap.ts・api/hint.ts・api/vocab-summary.ts)
+-- が送信する。turn_number は api/chat.ts のみが送信する(会話ターンの往復数
+-- という意味を持つのは chat.ts 経由の event='message_sent' のみのため)。
+-- 他4エンドポイントは会話ターンではないため turn_number は常に NULL のまま。
