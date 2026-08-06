@@ -1,6 +1,7 @@
 {
   "@@locale": "fil",
   "appTitle": "Voikerchat",
+  "offlineAtLaunchBanner": "Wala kang koneksyon sa internet. Limitado ang ilang feature.",
   "premiumUnlimited": "Premium - 50/araw",
   "callsRemainingToday": "{remaining} / {total} na mensahe ang natitira ngayong araw",
   "goPremium": "Mag-Premium",
@@ -145,6 +146,7 @@
   "unexpectedError": "Hindi inaasahang error: {error}. Pakisubukan muli mamaya.",
   "failedToSendMessage": "Nabigong ipadala ang mensahe: {error}",
   "errorWithDetail": "Error: {error}",
+  "noInternetConnectionError": "Walang koneksyon sa internet. Pakisuri ang iyong koneksyon at subukan muli.",
   "notifMarkedRead": "Namarkahan nang nabasa ang notipikasyon",
   "notifDeleted": "Tinanggal ang notipikasyon",
   "notifDeleteError": "Error sa pagtanggal: {error}",

@@ -7,6 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voikerchat/models/notification_data_model.dart';
 import 'local_notification_service.dart';
 
+/// FCM呼び出し(getToken/subscribeToTopic等)に設けるタイムアウト。
+/// オフライン時にこれらが無期限に待ち続け、起動シーケンス全体が白画面の
+/// まま進まなくなる不具合の対策(2026-08-06、DECISIONS.md参照)。
+const _kFcmCallTimeout = Duration(seconds: 8);
+
 /// RemoteNotificationService
 /// Firebase Cloud Messaging (FCM) を使用したリモート通知管理
 class RemoteNotificationService {
@@ -87,7 +92,7 @@ class RemoteNotificationService {
   /// FCM トークンをリフレッシュ
   Future<String?> _refreshFCMToken() async {
     try {
-      final token = await _fcm.getToken();
+      final token = await _fcm.getToken().timeout(_kFcmCallTimeout);
       if (token != null) {
         _cachedToken = token;
         await _prefs.setString('fcm_token', token);
@@ -219,7 +224,7 @@ class RemoteNotificationService {
   /// トピック購読（ユーザーグループ通知用）
   Future<void> subscribeToTopic(String topic) async {
     try {
-      await _fcm.subscribeToTopic(topic);
+      await _fcm.subscribeToTopic(topic).timeout(_kFcmCallTimeout);
       logger.info('[RemoteNotificationService] Subscribed to topic: $topic');
     } catch (e) {
       logger.info('[RemoteNotificationService] Error subscribing to topic: $e');
@@ -229,7 +234,7 @@ class RemoteNotificationService {
   /// トピック購読解除
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
-      await _fcm.unsubscribeFromTopic(topic);
+      await _fcm.unsubscribeFromTopic(topic).timeout(_kFcmCallTimeout);
       logger.info('[RemoteNotificationService] Unsubscribed from topic: $topic');
     } catch (e) {
       logger.info('[RemoteNotificationService] Error unsubscribing from topic: $e');

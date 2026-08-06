@@ -189,11 +189,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _isLoading = false);
       await _maybeShowWordLookupHint();
     } catch (e) {
-      _showError('Failed to initialize chat: $e');
       // 初期化に失敗してもローディングを解除し、画面が無限に
       // ぐるぐるし続けないようにする（チャットUI自体は表示する）。
-      if (mounted) setState(() => _isLoading = false);
+      // 未マウントならUIを更新する対象が無いため何もしない。
+      if (!mounted) return;
+      // オフライン時は"PostgrestException: FormatException: ..."等の生の
+      // 例外文言がそのまま表示され、ユーザーに意味が伝わらなかった
+      // (2026-08-06、機内モードでシーンを開いた際に再現。DECISIONS.md参照)。
+      _showError(_isNetworkError(e)
+          ? AppLocalizations.of(context).noInternetConnectionError
+          : 'Failed to initialize chat: $e');
+      setState(() => _isLoading = false);
     }
+  }
+
+  /// 例外がネットワーク未接続に起因するものらしいかを判定する(2026-08-06)。
+  /// dart:ioのSocketExceptionはWebビルドで使えないため型チェックはせず、
+  /// 典型的な接続失敗の文言をヒューリスティックに判定する。
+  bool _isNetworkError(Object e) {
+    final s = e.toString().toLowerCase();
+    return s.contains('socketexception') ||
+        s.contains('failed host lookup') ||
+        s.contains('network is unreachable') ||
+        s.contains('connection failed') ||
+        s.contains('connection refused') ||
+        s.contains('clientexception') ||
+        s.contains('timeoutexception');
   }
 
   Future<void> _checkPremiumStatus() async {
@@ -526,7 +547,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _messages = messages);
       _scrollToBottom();
     } catch (e) {
-      _showError('Failed to load messages: $e');
+      if (!mounted) return;
+      _showError(_isNetworkError(e)
+          ? AppLocalizations.of(context).noInternetConnectionError
+          : 'Failed to load messages: $e');
     }
   }
 
