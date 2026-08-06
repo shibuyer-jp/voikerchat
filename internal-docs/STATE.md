@@ -121,12 +121,9 @@
     - 現況: **症状の記録のみで、原因調査・実装ともに未着手**。推定原因(Supabase匿名認証が通信を要するため)はコードによる裏付け未実施。対応方針(4ステップ)は記録済みだが着手していない
     - 担当: CC(調査→実装)。期限: 未定
 
-11. **通知履歴削除の対応**(2026-08-06時点でスコープ未確定)
-    - 「未着手タスク」として挙げられたが、STATE.md/DECISIONS.mdを検索した限り該当する単一の未対応項目を特定できなかった。関連しそうな**既に解決済み**の記録は以下の2件のみ:
-      - PR #34(2026-08-01マージ): 通知履歴画面の未配信(`scheduled`)行の非表示・削除時TypeErrorの修正。完了済み
-      - DECISIONS.md 2026-07-29: プライバシーポリシーの削除対象データ一覧に「通知履歴」記載を追加(実装側`api/delete-account.ts`は元々正しく削除していた)。完了済み
-    - 上記いずれとも異なる場合、対象範囲を明確にしてから着手する必要がある。PR #34本文には「既存DBに残る`is_read=true`かつ`status='scheduled'`の行への対処は本PRのスコープ外(要否を別途検討中)」という未解決の言及があるが、これがSTATE.mdの正式なバックログ項目として記録されたことはない
-    - 担当: CC(要件確認後)。期限: 未定
+11. **通知履歴削除の対応** ✅ クローズ(2026-08-06)
+    - 2026-08-06調査の結果、関連する2件はいずれも解決済みと確認: PR #34(2026-08-01マージ、未配信行の非表示・削除時TypeError修正)/ DECISIONS.md 2026-07-29(プライバシーポリシーの削除対象データ一覧への「通知履歴」記載追加)
+    - PR #34本文に残っていた「既存DBに残る`is_read=true`かつ`status='scheduled'`の行への対処」は影響軽微と判断し、バックログへ格下げ(下記「バックログ(テスト完走後)」節参照)
 
 12. **iOS Sandbox 課金検証**(2026-08-06追記)
     - 過去のSTATE.md/DECISIONS.mdに関連記録なし(新規項目)
@@ -138,6 +135,7 @@
 
 - **RevenueCat Android有効化**(ほぼ完了、残作業のみ。①②③は完了、④のみテスト完走後): ①Google Play Consoleで定期購入商品を作成 ✅完了(2026-07-29、`voikerchat_premium_monthly:monthly-autorenew`、174か国) → ②RevenueCatにAndroidアプリ登録+Google Playサービスアカウント認証 ✅完了(2026-08-04)[本人報告、Claude Code未検証]。Google Cloudプロジェクト`voikerchat`(Firebaseと同一)でPlay Android Developer API/Play Developer Reporting API/Cloud Pub/Sub APIを有効化、サービスアカウント`revenuecat@voikerchat.iam.gserviceaccount.com`(ロール: Pub/Sub編集者+モニタリング閲覧者)を作成しPlay Consoleへ招待(アプリ情報閲覧/売上データ/注文と定期購入の管理)。RevenueCatにPlay StoreアプリをApp ID `appf7acdb482b`で追加、Productインポート成功(Published) → ③Offering/Productをマッピング ✅完了(2026-08-04)。Entitlement `Premium`にAttach(App Store版と併存)、Offering `default`の`$rc_monthly`に追加。**Entitlement識別子の大小文字厳密一致は結果的に`Premium`で確定** → ④ビルドに`REVENUECAT_ANDROID_KEY`を渡す **未着手・テスト完走後(8/14頃)まで意図的に保留**(コード側の準備は完了済み: `internal-docs/ANDROID_RELEASE.md`のビルドコマンドに`--dart-define=REVENUECAT_ANDROID_KEY=<YOUR_ANDROID_KEY>`のプレースホルダを追記済みで、実キーに置き換えるだけの状態。同ドキュメントの5-3節にPaywall/Offering取得確認手順も追加済み)。**キーだけ先行投入は禁止**(DECISIONS.md 2026-07-29)。コード側の`app_user_id`結線は確認済みで修正不要。**残作業**: Real-Time Developer Notifications接続(2026-08-06以降、RevenueCat側の認証情報反映待ち。トラック設定変更を伴わないためテスト期間中でも着手可)。担当: 人間(ダッシュボード作業)+人間(ビルド実行、④のみ完走後)。期限: RTDN接続は8/6以降、④ビルド投入は完走後(8/14頃)
 - **Push通知 Phase2**(submission非必須・機能拡張・「道2」でスコープ外継続): Apple Developer Portal側のcapability有効化・プロファイル再作成は2026-07-26確認時点で既に完了済み(DECISIONS.md参照)。残る手順: APNsキー(`26PUZTM353`、.p8、Drive `00_Project_Credentials`、file ID `1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)をFirebase Console → Cloud Messagingにアップロード → PR #14(iOS APNsエンティトルメント追加、実装済み・App Store公開待ちでマージ保留中)をマージ → 実機でのプッシュ受信テスト。担当: 人間+CC。期限: 未定(App Store公開後)
+- **通知履歴の既存DB行クリーンアップ**(2026-08-06追記、影響軽微): PR #34マージ時点で`is_read=true`かつ`status='scheduled'`のまま残っていた既存行(該当3件、2026-07-31時点で確認)への対処。`getHistory()`が`status='delivered'`のみに絞り込み済みのため画面上には表示されず、ユーザー影響は無い。DBの整合性のみの問題。担当: 未定。期限: 未定
 - **AdMob公開後タスク**(承認状況「要審査」。ストア公開が前提のため公開後に再確認): リワード広告No Fillの再検証(公開直後は在庫が薄い場合があるため数日様子見)/ AdMobコンソールにApp Storeのストアリンクを登録 / `voikerchat.com`に`app-ads.txt`を設置 / AdMobの「準備状況」レビューを確認。担当: 人間。期限: App Store公開後
 - **Android署名fail-fast**(PR #5、実装済み・マージ保留中): key.properties不在時のdebug鍵フォールバック廃止。Windows Laptopでのローカルgradle検証待ち。担当: 人間。期限: 未定
 - **クロスプラットフォーム課金引き継ぎ**(着手条件付きバックログ): 匿名サインインのみのため、iOSで購入した人がAndroidで利用しても課金が引き継がれない(同一端末の再インストールは`restorePurchases()`で復元されるため実害なし)。解消にはメールログイン等の実アカウント導入が必要(登録画面追加による離脱率上昇とのトレードオフ、DECISIONS.md 2026-07-29参照)。着手条件: リリース後に「機種変更したら課金が消えた」という問い合わせが実際に発生してから判断する。担当: 未定。期限: 未定
