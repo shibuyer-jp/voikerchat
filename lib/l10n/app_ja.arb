@@ -146,6 +146,7 @@
   "unexpectedError": "予期しないエラー: {error}。時間をおいて再度お試しください。",
   "failedToSendMessage": "メッセージの送信に失敗しました: {error}",
   "errorWithDetail": "エラー: {error}",
+  "noInternetConnectionError": "インターネット接続がありません。接続を確認してもう一度お試しください。",
   "notifMarkedRead": "通知を既読にしました",
   "notifDeleted": "通知を削除しました",
   "notifDeleteError": "削除エラー: {error}",

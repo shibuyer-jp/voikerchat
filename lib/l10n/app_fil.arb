@@ -146,6 +146,7 @@
   "unexpectedError": "Hindi inaasahang error: {error}. Pakisubukan muli mamaya.",
   "failedToSendMessage": "Nabigong ipadala ang mensahe: {error}",
   "errorWithDetail": "Error: {error}",
+  "noInternetConnectionError": "Walang koneksyon sa internet. Pakisuri ang iyong koneksyon at subukan muli.",
   "notifMarkedRead": "Namarkahan nang nabasa ang notipikasyon",
   "notifDeleted": "Tinanggal ang notipikasyon",
   "notifDeleteError": "Error sa pagtanggal: {error}",

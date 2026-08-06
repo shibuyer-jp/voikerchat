@@ -655,6 +655,10 @@
       }
     }
   },
+  "noInternetConnectionError": "No internet connection. Please check your connection and try again.",
+  "@noInternetConnectionError": {
+    "description": "Shown instead of a raw exception message when chat initialization/message loading fails due to no network connectivity (2026-08-06)"
+  },
   "notifMarkedRead": "Notification marked as read",
   "@notifMarkedRead": {
     "description": "Snackbar after marking a notification read"

@@ -154,6 +154,16 @@ Future<_SupabaseInitResult> _initSupabaseAndSignIn() async {
     if (auth.currentSession == null) {
       await auth.signInAnonymously().timeout(_kInitTimeout);
       logger.info('[main] Signed in anonymously');
+    } else {
+      // セッションがローカルに永続化されている場合、ここまでは一切
+      // ネットワーク通信をしていない。オフライン起動時の案内バナーは
+      // 「セッションの有無」ではなく「実際にネットワークへ到達できるか」
+      // で判定する必要があるため、キャッシュ済みセッションがあっても
+      // 必ず一度サーバーへ問い合わせて検証する(2026-08-06: 機内モードでも
+      // キャッシュ済みセッションのためsuccessと誤判定され、オフライン
+      // 案内バナーが出なかった不具合の修正。DECISIONS.md参照)。
+      await auth.getUser().timeout(_kInitTimeout);
+      logger.info('[main] Cached session verified against server');
     }
     return _SupabaseInitResult.success;
   } catch (e) {
