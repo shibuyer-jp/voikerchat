@@ -26,6 +26,11 @@ import 'theme/app_theme.dart';
 
 final logger = Logger('main');
 
+/// 起動時のSupabase初期化に設けるタイムアウト。オフライン時に無期限に
+/// 待ち続け白画面のまま進まなくなる不具合の対策(2026-08-06、
+/// DECISIONS.md参照)。
+const _kInitTimeout = Duration(seconds: 8);
+
 /// バックグラウンド/終了状態でのメッセージハンドラー
 /// iOS/Android でアプリがメモリから削除されている場合でも実行される
 @pragma('vm:entry-point')
@@ -40,6 +45,120 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     logger.info('[BackgroundHandler] Processed notification: ${notificationData.id}');
   } catch (e) {
     logger.warning('[BackgroundHandler] Error: $e');
+  }
+}
+
+/// 起動時のSupabase初期化結果。オフライン起動時の一言案内(RootScreen参照)を
+/// 出し分けるために区別する: skippedは--dart-define未設定の開発ビルド(案内は
+/// 不要)、failedは実際に通信を試みて失敗/タイムアウトした場合(案内が必要)。
+enum _SupabaseInitResult { skipped, success, failed }
+
+/// 通知(FCM)初期化+デフォルトトピック購読をまとめて行う。Web/オフラインでは
+/// 通知機能なしで継続する(既存方針を維持)。
+Future<void> _initLocalAndRemoteNotifications() async {
+  try {
+    final localNotificationService = LocalNotificationService();
+    await localNotificationService.initialize(
+      onSelectNotification: (String? payload) {
+        // ローカル通知タップ時の処理
+        // payload は conversationId を含む場合がある
+      },
+    );
+
+    // NotificationScheduler 初期化 + 毎日リマインダー(8/12/19)を予約。
+    // zonedScheduleは同一IDへの再予約で上書きされるため、毎起動時に
+    // 呼んでも安全（ロケール変更時の rescheduleForLocaleChange と同様）。
+    // この時点ではSupabase(並行して初期化中)が未初期化のため、内部の履歴
+    // 書き込み(auth.uid()前提)は失敗して無視される。OS側の通知登録自体は
+    // Supabase有無に関わらず確実に行われるよう、ここで一度呼んでおく。
+    // 履歴書き込みは Supabase 初期化後に再度呼ぶことで確定させる(下記Wave 2)。
+    await NotificationScheduler().initialize(localNotificationService);
+    await NotificationScheduler().scheduleDailyReminders();
+
+    // RemoteNotificationService 初期化(内部のFCM呼び出しは個別にタイムアウト
+    // 済み、remote_notification_service.dart参照)
+    final remoteNotificationService = RemoteNotificationService();
+    await remoteNotificationService.initialize(
+      localNotificationService: localNotificationService,
+    );
+
+    // 通知ハンドラー設定（パターンB: conversationId で会話ナビゲーション）
+    remoteNotificationService.setMessageHandler(
+      (NotificationDataModel notification) {
+        // フォアグラウンド通知受信時の処理
+        // conversationId がある場合は、ユーザーが通知をタップしたときに
+        // ChatScreen がそのシーンを自動ロードする
+      },
+      onTerminated: (NotificationDataModel notification) {
+        // アプリ終了状態から通知タップで起動した場合
+        // conversationId を使って目的の会話を開く
+        if (notification.conversationId != null) {
+          // NavigationService などを使って、
+          // 該当 sceneId の ChatScreen に遷移
+        }
+      },
+    );
+
+    // 全ユーザー共通トピックを購読（Firebase Console からの
+    // トピック配信・テスト送信がアプリに届くようにする）。
+    // premium_users は課金状態に応じて後段(Wave 2)で同期する。
+    await remoteNotificationService.subscribeToDefaultTopics();
+  } catch (e) {
+    // Web/オフラインでは通知機能なしで継続
+    logger.info('[main] Notification init skipped: $e');
+  }
+}
+
+/// RevenueCat初期化(内部のPurchases.configure呼び出しは個別にタイムアウト
+/// 済み、revenuecat_service.dart参照)。
+Future<RevenueCatService> _initRevenueCat() async {
+  final revenueCatService = RevenueCatService();
+  try {
+    await revenueCatService.initialize();
+  } catch (e) {
+    // RevenueCat initialization error is non-critical
+  }
+  return revenueCatService;
+}
+
+/// Supabase 初期化 + 匿名サインイン（URL/publishableKey は --dart-define で
+/// 注入。例: flutter run --dart-define=SUPABASE_URL=...
+/// --dart-define=SUPABASE_PUBLISHABLE_KEY=...）
+/// publishableKey はクライアント公開可（sb_publishable_...）。Secret keyは
+/// 絶対に使わない。未設定の場合は初期化をスキップし、認証/DBなしでも
+/// 起動可能にする。
+Future<_SupabaseInitResult> _initSupabaseAndSignIn() async {
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabasePublishableKey =
+      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty) {
+    logger.warning(
+      '[main] Supabase URL/publishableKey not provided via --dart-define; '
+      'auth/DB features disabled',
+    );
+    return _SupabaseInitResult.skipped;
+  }
+
+  try {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabasePublishableKey,
+    ).timeout(_kInitTimeout);
+    logger.info('[main] Supabase initialized');
+
+    // 匿名サインイン（検証段階）。
+    // セッションが無ければ匿名ユーザーを作成し、auth.uid を確保する。
+    // これにより user 単位のレート制限・RLS・accessToken 付きAPIが機能する。
+    // 後日メール/SNS認証へ「同じUIDのまま」昇格でき、データは引き継がれる。
+    final auth = Supabase.instance.client.auth;
+    if (auth.currentSession == null) {
+      await auth.signInAnonymously().timeout(_kInitTimeout);
+      logger.info('[main] Signed in anonymously');
+    }
+    return _SupabaseInitResult.success;
+  } catch (e) {
+    logger.warning('[main] Supabase init / anonymous sign-in failed: $e');
+    return _SupabaseInitResult.failed;
   }
 }
 
@@ -84,100 +203,37 @@ void main() async {
   } catch (e) {
     logger.info('[main] Background handler registration skipped (Web/non-mobile): $e');
   }
-  
-  // LocalNotificationService 初期化（Web では失敗を許容）
-  try {
-    final localNotificationService = LocalNotificationService();
-    await localNotificationService.initialize(
-      onSelectNotification: (String? payload) {
-        // ローカル通知タップ時の処理
-        // payload は conversationId を含む場合がある
-      },
-    );
 
-    // NotificationScheduler 初期化 + 毎日リマインダー(8/12/19)を予約。
-    // zonedScheduleは同一IDへの再予約で上書きされるため、毎起動時に
-    // 呼んでも安全（ロケール変更時の rescheduleForLocaleChange と同様）。
-    // この時点ではSupabase(下記)がまだ未初期化のため、内部の履歴書き込み
-    // (auth.uid()前提)は失敗して無視される。OS側の通知登録自体は
-    // Supabase有無に関わらず確実に行われるよう、ここで一度呼んでおく。
-    // 履歴書き込みは Supabase 初期化後に再度呼ぶことで確定させる。
-    await NotificationScheduler().initialize(localNotificationService);
-    await NotificationScheduler().scheduleDailyReminders();
+  // Wave 1: 互いに依存しない初期化(通知/RevenueCat/Supabase)を並列実行する。
+  // 内部の各ネットワーク呼び出しは個別にタイムアウト済みのため、オフライン
+  // 時でも全体の待ち時間は最長でも _kInitTimeout 程度に収まる(2026-08-06:
+  // 逐次awaitがオフライン時に無期限に停止し白画面のまま進まない不具合の
+  // 修正。DECISIONS.md 2026-08-06参照)。
+  RevenueCatService? revenueCatService;
+  var supabaseResult = _SupabaseInitResult.skipped;
+  await Future.wait<void>([
+    _initLocalAndRemoteNotifications(),
+    _initRevenueCat().then((service) {
+      revenueCatService = service;
+    }),
+    _initSupabaseAndSignIn().then((result) {
+      supabaseResult = result;
+    }),
+  ]);
+  final revenueCat = revenueCatService!;
 
-    // RemoteNotificationService 初期化
-    final remoteNotificationService = RemoteNotificationService();
-    await remoteNotificationService.initialize(
-      localNotificationService: localNotificationService,
-    );
-    
-    // 通知ハンドラー設定（パターンB: conversationId で会話ナビゲーション）
-    remoteNotificationService.setMessageHandler(
-      (NotificationDataModel notification) {
-        // フォアグラウンド通知受信時の処理
-        // conversationId がある場合は、ユーザーが通知をタップしたときに
-        // ChatScreen がそのシーンを自動ロードする
-      },
-      onTerminated: (NotificationDataModel notification) {
-        // アプリ終了状態から通知タップで起動した場合
-        // conversationId を使って目的の会話を開く
-        if (notification.conversationId != null) {
-          // NavigationService などを使って、
-          // 該当 sceneId の ChatScreen に遷移
-        }
-      },
-    );
-
-    // 全ユーザー共通トピックを購読（Firebase Console からの
-    // トピック配信・テスト送信がアプリに届くようにする）。
-    // premium_users は課金状態に応じて後段で同期する。
-    await remoteNotificationService.subscribeToDefaultTopics();
-  } catch (e) {
-    // Web では通知機能なしで継続
-  }
-  
-  // RevenueCat 初期化
-  final revenueCatService = RevenueCatService();
-  try {
-    await revenueCatService.initialize();
-  } catch (e) {
-    // RevenueCat initialization error is non-critical
-  }
-
+  // Wave 2: Wave 1の結果に依存する処理。
   // 課金状態に応じて premium_users トピックの購読を同期
   // （Premiumなら購読、非Premium/解約済みなら解除）。
   try {
-    final isPremium = await revenueCatService.checkPremiumStatus();
+    final isPremium = await revenueCat.checkPremiumStatus();
     await RemoteNotificationService().updatePremiumTopicSubscription(isPremium);
   } catch (e) {
     logger.info('[main] Premium topic sync skipped: $e');
   }
-  
-  // Supabase 初期化（URL/publishableKey は --dart-define で注入。
-  // 例: flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...）
-  // publishableKey はクライアント公開可（sb_publishable_...）。Secret keyは絶対に使わない。
-  // 未設定の場合は初期化をスキップし、認証/DBなしでも起動可能にする。
-  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  const supabasePublishableKey =
-      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
-  if (supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty) {
+
+  if (supabaseResult == _SupabaseInitResult.success) {
     try {
-      await Supabase.initialize(
-        url: supabaseUrl,
-        publishableKey: supabasePublishableKey,
-      );
-      logger.info('[main] Supabase initialized');
-
-      // 匿名サインイン（検証段階）。
-      // セッションが無ければ匿名ユーザーを作成し、auth.uid を確保する。
-      // これにより user 単位のレート制限・RLS・accessToken 付きAPIが機能する。
-      // 後日メール/SNS認証へ「同じUIDのまま」昇格でき、データは引き継がれる。
-      final auth = Supabase.instance.client.auth;
-      if (auth.currentSession == null) {
-        await auth.signInAnonymously();
-        logger.info('[main] Signed in anonymously');
-      }
-
       // 毎日リマインダー(8/12/19)を予約 + 起動時リコンサイル
       // (予定を過ぎたscheduled履歴をdeliveredへ確定)。
       // zonedScheduleは同一IDへの再予約で上書きされるため、毎起動時に
@@ -190,29 +246,32 @@ void main() async {
 
       // RevenueCat の app_user_id を Supabase の user_id に紐付ける。
       // これにより RevenueCat Webhook が rate_limits.user_id と突合できるようになる。
-      final userId = auth.currentUser?.id;
+      final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId != null) {
-        final linked = await revenueCatService.loginWithUserId(userId);
+        final linked = await revenueCat.loginWithUserId(userId);
         if (linked) {
-          final isPremium = await revenueCatService.checkPremiumStatus();
+          final isPremium = await revenueCat.checkPremiumStatus();
           await RemoteNotificationService().updatePremiumTopicSubscription(isPremium);
         }
       }
     } catch (e) {
-      logger.warning('[main] Supabase init / anonymous sign-in failed: $e');
+      logger.warning('[main] Post-auth sync failed: $e');
     }
-  } else {
-    logger.warning(
-      '[main] Supabase URL/publishableKey not provided via --dart-define; '
-      'auth/DB features disabled',
-    );
   }
 
-  runApp(const VoikerchatApp());
+  runApp(VoikerchatApp(
+    // Supabase初期化が実際に失敗/タイムアウトした場合のみオフライン案内を
+    // 出す(--dart-define未設定の開発ビルドでは出さない)。
+    offlineAtLaunch: supabaseResult == _SupabaseInitResult.failed,
+  ));
 }
 
 class VoikerchatApp extends StatefulWidget {
-  const VoikerchatApp({super.key});
+  /// Supabase初期化が実際に失敗/タイムアウトした場合にtrue。
+  /// RootScreenの初回案内バナー表示に使う(2026-08-06)。
+  final bool offlineAtLaunch;
+
+  const VoikerchatApp({super.key, this.offlineAtLaunch = false});
 
   @override
   State<VoikerchatApp> createState() => _VoikerchatAppState();
@@ -246,7 +305,7 @@ class _VoikerchatAppState extends State<VoikerchatApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       locale: _locale,
       theme: AppTheme.light,
-      home: const RootScreen(),
+      home: RootScreen(offlineAtLaunch: widget.offlineAtLaunch),
     );
   }
 }
@@ -265,7 +324,11 @@ UserDiagnosticLevel _parseLevel(String name) {
 /// RootScreen: 起動時に初回判定し、初回はオンボーディング、
 /// 2回目以降は保存済みレベルで HomeScreen を直接表示する。
 class RootScreen extends StatefulWidget {
-  const RootScreen({super.key});
+  /// Supabase初期化が実際に失敗/タイムアウトした場合にtrue。
+  /// trueの場合、初回描画後に一度だけオフライン案内を表示する(2026-08-06)。
+  final bool offlineAtLaunch;
+
+  const RootScreen({super.key, this.offlineAtLaunch = false});
 
   @override
   State<RootScreen> createState() => _RootScreenState();
@@ -278,6 +341,21 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    if (widget.offlineAtLaunch) {
+      // 起動時にSupabase初期化がタイムアウト/失敗した場合、一度だけ案内する
+      // (2026-08-06)。initStateはRootScreenのライフサイクルで1回しか
+      // 呼ばれないため、追加のフラグ管理は不要。
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).offlineAtLaunchBanner),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      });
+    }
   }
 
   @override

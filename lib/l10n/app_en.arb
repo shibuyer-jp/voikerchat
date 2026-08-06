@@ -4,6 +4,10 @@
   "@appTitle": {
     "description": "Application title"
   },
+  "offlineAtLaunchBanner": "You're offline. Some features may be limited.",
+  "@offlineAtLaunchBanner": {
+    "description": "One-shot SnackBar shown at app launch when Supabase initialization times out or fails (no network), Build 18 (2026-08-06)"
+  },
   "premiumUnlimited": "Premium - 50/day",
   "@premiumUnlimited": {
     "description": "Label shown to premium users instead of a usage limit"

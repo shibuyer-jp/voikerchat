@@ -4,8 +4,13 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
 
+/// RevenueCat呼び出し(configure/getCustomerInfo)に設けるタイムアウト。
+/// オフライン時にこれらが無期限に待ち続け、起動シーケンス全体が白画面の
+/// まま進まなくなる不具合の対策(2026-08-06、DECISIONS.md参照)。
+const _kRevenueCatCallTimeout = Duration(seconds: 8);
+
 /// RevenueCat サービス - IAP (In-App Purchase) 統合
-/// 
+///
 /// iOS/Android の App Store / Google Play との連携
 /// Premium サブスクリプション管理
 class RevenueCatService {
@@ -59,7 +64,7 @@ class RevenueCatService {
       await Purchases.setLogLevel(kReleaseMode ? LogLevel.info : LogLevel.debug);
       await Purchases.configure(
         PurchasesConfiguration(apiKey),
-      );
+      ).timeout(_kRevenueCatCallTimeout);
       _configured = true;
 
       // 既存の Premium ステータスをロード
@@ -106,16 +111,17 @@ class RevenueCatService {
   Future<bool> checkPremiumStatus() async {
     if (!_configured) return _isPremium;
     try {
-      final customerInfo = await Purchases.getCustomerInfo();
-      
+      final customerInfo =
+          await Purchases.getCustomerInfo().timeout(_kRevenueCatCallTimeout);
+
       // Premium エンタイトルメント確認
       final entitlements = customerInfo.entitlements;
-      _isPremium = entitlements.active.containsKey('Premium') || 
+      _isPremium = entitlements.active.containsKey('Premium') ||
                    entitlements.active.containsKey('voikerchat_premium');
-      
+
       // ローカル保存
       await _prefs.setBool('isPremium', _isPremium);
-      
+
       logger.info('[RevenueCat] Premium status checked: $_isPremium');
       return _isPremium;
     } catch (e) {

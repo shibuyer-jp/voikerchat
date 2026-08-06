@@ -1,6 +1,7 @@
 {
   "@@locale": "ja",
   "appTitle": "Voikerchat",
+  "offlineAtLaunchBanner": "インターネットに接続されていません。一部の機能が制限されます",
   "premiumUnlimited": "プレミアム - 1日50回",
   "callsRemainingToday": "今日の残り {remaining} / {total} メッセージ",
   "goPremium": "プレミアムにする",

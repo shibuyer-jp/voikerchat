@@ -1,6 +1,7 @@
 {
   "@@locale": "fil",
   "appTitle": "Voikerchat",
+  "offlineAtLaunchBanner": "Wala kang koneksyon sa internet. Limitado ang ilang feature.",
   "premiumUnlimited": "Premium - 50/araw",
   "callsRemainingToday": "{remaining} / {total} na mensahe ang natitira ngayong araw",
   "goPremium": "Mag-Premium",
