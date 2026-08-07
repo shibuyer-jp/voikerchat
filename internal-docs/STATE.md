@@ -203,6 +203,12 @@
     - 担当: CC(実装)完了、人間(マイグレーション実行・Secret Key登録・PRレビュー・実機検証)すべて完了
     - **引き続き未検証**: 購入直後のPremiumシーン即時解除(PR #53)。+20でもRevenueCatが購読を復元したため未購入状態を作れず実施できていない。コードレビューによる確認に留める方針とする(Androidで同一症状が再現しPR #53で修正済み、iOS +17でも同一症状を確認しており、プラットフォーム固有の問題でないことは確定している)
 
+18. **Google Play価格の引き下げ(App Store側へ揃える)** ✅完了(2026-08-07)
+    - 背景: iOS Sandbox課金検証(未完了項目12)で発覚した、App StoreとGoogle Playの日本・フィリピン価格の食い違い(App Store: ¥2,000 / ₱799、Google Play: JPY 2,120 / PHP 895。税抜換算ではフィリピンで約25%差)への対応。Takatohの収益戦略方針(DECISIONS.md 2026-08-07参照、B2Cは通過点でありユーザー数拡大を優先)に基づき、**安い方(App Store側)へ揃える**方針とした
+    - **実施内容(2026-08-07)**: Play Console → 定期購入`voikerchat_premium_monthly` → 基本プラン`monthly-autorenew`の価格を変更。日本: JPY 2,120 → **JPY 1,818**(税抜。VATなし表示のため税込も同額扱い)、フィリピン: PHP 895 → **PHP 713**(税抜、VAT 12%)[確認済 2026-08-07、Play Console実画面]
+    - **変更の根拠・前提**: App Store側の価格(¥2,000/₱799)は、価格一覧画面に税に関する注記が無いことから税込表示と判断した。**[未確認]** Appleは各国の税率を織り込んだ価格ティアを提示する仕組みのため税込と考えられるが、公式ドキュメントでの確認は行っていない。この前提のもと、Google Play側の税抜入力額が税込換算でApp Store側に揃うよう算出した
+    - 担当: 人間(Play Console操作)完了
+
 ## バックログ(テスト完走後)
 
 旧「次タスク」の未完了分。下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手はテスト完走(2026-08-14目安)後。
@@ -221,7 +227,7 @@
 - **シーンのお気に入り機能**(任意・条件付きバックログ): 未完成のまま放置されていたハートボタンは削除済み(DECISIONS.md 2026-07-26)。再検討条件: (a) シーン数が20を超えた段階、(b) 実装する場合は「一覧・絞り込み」までセットで設計、(c) 代替案(「最近使ったシーン」)も比較対象、(d) 判断は公開後のusage_logs(scene_idの分布)を確認してから。担当: 未定。期限: 未定
 - **小タスク: G6ダイアログを権限取得済み時はスキップする改善**(任意)。担当: 未定。期限: 未定
 - **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-14以降)
-- **Google Play Console 定期購入の特典テキスト修正(「Access to all 13 scenes」→18)**: 2026-08-04、シーン数記載監査でコード実装(18シーン)とストア/ドキュメント側の記載乖離を確認した際に発見。`docs/support.html`・`internal-docs/Persona-Design-v1.0.md`・`internal-docs/Onboarding-Flow-v1.0.md`・`internal-docs/Tutorial-Design-v1.0.md`・`internal-docs/T-20-Onboarding-Enhancement-v1.0.md`はリポジトリ側で18に修正済み(PR参照)だが、**Google Play Consoleの定期購入商品(`voikerchat_premium_monthly`)特典テキストの「Access to all 13 scenes」表記はストア側の設定でありコード修正の対象外**。トラック設定変更の運用ルール(本ファイル「運用ルール」節)により、クローズドテスト完走(2026-08-14頃)後に手動で修正すること。担当: 人間。期限: 2026-08-14頃(完走後)
+- **Google Play Console 定期購入の特典テキスト修正(「Access to all 13 scenes」→18)** ✅完了(2026-08-07): 2026-08-04、シーン数記載監査でコード実装(18シーン)とストア/ドキュメント側の記載乖離を確認した際に発見。`docs/support.html`・`internal-docs/Persona-Design-v1.0.md`・`internal-docs/Onboarding-Flow-v1.0.md`・`internal-docs/Tutorial-Design-v1.0.md`・`internal-docs/T-20-Onboarding-Enhancement-v1.0.md`はリポジトリ側で18に修正済み(PR参照)だが、Google Play Consoleの定期購入商品(`voikerchat_premium_monthly`)特典テキストの「Access to all 13 scenes」表記はストア側の設定でありコード修正の対象外だった。**Play Console → 定期購入 Voikerchat Premiumの特典テキストを「Access to all 18 scenes」へ修正済み**[確認済 2026-08-07、Play Console実画面]。翻訳は英語(en-US)の0言語のみであることを確認したため、他言語版の追加修正は不要だった。担当: 人間。完了日: 2026-08-07(クローズドテスト完走を待たずに実施。トラック設定変更には該当しないため運用ルールに抵触しない)
 - **iOS MinimumOSVersionの引き上げ(13.0→15.0以上)**(2026-08-07発見、期限明確・優先度低): `ios-release.yml`のApp Store Connectアップロードログに`WARN: [altool.100302E50] MinimumOSVersion too low. This app has a MinimumOSVersion of 13.0. Starting in Spring 2027, all iOS apps must have a MinimumOSVersion of 15.0 or later in order to be uploaded to App Store Connect or submitted for distribution. (90068)`という警告が1.0.0+19・1.0.0+20とも継続的に出ている。現時点ではアップロード自体は成功しており緊急対応は不要だが、**2027年春以降はこの警告が提出そのもののブロッカーになる**。Xcodeプロジェクトの`IPHONEOS_DEPLOYMENT_TARGET`引き上げと、対応するテスト・古いiOSバージョン切り捨ての影響確認が必要。担当: 未定。期限: 2027年春(Apple公式期限)より十分前
 - **AI応答の英訳表示(タップ方式)**(着手条件付きバックログ、2026-08-06方針決定): テスターフィードバック(`internal-docs/TESTER-FEEDBACK.md`Q2・Q5)を受け、常時日英併記は不採用と決定(学習者が日本語を読まなくなり推測して理解する過程が失われるため)。代わりに既存の辞書ツール(難語Top3・なぞり選択)と同じ「タップで英訳を取得」オンデマンド方式を採用する方針。実装は案A(タップ時にAPIで英訳取得)。案B(応答生成と同時に英訳も生成)は出力トークンがほぼ倍増するため不採用。詳細はDECISIONS.md 2026-08-06参照。**着手条件**: 次回以降のテスターフィードバックで同じ要望が再度出た場合(無料枠5→10引き上げでQ3の不満が解消され、要望自体が再度出ないか経過観察する)。担当: 未定。期限: 未定(判断待ち)
 - **オフライン起動時間のさらなる短縮**(任意・優先度低、2026-08-06追記): PR #59(タイムアウト+Wave並列化+premium_usersトピック同期のバックグラウンド化)適用後も、機内モードでの起動は目標8秒に対し実測約15秒程度(実機検証3回目、体感・正確な計測なし)。**要調査**: Wave 2に残る直列待ちの可能性(例: `if (supabaseResult == success)`ブロック内の`reconcileHistoryOnLaunch()`/`scheduleDailyReminders()`/`loginWithUserId()`は現状オフライン時は`supabaseResult != success`のため実行されないはずだが、実際に何が15秒の内訳になっているかは未計測。ログにタイムスタンプを仕込む等での再調査が必要)。担当: 未定。期限: 未定
@@ -318,6 +324,7 @@
 
 ### [優先: 中] 技術的負債
 
+- **シーン数を含むストア掲載文言はシーン数が変わるたびに手動更新が必要**(2026-08-07): アプリ内Paywall文言(`featureAnimeDesc`)は2026-07-27の決定で「数字を含まない表現」へ変更済み(DECISIONS.md参照)だが、**Google Play Consoleの定期購入(`voikerchat_premium_monthly`)特典テキストは具体性が求められる欄のため、あえて数字を残す判断とした**(2026-08-07、「Access to all 13 scenes」→「Access to all 18 scenes」に修正済み)。この結果、コード側は数字非依存化されている一方、Play Console側の特典テキストだけは今後もシーン数が変わるたびに手動更新が必要な箇所として残り続ける。同様の箇所が他にも無いか(App Store Connect側の商品説明等)、将来シーン数を変更する際に横断的に確認すること。担当: 未定。期限: 次回シーン数変更時
 - **`usage_logs.scene_id`のCHECK制約が実装のシーン数(18)と不一致**(2026-08-07発見): `usage_logs_scene_id_check`は`CHECK (scene_id >= 1 AND scene_id <= 13)`のまま(本番`pg_constraint`で確認[確認済 2026-08-07])。実際のシーン数はT-34で13→18に拡張済み(基本8+アニメ5+実用5、14〜18はいずれもPremium実用カテゴリ)。現状`api/chat.ts`はこの列に書き込まず`metadata.scene`に文字列として格納する設計のため実害はない(列がNULLのままなのでCHECKは発火しない)。ただし**将来この列を実際に使い始めると、シーン14〜18の記録だけが静かに失敗する**(エラーにはなるが、書き込み側がusage_logsの失敗を握り潰す設計のため気づきにくい)。上限を18以上(将来の拡張余地を見て20等)に緩める軽微なマイグレーションで解消可能。担当: 未定。期限: この列を実際に使い始める前
 - **Mac(Intel、Xcode 16)の使用可否の正確な記述**(2026-08-07訂正): `ios-release.yml`のコメント(「ローカル(Intel Mac, Xcode 16)ではiOS 26 SDK要件を満たせずApp Store Connectへのアップロードが不可能」)が「Macは(開発に)使えない」と単純化されて伝わることがあるが、正確ではない。**シミュレータ自体は使用可能**であり、App Store提出用スクリーンショットの撮影、iPad Air 11-inch等の各画面サイズでのレイアウト確認には実際に使用した実績がある[本人報告 2026-08-07](例: DECISIONS.md 2026-07-28「iPhone 16 Pro/iPhone 16 Pro Maxシミュレータで確認」)。**正しくは「Macは使えない」ではなく「Macでは配布用IPA(App Store Connectへのアップロード)が作れない」**。配布用IPA作成のみGitHub Actions(macos-26ランナー、Xcode 26)に委ねる構成になっている(`ios-release.yml`、DECISIONS.md 2026-07-26参照)
 - chat.ts のリセット基準が他エンドポイントと不統一(chat.ts: 24時間ローリング / define・hint・recap・vocab-summary: UTC暦日境界)
@@ -355,6 +362,7 @@
 - **KUROFUNE PASSPORT**(KUROFUNE株式会社): 特定技能の義務的支援10項目をアプリで管理・報告書生成するツールとして、受入企業・登録支援機関に月額課金。Google Play 1,000+ DL。B2B展開時の直接競合になりうる
 - **GTN Living / GTN Assistants**(グローバルトラストネットワークス): 20か国語以上の生活相談。家賃保証・SIM利用者向けに無償提供。Google Play 1万+ DL
 - 単価等は未確認。B2B検討時に各社サイトで実物確認すること
+- **育成就労制度(2027年開始見込み)**: 雇用主に日本語教育の実施が義務付けられる新制度。Takatohの収益戦略方針(B2Cは通過点、本命はB2B、DECISIONS.md 2026-08-07参照)の延長線上にある具体的なB2B機会として位置づけられる。受入企業・登録支援機関(上記KUROFUNE PASSPORTの顧客層と重なる)への導入を見据えた展開機会。制度の詳細・時期は要継続ウォッチ(2026-08-07時点、詳細未調査)
 
 ## 完了(2026-07-25〜26セッション)
 - **オープンPR一式のマージ**: #3(purchases_flutter v10.4.3対応)・#4(規約類の英語版・不整合修正)・#6(AI生成コンテンツ報告機能、Google Playポリシー必須)・#7(ストア掲載文v1.3)・#8(アプリ内UI言語切替)をmainへマージ
