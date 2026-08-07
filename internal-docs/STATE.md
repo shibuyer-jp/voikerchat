@@ -186,16 +186,17 @@
     - リスク: Play Console のライセンステストアカウントとして登録されているかが**[未確認]**。未登録の実購入であれば、解約しない限り毎月$12.99が実課金される
     - 担当: 人間。期限: 速やかに
 
-17. **Premium判定のクライアント/サーバー不整合の修正**(2026-08-07追記) 🔴 **iOS再提出・Android製品版ビルドの両方に含めるべき必須修正**
+17. **Premium判定のクライアント/サーバー不整合の修正**(2026-08-07追記) ✅ **実装・前提作業とも完了(2026-08-07)**
     - 症状: iOS 1.0.0+19実機検証(iPhone 16 / iOS 26.5.2)で発見[検証日 2026-08-07]。Premium購入済みユーザーがアプリを削除し再インストールすると、Premiumシーンはロック解除されるのに日次上限は無料枠「10/10」表示・広告視聴案内も出るという矛盾したUIになる
     - 原因: シーンロックはRevenueCatクライアント側(`checkPremiumStatus()`)、日次上限・広告表示はSupabase `rate_limits.is_premium`のみを参照しており判定元が別。再インストール時、RevenueCatはApple/Googleアカウント経由で購読を即座に復元するが、`api/revenuecat-webhook.ts`のGRANTイベントはこの復元では発火しない(TRANSFERは明示的にno-op)ため、新しい匿名user_idに対する`rate_limits`行の`is_premium`が次回のRENEWAL(最大約30日後)まで`false`のまま取り残される
     - Android: シーンロック・レート制限判定・webhook処理のいずれにもプラットフォーム分岐は無く、構造的に同一の不具合が起きる(実機未検証)
     - 修正: `api/premium-sync.ts`新設(ログイン後、クライアント=Premiumかつサーバー=falseの場合のみサーバーへ再照合をリクエスト。サーバー側はクライアントの自己申告を信用せずRevenueCat REST APIへ直接問い合わせて検証してから`rate_limits`を更新)。`lib/main.dart`の`loginWithUserId()`成功後に結線。プラットフォーム共通で効く
-    - 前提として必要な人手作業: `internal-docs/migrations/2026-08-07_add_usage_logs_premium_sync_event.sql`をSupabaseで実行、`REVENUECAT_SECRET_KEY`をVercel環境変数へ追加(RevenueCatダッシュボードの「API keys → Secret keys」から発行)
-    - **`REVENUECAT_SECRET_KEY`の反映確認** ✅完了(2026-08-07)。追加前は`curl -X POST https://voikerchat.com/api/premium-sync`が`HTTP 500 Missing environment variable(s): REVENUECAT_SECRET_KEY`を返していたが、Vercelへの環境変数追加+Redeploy後に再実行したところ`HTTP 401 {"error":"Missing authentication token"}`に変化したことを確認[確認済 2026-08-07、Claude Code実施]。環境変数が正しく読み込まれ認証チェックまで到達している証拠であり、正常。マイグレーションSQL実行の完了有無は未確認のまま残る
+    - 前提として必要な人手作業: `internal-docs/migrations/2026-08-07_add_usage_logs_premium_sync_event.sql`をSupabaseで実行、`REVENUECAT_SECRET_KEY`をVercel環境変数へ追加(RevenueCatダッシュボードの「API keys → Secret keys」から発行) — **いずれも完了(下記参照)**
+    - **`REVENUECAT_SECRET_KEY`の反映確認** ✅完了(2026-08-07)。追加前は`curl -X POST https://voikerchat.com/api/premium-sync`が`HTTP 500 Missing environment variable(s): REVENUECAT_SECRET_KEY`を返していたが、Vercelへの環境変数追加+Redeploy後に再実行したところ`HTTP 401 {"error":"Missing authentication token"}`に変化したことを確認[確認済 2026-08-07、Claude Code実施]。環境変数が正しく読み込まれ認証チェックまで到達している証拠であり、正常
+    - **マイグレーションSQL実行** ✅完了(2026-08-07)。Supabase SQL Editor(voikerchat-prod / main / Primary Database / role postgres)にて`BEGIN; DROP; ADD; COMMIT;`を実行し「Success. No rows returned」を確認。実行前に`pg_constraint`で既存定義を確認したところ、許容値は`session_start`/`message_sent`/`ad_reward`/`quota_reached`/`upsell_shown`/`upsell_clicked`/`upsell_converted`の7件でマイグレーションの記載と完全一致しており、既存行の違反は発生しなかった。現在の`usage_logs_event_check`は上記7件+`premium_sync`の8件[確認済 2026-08-07、Supabase SQL Editor実行結果]。**premium-syncのレート制限・監査ログは現在有効**
     - 優先度の理由: iOSはAndroidの製品版公開(見込み8/21〜25頃)待ちで2週間程度の余裕があり、今回の修正を含めても再提出スケジュールに影響しない。放置すると課金済みユーザーが再インストールのたびに最大30日間「シーンは使えるが上限10回・広告あり」という状態になり、信頼を損なうリスクが高い
     - 詳細: `internal-docs/reports/premium_state_mismatch_20260807.md`参照
-    - 担当: CC(実装)完了、人間(マイグレーション実行・Secret Key登録・PRレビュー)。期限: iOS 1.0.0+20再提出前
+    - 担当: CC(実装)完了、人間(マイグレーション実行・Secret Key登録・PRレビュー)完了。残るはiOS 1.0.0+20実機での再検証のみ
 
 ## バックログ(テスト完走後)
 
@@ -312,6 +313,7 @@
 
 ### [優先: 中] 技術的負債
 
+- **`usage_logs.scene_id`のCHECK制約が実装のシーン数(18)と不一致**(2026-08-07発見): `usage_logs_scene_id_check`は`CHECK (scene_id >= 1 AND scene_id <= 13)`のまま(本番`pg_constraint`で確認[確認済 2026-08-07])。実際のシーン数はT-34で13→18に拡張済み(基本8+アニメ5+実用5、14〜18はいずれもPremium実用カテゴリ)。現状`api/chat.ts`はこの列に書き込まず`metadata.scene`に文字列として格納する設計のため実害はない(列がNULLのままなのでCHECKは発火しない)。ただし**将来この列を実際に使い始めると、シーン14〜18の記録だけが静かに失敗する**(エラーにはなるが、書き込み側がusage_logsの失敗を握り潰す設計のため気づきにくい)。上限を18以上(将来の拡張余地を見て20等)に緩める軽微なマイグレーションで解消可能。担当: 未定。期限: この列を実際に使い始める前
 - **Mac(Intel、Xcode 16)の使用可否の正確な記述**(2026-08-07訂正): `ios-release.yml`のコメント(「ローカル(Intel Mac, Xcode 16)ではiOS 26 SDK要件を満たせずApp Store Connectへのアップロードが不可能」)が「Macは(開発に)使えない」と単純化されて伝わることがあるが、正確ではない。**シミュレータ自体は使用可能**であり、App Store提出用スクリーンショットの撮影、iPad Air 11-inch等の各画面サイズでのレイアウト確認には実際に使用した実績がある[本人報告 2026-08-07](例: DECISIONS.md 2026-07-28「iPhone 16 Pro/iPhone 16 Pro Maxシミュレータで確認」)。**正しくは「Macは使えない」ではなく「Macでは配布用IPA(App Store Connectへのアップロード)が作れない」**。配布用IPA作成のみGitHub Actions(macos-26ランナー、Xcode 26)に委ねる構成になっている(`ios-release.yml`、DECISIONS.md 2026-07-26参照)
 - chat.ts のリセット基準が他エンドポイントと不統一(chat.ts: 24時間ローリング / define・hint・recap・vocab-summary: UTC暦日境界)
 - FREE_DAILY_DEFINE_HINT_LIMIT = 30 が define.ts / hint.ts で重複定義
