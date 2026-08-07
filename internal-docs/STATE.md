@@ -146,6 +146,24 @@
     - 担当: 人間(ビルドコマンドの確認)。期限: 製品版アクセス申請前
     - 詳細: `internal-docs/PRODUCTION_ACCESS.md`チェックリスト項目9・「CCからの質問」
 
+15. **Android デベロッパーの確認(パッケージ名の登録)**(2026-08-07追記)
+    - 背景: Play Console に通知。2026-09-30 までに Android に配信する
+      全アプリのパッケージ名を登録しないと、Google Play から削除される
+    - 対象: `jp.shibuyer.voikerchat`(わかりやすい名前は `Voikerchat`)
+    - 前提確認: Google は既存の Google Play アプリを自動登録するため、
+      「パッケージ名」タブの一覧に既に載っている可能性がある。
+      手動登録の前に一覧を確認すること
+    - 次ステップ: 署名鍵の登録。既存パッケージ名扱いのため、
+      利用可能な公開証明書フィンガープリントのリストから選択する想定。
+      **[未確認]** リストに鍵が表示されない場合は、
+      assets に `adi-registration.properties` を置いた
+      リリース APK を秘密鍵で署名してアップロードする所有権証明が必要
+    - 担当: 人間(Play Console 実画面)。期限: 2026-09-30
+    - 注記: トラック設定の変更にはあたらないため、
+      クローズドテスト期間中に実施しても14日タイマーに影響しない
+    - 出典: https://support.google.com/googleplay/android-developer/answer/16761053
+            https://support.google.com/googleplay/android-developer/answer/16984799
+
 ## バックログ(テスト完走後)
 
 旧「次タスク」の未完了分。下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手はテスト完走(2026-08-14目安)後。
