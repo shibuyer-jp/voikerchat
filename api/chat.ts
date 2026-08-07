@@ -121,11 +121,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 5. Claude Haiku 呼び出し
+    const sanitizedMessages = sanitizeMessages(messages);
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: Math.min(maxTokens, 500),
       system: buildSystemPrompt(sceneId, furiganaEnabled === true, difficultyHint),
-      messages: sanitizeMessages(messages),
+      messages: sanitizedMessages,
     });
 
     // 6. 使用ログ（成功）— usage_logs 新スキーマ準拠（event ベース）
@@ -136,6 +137,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       isPremium,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
+      cacheReadInputTokens: response.usage.cache_read_input_tokens,
+      cacheCreationInputTokens: response.usage.cache_creation_input_tokens,
+      turnNumber: sanitizedMessages.length,
       locale,
       platform,
       metadata: sceneId ? { scene: sceneId } : {},
@@ -283,9 +287,13 @@ Do not:
 
 // T-36: 全漢字にふりがなを「漢字(かんじ)」形式で付与する指示(Web版と同方式)。
 // 設定画面のトグル(デフォルトON)でクライアントが furiganaEnabled を送る。
+// 2026-08-06: 本番messagesログの精度検証(上位100件中誤り2件)で見つかった
+// 2パターン(送り仮名へのはみ出し/漢字欠落)への対処を追記(DECISIONS.md参照)。
 const FURIGANA_INSTRUCTION = `
 
-Furigana requirement: For EVERY word containing kanji in your reply, immediately follow it with its hiragana reading in parentheses, like 漢字(かんじ). Apply this to all kanji compounds and single kanji, including names. Do not add furigana to hiragana/katakana-only words or to text already in parentheses.`;
+Furigana requirement: For EVERY word containing kanji in your reply, immediately follow it with its hiragana reading in parentheses, like 漢字(かんじ). Apply this to all kanji compounds and single kanji, including names. Do not add furigana to hiragana/katakana-only words or to text already in parentheses.
+
+Furigana accuracy: The reading in parentheses must cover only the kanji immediately preceding it, never any trailing okurigana (the hiragana that is part of the word's own conjugation/inflection). Correct: 素晴(すば)らしい. Incorrect: 素晴(すばら)らしい. Never omit a kanji character from the visible text while folding its reading into a neighboring word's parentheses — every kanji must appear as an actual character with its own reading attached. Correct: 申(もう)し訳(わけ)ありません. Incorrect: 訳(もうしわけ)ありません.`;
 
 // 難易度フィードバック(競合分析: Duolingo Max方式)。会話終了時のユーザー3択
 // (easy/good/hard)をクライアントがローカル保存し、次回以降 difficultyHint として送る。
@@ -386,6 +394,9 @@ async function logUsage(
     isPremium?: boolean;
     inputTokens?: number;
     outputTokens?: number;
+    cacheReadInputTokens?: number | null;
+    cacheCreationInputTokens?: number | null;
+    turnNumber?: number;
     locale?: unknown;
     platform?: unknown;
     metadata?: Record<string, unknown>;
@@ -404,6 +415,9 @@ async function logUsage(
       is_premium: params.isPremium ?? false,
       input_tokens: params.inputTokens ?? null,
       output_tokens: params.outputTokens ?? null,
+      cache_read_input_tokens: params.cacheReadInputTokens ?? null,
+      cache_creation_input_tokens: params.cacheCreationInputTokens ?? null,
+      turn_number: params.turnNumber ?? null,
       metadata: params.metadata ?? {},
     });
     if (error) {

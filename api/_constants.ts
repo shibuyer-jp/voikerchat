@@ -5,12 +5,12 @@
  */
 
 // 無料/Premium の基礎日次上限
-export const FREE_DAILY_LIMIT = 5;
+export const FREE_DAILY_LIMIT = 10;
 export const PREMIUM_DAILY_LIMIT = 50;
 
 // 広告視聴ボーナス(無料ユーザーのみ・当日限り)
 export const AD_BONUS = 5;
-export const FREE_DAILY_CAP = 10; // FREE_DAILY_LIMIT + AD_BONUS
+export const FREE_DAILY_CAP = 20; // FREE_DAILY_LIMIT + AD_BONUS
 
 // recap(言い直し復習)と vocab-summary(今日の単語)の合算の軽い日次上限。
 // 会話回数(rate_limits)とは別枠。両者はセッション終了時(3往復以上)に

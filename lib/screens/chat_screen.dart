@@ -31,6 +31,7 @@ import '../widgets/mic_rationale_dialog.dart';
 import '../widgets/rate_limit_widget.dart';
 import '../widgets/premium_upsell_widgets.dart';
 import '../widgets/word_lookup_sheet.dart';
+import '../widgets/word_list_sheet.dart';
 import '../widgets/content_report_sheet.dart';
 import '../widgets/hint_sheet.dart';
 import '../widgets/vocab_summary_sheet.dart';
@@ -48,12 +49,18 @@ class ChatScreen extends StatefulWidget {
   final Map<String, dynamic> sceneData;
   final String? conversationId; // From notification (pattern B)
 
+  /// チャット画面内(レート制限ダイアログ・段階的アップセル等)から購入が
+  /// 成功した場合に呼ばれる。呼び出し元(SceneSelectionScreen経由で
+  /// HomeScreen)がPremium状態を再取得し、シーンロック表示に反映するために使う。
+  final VoidCallback? onPremiumUnlocked;
+
   const ChatScreen({
     super.key,
     required this.sceneId,
     required this.sceneName,
     required this.sceneData,
     this.conversationId,
+    this.onPremiumUnlocked,
   });
 
   @override
@@ -180,12 +187,34 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       await _loadStreak();
 
       setState(() => _isLoading = false);
+      await _maybeShowWordLookupHint();
     } catch (e) {
-      _showError('Failed to initialize chat: $e');
       // 初期化に失敗してもローディングを解除し、画面が無限に
       // ぐるぐるし続けないようにする（チャットUI自体は表示する）。
-      if (mounted) setState(() => _isLoading = false);
+      // 未マウントならUIを更新する対象が無いため何もしない。
+      if (!mounted) return;
+      // オフライン時は"PostgrestException: FormatException: ..."等の生の
+      // 例外文言がそのまま表示され、ユーザーに意味が伝わらなかった
+      // (2026-08-06、機内モードでシーンを開いた際に再現。DECISIONS.md参照)。
+      _showError(_isNetworkError(e)
+          ? AppLocalizations.of(context).noInternetConnectionError
+          : 'Failed to initialize chat: $e');
+      setState(() => _isLoading = false);
     }
+  }
+
+  /// 例外がネットワーク未接続に起因するものらしいかを判定する(2026-08-06)。
+  /// dart:ioのSocketExceptionはWebビルドで使えないため型チェックはせず、
+  /// 典型的な接続失敗の文言をヒューリスティックに判定する。
+  bool _isNetworkError(Object e) {
+    final s = e.toString().toLowerCase();
+    return s.contains('socketexception') ||
+        s.contains('failed host lookup') ||
+        s.contains('network is unreachable') ||
+        s.contains('connection failed') ||
+        s.contains('connection refused') ||
+        s.contains('clientexception') ||
+        s.contains('timeoutexception');
   }
 
   Future<void> _checkPremiumStatus() async {
@@ -518,7 +547,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() => _messages = messages);
       _scrollToBottom();
     } catch (e) {
-      _showError('Failed to load messages: $e');
+      if (!mounted) return;
+      _showError(_isNetworkError(e)
+          ? AppLocalizations.of(context).noInternetConnectionError
+          : 'Failed to load messages: $e');
     }
   }
 
@@ -961,15 +993,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                           )
                                         : _buildAssistantMessageText(message),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      message.formattedTime,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isUser
-                                            ? Colors.white70
-                                            : Colors.grey.shade600,
-                                      ),
-                                    ),
+                                    isUser
+                                        ? Text(
+                                            message.formattedTime,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white70,
+                                            ),
+                                          )
+                                        : _buildAssistantFooterRow(message),
                                   ],
                                 ),
                               ),
@@ -1242,6 +1274,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (unlocked == true && mounted) {
       setState(() => _isPremium = true);
       _showSuccess(AppLocalizations.of(context).welcomePremium);
+      // シーン選択画面(呼び出し元)にもPremium状態を伝播し、
+      // ロック済みシーンの表示をこの場で更新できるようにする。
+      widget.onPremiumUnlocked?.call();
     }
   }
 
@@ -1253,6 +1288,24 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  /// 辞書機能(なぞり選択→意味を調べる)の存在を、初回入室時に一度だけ
+  /// SnackBarで案内する(Build 17)。2回目以降は表示しない。
+  Future<void> _maybeShowWordLookupHint() async {
+    final alreadySeen = await _learnerPreferencesService.hasSeenWordLookupHint();
+    if (alreadySeen) return;
+    await _learnerPreferencesService.setHasSeenWordLookupHint(true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).wordLookupHint),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    });
   }
 
   /// AIメッセージ本文(T-31): 範囲選択 + コンテキストメニューに
@@ -1298,6 +1351,61 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           buttonItems: buttonItems,
         );
       },
+    );
+  }
+
+  /// AIメッセージの時刻表示行。既存の長押し導線に加えて、辞書機能への
+  /// もう一つの入口(単語一覧)を常時表示する。ふりがなの有無や漢字の
+  /// 有無に関わらず表示する(施策②: サーバー側のAIが難語選定を行うため、
+  /// クライアント側で事前に対象語の有無を判定する必要が無くなった)。
+  Widget _buildAssistantFooterRow(Message message) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          message.formattedTime,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        const SizedBox(width: 10),
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => _showWordListSheet(message),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.menu_book_outlined,
+                    size: 14, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Text(
+                  AppLocalizations.of(context).wordLookupButtonLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// メッセージ全文をサーバーへ送り、AIが選んだ難語最大3件の詳細を
+  /// まとめて表示する(施策②)。読み込み中・0件・エラーの表示は
+  /// WordListSheet 内部(FutureBuilder)で行う。
+  void _showWordListSheet(Message message) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => WordListSheet(
+        messageContent: message.content,
+        sceneId: widget.sceneId,
+        sceneLevel: widget.sceneData['level'] as String?,
+      ),
     );
   }
 

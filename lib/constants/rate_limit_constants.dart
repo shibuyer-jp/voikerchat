@@ -7,8 +7,8 @@
 class RateLimitConstants {
   RateLimitConstants._();
 
-  static const int freeDailyLimit = 5;
+  static const int freeDailyLimit = 10;
   static const int premiumDailyLimit = 50;
   static const int adBonus = 5;
-  static const int freeDailyCap = 10;
+  static const int freeDailyCap = 20;
 }

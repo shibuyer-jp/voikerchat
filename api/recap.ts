@@ -174,7 +174,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .filter((c) => c.original && c.improved);
 
     // 使用ログ(失敗しても本処理は止めない)。既存の event 種別のみ使用し、
-    // metadata.feature で識別する(usage_logs のスキーマ変更はしない)。
+    // metadata.feature で識別する(turn_number は会話ターンではないため送らない)。
     try {
       const { error: logError } = await supabase.from('usage_logs').insert({
         user_id: userId,
@@ -183,6 +183,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         is_premium: isPremium,
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,
+        cache_read_input_tokens: response.usage.cache_read_input_tokens,
+        cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
         platform: sanitizePlatform(platform),
         locale: sanitizeLocale(locale),
         metadata: { feature: 'recap', scene: sceneId ?? null, correctionCount: corrections.length },

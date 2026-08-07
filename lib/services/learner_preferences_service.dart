@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/diagnostic.dart';
+
 /// LearnerPreferencesService: 学習サポート系のローカル設定(T-36)。
 class LearnerPreferencesService {
   static const String _furiganaKey = 'furigana_enabled';
@@ -66,5 +68,105 @@ class LearnerPreferencesService {
         .take(_recentSceneIdsMaxLength)
         .toList();
     await prefs.setStringList(_recentSceneIdsKey, updated);
+  }
+
+  // ---- オンボーディングスライド(施策③) ----
+
+  static const String _onboardingSlidesCompletedKey =
+      'onboarding_slides_completed';
+
+  /// スライド(診断テスト前の説明3枚)を最後まで見た、またはスキップしたか。
+  /// 一度完了したら再表示しないためのフラグ。
+  Future<bool> isOnboardingSlidesCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_onboardingSlidesCompletedKey) ?? false;
+  }
+
+  Future<void> setOnboardingSlidesCompleted(bool completed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingSlidesCompletedKey, completed);
+  }
+
+  // ---- 診断テストの任意化(施策③) ----
+
+  /// main.dart の _resolveInitialScreen が書き込む値と同一キー。
+  /// user_diagnostic_level はテスト未受験でも(「あとで」選択時)
+  /// beginner が保存されるため、このキーだけでは「実際に受験したか」を
+  /// 判別できない。judgeには diagnosticTestCompleted を併用する。
+  static const String _userDiagnosticLevelKey = 'user_diagnostic_level';
+
+  static const String _diagnosticTestCompletedKey =
+      'diagnostic_test_completed';
+
+  /// 診断テストを実際に受験して完了したか(「あとで」でデフォルト適用された
+  /// 場合はfalseのまま)。シーン選択画面のレベルテストカード表示条件に使う。
+  Future<bool> isDiagnosticTestCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_diagnosticTestCompletedKey) ?? false;
+  }
+
+  Future<void> setDiagnosticTestCompleted(bool completed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_diagnosticTestCompletedKey, completed);
+  }
+
+  /// 現在保存されているユーザー診断レベル(未保存/不正値は beginner)。
+  Future<UserDiagnosticLevel> getUserDiagnosticLevel() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_userDiagnosticLevelKey);
+    return UserDiagnosticLevel.values.firstWhere(
+      (e) => e.name == name,
+      orElse: () => UserDiagnosticLevel.beginner,
+    );
+  }
+
+  /// 診断テスト(再受験含む)完了時にレベルを更新する。
+  Future<void> setUserDiagnosticLevel(UserDiagnosticLevel level) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userDiagnosticLevelKey, level.name);
+  }
+
+  // ---- レベルテストカード(施策③、シーン選択画面) ----
+
+  static const String _levelTestCardDismissedDateKey =
+      'level_test_card_dismissed_date';
+
+  /// カードの「あとで」を今日押したか(端末ローカル日付で判定。
+  /// streak_service.dart と同じくローカルタイム基準、DECISIONS.md
+  /// 2026-07-27の方針に合わせる)。
+  Future<bool> isLevelTestCardDismissedToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dateStr = prefs.getString(_levelTestCardDismissedDateKey);
+    if (dateStr == null) return false;
+    final dismissedDate = DateTime.tryParse(dateStr);
+    if (dismissedDate == null) return false;
+    final now = DateTime.now();
+    return dismissedDate.year == now.year &&
+        dismissedDate.month == now.month &&
+        dismissedDate.day == now.day;
+  }
+
+  Future<void> dismissLevelTestCardForToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _levelTestCardDismissedDateKey,
+      DateTime.now().toIso8601String(),
+    );
+  }
+
+  // ---- なぞり選択・辞書機能の案内(Build 17) ----
+
+  static const String _hasSeenWordLookupHintKey = 'has_seen_word_lookup_hint';
+
+  /// チャット画面で「言葉を長押しすると意味を調べられる」ワンショット案内
+  /// (SnackBar)を表示済みか。一度表示したら再表示しないためのフラグ。
+  Future<bool> hasSeenWordLookupHint() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hasSeenWordLookupHintKey) ?? false;
+  }
+
+  Future<void> setHasSeenWordLookupHint(bool seen) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hasSeenWordLookupHintKey, seen);
   }
 }

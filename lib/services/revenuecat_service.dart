@@ -1,11 +1,17 @@
 import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:logging/logging.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
 
+/// RevenueCat呼び出し(configure/getCustomerInfo)に設けるタイムアウト。
+/// オフライン時にこれらが無期限に待ち続け、起動シーケンス全体が白画面の
+/// まま進まなくなる不具合の対策(2026-08-06、DECISIONS.md参照)。
+const _kRevenueCatCallTimeout = Duration(seconds: 8);
+
 /// RevenueCat サービス - IAP (In-App Purchase) 統合
-/// 
+///
 /// iOS/Android の App Store / Google Play との連携
 /// Premium サブスクリプション管理
 class RevenueCatService {
@@ -59,7 +65,7 @@ class RevenueCatService {
       await Purchases.setLogLevel(kReleaseMode ? LogLevel.info : LogLevel.debug);
       await Purchases.configure(
         PurchasesConfiguration(apiKey),
-      );
+      ).timeout(_kRevenueCatCallTimeout);
       _configured = true;
 
       // 既存の Premium ステータスをロード
@@ -106,16 +112,17 @@ class RevenueCatService {
   Future<bool> checkPremiumStatus() async {
     if (!_configured) return _isPremium;
     try {
-      final customerInfo = await Purchases.getCustomerInfo();
-      
+      final customerInfo =
+          await Purchases.getCustomerInfo().timeout(_kRevenueCatCallTimeout);
+
       // Premium エンタイトルメント確認
       final entitlements = customerInfo.entitlements;
-      _isPremium = entitlements.active.containsKey('Premium') || 
+      _isPremium = entitlements.active.containsKey('Premium') ||
                    entitlements.active.containsKey('voikerchat_premium');
-      
+
       // ローカル保存
       await _prefs.setBool('isPremium', _isPremium);
-      
+
       logger.info('[RevenueCat] Premium status checked: $_isPremium');
       return _isPremium;
     } catch (e) {
@@ -187,9 +194,28 @@ class RevenueCatService {
           };
         }
       } catch (e) {
+        // 既に購入済み(ITEM_ALREADY_OWNED / ProductAlreadyPurchasedError)の場合、
+        // エラー文言だけで判断せず、実際にentitlementがactiveであることを
+        // 確認してから成功として扱う(施策: プレミアム再購入時のシーンロック
+        // 解除不具合対応)。entitlementが実際には見つからない異常系は、
+        // 下の汎用エラー分類にフォールスルーする。
+        if (e is PlatformException &&
+            PurchasesErrorHelper.getErrorCode(e) ==
+                PurchasesErrorCode.productAlreadyPurchasedError) {
+          final alreadyActive = await _confirmActiveEntitlement();
+          if (alreadyActive) {
+            logger.info(
+                '[RevenueCat] Already purchased; entitlement confirmed active');
+            return {
+              'success': true,
+              'message': 'Welcome to Voikerchat Premium!',
+            };
+          }
+        }
+
         // エラーハンドリング（汎用）
         final errorString = e.toString().toLowerCase();
-        
+
         if (errorString.contains('cancel')) {
           return {
             'success': false,
@@ -242,6 +268,25 @@ class RevenueCatService {
         'message': 'Unexpected error: $e',
         'retryable': true,
       };
+    }
+  }
+
+  /// 「既に購入済み」エラー受信時、実際にentitlementがactiveかを
+  /// RevenueCatへ直接問い合わせて確認する(エラー文言だけで判断しない)。
+  Future<bool> _confirmActiveEntitlement() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      final entitlements = customerInfo.entitlements;
+      _isPremium = entitlements.active.containsKey('Premium') ||
+          entitlements.active.containsKey('voikerchat_premium');
+      if (_isPremium) {
+        await _prefs.setBool('isPremium', true);
+      }
+      return _isPremium;
+    } catch (e) {
+      logger.info(
+          '[RevenueCat] Failed to confirm entitlement after already-purchased error: $e');
+      return false;
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
 import '../models/diagnostic.dart';
+import '../services/learner_preferences_service.dart';
 import '../services/revenuecat_service.dart';
 import 'scene_selection_screen.dart';
 import 'badges_screen.dart';
@@ -34,6 +35,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   late bool _isPremiumUser = widget.isPremiumUser;
+  late UserDiagnosticLevel _userLevel = widget.userLevel;
 
   @override
   void initState() {
@@ -49,11 +51,19 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isPremiumUser = isPremium);
   }
 
+  /// レベルテストカード/設定画面での再受験後にレベルを再取得する(施策③)。
+  Future<void> _refreshUserLevel() async {
+    final level = await LearnerPreferencesService().getUserDiagnosticLevel();
+    if (!mounted) return;
+    setState(() => _userLevel = level);
+  }
+
   List<Widget> get _tabs => [
         SceneSelectionScreen(
-          userLevel: widget.userLevel,
+          userLevel: _userLevel,
           isPremiumUser: _isPremiumUser,
           onPremiumUnlocked: _refreshPremiumStatus,
+          onLevelUpdated: _refreshUserLevel,
         ),
         const BadgesScreen(),
         const StatsScreen(),

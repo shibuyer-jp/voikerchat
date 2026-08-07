@@ -4,11 +4,15 @@
   "@appTitle": {
     "description": "Application title"
   },
+  "offlineAtLaunchBanner": "You're offline. Some features may be limited.",
+  "@offlineAtLaunchBanner": {
+    "description": "One-shot SnackBar shown at app launch when Supabase initialization times out or fails (no network), Build 18 (2026-08-06)"
+  },
   "premiumUnlimited": "Premium - 50/day",
   "@premiumUnlimited": {
     "description": "Label shown to premium users instead of a usage limit"
   },
-  "callsRemainingToday": "{remaining} / {total} calls remaining today",
+  "callsRemainingToday": "{remaining} / {total} messages left today",
   "@callsRemainingToday": {
     "description": "Daily remaining message count for free tier users",
     "placeholders": {
@@ -249,9 +253,9 @@
   "@premiumDialogBody": {
     "description": "Upsell dialog body"
   },
-  "premiumBenefitUnlimited": "✓ Up to 50 conversations/day",
+  "premiumBenefitUnlimited": "✓ Up to 50 messages/day",
   "@premiumBenefitUnlimited": {
-    "description": "Premium benefit: 50 calls/day"
+    "description": "Premium benefit: 50 messages/day"
   },
   "premiumBenefitAllScenes": "✓ All anime scenes unlocked",
   "@premiumBenefitAllScenes": {
@@ -310,11 +314,11 @@
   "@dailyLimitReachedTitle": {
     "description": "Rate limit dialog title"
   },
-  "dailyLimitReachedBody": "You have used all your free daily calls.",
+  "dailyLimitReachedBody": "You have used all your free daily messages.",
   "@dailyLimitReachedBody": {
     "description": "Rate limit dialog body"
   },
-  "dailyLimitDetail": "Limit: {limit} calls/day",
+  "dailyLimitDetail": "Limit: {limit} messages/day",
   "@dailyLimitDetail": {
     "description": "Rate limit detail",
     "placeholders": {
@@ -323,11 +327,11 @@
       }
     }
   },
-  "dailyLimitReachedBodyPremium": "You have reached today's limit (50/day). It resets tomorrow.",
+  "dailyLimitReachedBodyPremium": "You have reached today's limit (50 messages/day). It resets tomorrow.",
   "@dailyLimitReachedBodyPremium": {
     "description": "Rate limit dialog body shown to Premium users who hit their daily cap"
   },
-  "goPremiumUnlockCta": "✨ Go Premium for up to 50 calls a day!",
+  "goPremiumUnlockCta": "✨ Go Premium for up to 50 messages a day!",
   "@goPremiumUnlockCta": {
     "description": "Rate limit dialog premium CTA"
   },
@@ -335,17 +339,17 @@
   "@premiumSheetTitle": {
     "description": "Premium dialog title"
   },
-  "premiumSheetSubtitle": "Unlock up to 50 conversations a day",
+  "premiumSheetSubtitle": "Unlock up to 50 messages a day",
   "@premiumSheetSubtitle": {
     "description": "Premium dialog subtitle"
   },
-  "featureUnlimitedTitle": "Up to 50 Calls/Day",
+  "featureUnlimitedTitle": "Up to 50 Messages/Day",
   "@featureUnlimitedTitle": {
-    "description": "Premium feature: 50 calls/day title"
+    "description": "Premium feature: 50 messages/day title"
   },
-  "featureUnlimitedDesc": "10x the free tier, plenty of room to practice",
+  "featureUnlimitedDesc": "5x the free tier, plenty of room to practice",
   "@featureUnlimitedDesc": {
-    "description": "Premium feature: 50 calls/day desc"
+    "description": "Premium feature: 50 messages/day desc"
   },
   "featureAnimeTitle": "Anime Scenes",
   "@featureAnimeTitle": {
@@ -396,7 +400,7 @@
   "@processingPurchase": {
     "description": "Purchase in-progress dialog"
   },
-  "welcomePremium": "✨ Welcome to Premium! Enjoy up to 50 conversations a day!",
+  "welcomePremium": "✨ Welcome to Premium! Enjoy up to 50 messages a day!",
   "@welcomePremium": {
     "description": "Purchase success message"
   },
@@ -528,6 +532,22 @@
   "@wordLookupQuotaReached": {
     "description": "Word lookup sheet: daily quota exceeded message"
   },
+  "wordLookupButtonLabel": "Look up",
+  "@wordLookupButtonLabel": {
+    "description": "Short label for the dictionary button shown under every assistant message bubble"
+  },
+  "wordLookupHint": "Long-press a word to look up its meaning.",
+  "@wordLookupHint": {
+    "description": "One-shot SnackBar shown the first time a user opens the chat screen, hinting that long-pressing text opens the dictionary lookup (Build 17)"
+  },
+  "wordListEmpty": "No words to look up in this message.",
+  "@wordListEmpty": {
+    "description": "Word list sheet: shown when the AI found no difficult words in this message"
+  },
+  "wordListError": "Couldn't load words for this message. Please try again.",
+  "@wordListError": {
+    "description": "Word list sheet: generic error (network/server) message"
+  },
   "hintButtonTooltip": "Hint: what could I say next?",
   "@hintButtonTooltip": {
     "description": "Tooltip for the lightbulb hint button near the chat input (T-36)"
@@ -634,6 +654,10 @@
         "type": "String"
       }
     }
+  },
+  "noInternetConnectionError": "No internet connection. Please check your connection and try again.",
+  "@noInternetConnectionError": {
+    "description": "Shown instead of a raw exception message when chat initialization/message loading fails due to no network connectivity (2026-08-06)"
   },
   "notifMarkedRead": "Notification marked as read",
   "@notifMarkedRead": {
@@ -782,6 +806,38 @@
   "diagDontKnow": "I don't know",
   "@diagDontKnow": {
     "description": "Diagnostic 'I don't know' answer option"
+  },
+  "diagSkipTest": "Take this later",
+  "@diagSkipTest": {
+    "description": "Button to skip the whole diagnostic test and use the default (beginner) level"
+  },
+  "onboardingSlidesSkip": "Skip",
+  "@onboardingSlidesSkip": {
+    "description": "Onboarding slides: skip button (top-right, always visible)"
+  },
+  "onboardingSlidesNext": "Next",
+  "@onboardingSlidesNext": {
+    "description": "Onboarding slides: next button (non-final slide)"
+  },
+  "onboardingSlidesStart": "Get Started",
+  "@onboardingSlidesStart": {
+    "description": "Onboarding slides: button on the final slide"
+  },
+  "levelTestCardTitle": "Take the level test",
+  "@levelTestCardTitle": {
+    "description": "Scene selection screen: level test card title (shown until the diagnostic test is completed)"
+  },
+  "levelTestCardSubtitle": "3 questions, about 1 minute. We'll recommend scenes that fit you.",
+  "@levelTestCardSubtitle": {
+    "description": "Scene selection screen: level test card subtitle"
+  },
+  "levelTestCardTakeButton": "Try it",
+  "@levelTestCardTakeButton": {
+    "description": "Scene selection screen: level test card primary button"
+  },
+  "settingsRetakeLevelTest": "Retake the level test",
+  "@settingsRetakeLevelTest": {
+    "description": "Settings screen: menu item to retake the diagnostic test at any time"
   },
   "sceneCharacterLabel": "Character: {name}",
   "@sceneCharacterLabel": {
