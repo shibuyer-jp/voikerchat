@@ -192,6 +192,7 @@
     - Android: シーンロック・レート制限判定・webhook処理のいずれにもプラットフォーム分岐は無く、構造的に同一の不具合が起きる(実機未検証)
     - 修正: `api/premium-sync.ts`新設(ログイン後、クライアント=Premiumかつサーバー=falseの場合のみサーバーへ再照合をリクエスト。サーバー側はクライアントの自己申告を信用せずRevenueCat REST APIへ直接問い合わせて検証してから`rate_limits`を更新)。`lib/main.dart`の`loginWithUserId()`成功後に結線。プラットフォーム共通で効く
     - 前提として必要な人手作業: `internal-docs/migrations/2026-08-07_add_usage_logs_premium_sync_event.sql`をSupabaseで実行、`REVENUECAT_SECRET_KEY`をVercel環境変数へ追加(RevenueCatダッシュボードの「API keys → Secret keys」から発行)
+    - **`REVENUECAT_SECRET_KEY`の反映確認** ✅完了(2026-08-07)。追加前は`curl -X POST https://voikerchat.com/api/premium-sync`が`HTTP 500 Missing environment variable(s): REVENUECAT_SECRET_KEY`を返していたが、Vercelへの環境変数追加+Redeploy後に再実行したところ`HTTP 401 {"error":"Missing authentication token"}`に変化したことを確認[確認済 2026-08-07、Claude Code実施]。環境変数が正しく読み込まれ認証チェックまで到達している証拠であり、正常。マイグレーションSQL実行の完了有無は未確認のまま残る
     - 優先度の理由: iOSはAndroidの製品版公開(見込み8/21〜25頃)待ちで2週間程度の余裕があり、今回の修正を含めても再提出スケジュールに影響しない。放置すると課金済みユーザーが再インストールのたびに最大30日間「シーンは使えるが上限10回・広告あり」という状態になり、信頼を損なうリスクが高い
     - 詳細: `internal-docs/reports/premium_state_mismatch_20260807.md`参照
     - 担当: CC(実装)完了、人間(マイグレーション実行・Secret Key登録・PRレビュー)。期限: iOS 1.0.0+20再提出前
@@ -322,7 +323,7 @@
 - linux/ macos/ windows/ の自動生成ファイルが checkout のたびに差分として出る
 - lib/services/revenuecat_service.dart:5 が dart:io の Platform を kIsWeb ガードなしで参照している。web 実行時の潜在バグ(2026-07-31発見、PR #33のスコープ外として保留)
 - `Documents/voikerchat`(別チェックアウト、2026-06-29時点の古い状態)の git remote URL に GitHub PAT が平文で埋め込まれている(2026-08-01にCCが発見)。対応候補: 該当PATのrevoke、不要チェックアウトの削除、fine-grained PATへの移行。現行PATはclassic/repoスコープ/有効期限なしのため漏洩時の影響が最大
-- 過去のVercelデプロイURL(`*.vercel.app`、プレビュー/旧本番デプロイ分)から、`internal-docs/`分離前の旧`docs/`配下ファイルのスナップショットにアクセスできる可能性がある(2026-08-04発見、未確認)。Deployment Protectionの導入を検討
+- 過去のVercelデプロイURL(`*.vercel.app`、プレビュー/旧本番デプロイ分)から、`internal-docs/`分離前の旧`docs/`配下ファイルのスナップショットにアクセスできる可能性がある(2026-08-04発見)。**プレビュー用ドメイン(`voikerchat-x621-git-main-*.vercel.app`)にはVercel Authentication(Deployment Protection)が有効であることを確認済み**[確認済 2026-08-07、本人報告、401応答の`vercel_auth_enabled:true`より]。プレビュー経由でのアクセスはこの認証で保護されているため、このリスクは実質的に解消している。旧本番デプロイ分(`*.vercel.app`の非プレビュー個別URL)まで同様に保護されているかは未確認のまま残る
 - RevenueCatダッシュボードに未使用のEntitlement `Voikerchat Pro`、Offeringの`$rc_annual`/`$rc_lifetime`が残存(2026-08-04のAndroid有効化作業中に発見。実店舗製品との紐付けなし)。完走後に整理
 - voikerchat.comトップページの訴求文言とストア掲載情報の間にズレが残っている可能性(2026-08-04、未確認。次回精査対象)
 - `git stash@{0}`〜`{4}`(ローカル、5件)は移植済み/ビルドノイズ。`stash@{0}`(RevenueCat Android関連の`docs/ANDROID_RELEASE.md`・`docs/STATE.md`編集)は2026-08-04に内容を`internal-docs/`側へ手動移植済みで、原本は意図的にdropせず残置(移植漏れ検証用)。`stash@{1}`〜`{4}`は`pubspec.lock`/生成済みプラグイン登録ファイルのみのビルド成果物ノイズで`docs/`とは無関係。いずれもP4完走後にまとめて整理(`git stash drop`)
