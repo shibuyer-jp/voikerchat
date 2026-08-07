@@ -1,5 +1,7 @@
 # STATE.md — Voikerchat 現在状態(外部メモリ)
 
+> **関連**: 未完了項目・バックログを「いつまでに・何を」の観点で整理したロードマップは`internal-docs/ROADMAP.md`を参照(2026-08-07新設)。
+
 > **運用ルール**: セッション開始時に読む/終了時に更新してコミット。ここが唯一の正(single source of truth)。ただしPlay Console/App Store Connect等の外部サービスの配布状況は、必ず実画面で確認してから記録すること(2026-07-27、Android versionCode 7の配布状況誤認を教訓に追記)。
 > 最終更新: 2026-08-07(続)(未完了項目14「`REVENUECAT_ANDROID_KEY`投入確認」が完了と判明: Build 18に投入済みで、開発者本人が実購入により課金フロー全体〈購入→entitlement反映→シーン解放〉を検証済み。バックログ「RevenueCat Android有効化」も④まで全完了(RTDN接続のみ残)。この検証を受け`internal-docs/PRODUCTION_ACCESS.md`のチェックリスト項目9・Part 1②を訂正。新たなリスクとして開発者本人の購入がライセンステスト扱いか未確認(未完了項目16新設)。iOSの公開タイミング(未完了項目13)は「Android完走を待って同時公開」の方針としたが、製品版アクセス申請の審査(通常7日以内)を踏まえるとAndroid一般公開は8/21〜25頃で、8/14での同時公開は成立しない旨を追記(先行公開/待機のどちらにするかは未確定のまま)。iOS Sandbox課金検証(未完了項目12)をiOS公開前必須へ格上げ(AndroidでのStoreKit外経路の検証だけではPR #53の修正がiOSで有効か保証できないため)。詳細はDECISIONS.md 2026-08-07(続)参照)
 > 旧: 2026-08-07(Android Build 18が2026-08-06 13:46 JSTにクローズドテストへ配信済みであることをPlay Console実画面で確認。Build 16のAI同意画面未収録問題は解消。iOS Build 17は2026-08-06に審査承認、ただし手動リリース設定のため**未公開**。滞留していたオープンPRを整理: #43(iOS却下プレイブック)・#45(機能別トークン集計SQL)・#46(オンボーディング調査)・#42(製品版アクセス申請手順書)をマージ、#60(検証セッションSTEP 6、#26のリベース版)をマージ、#44(無料枠決定記録)は内容が既にmainに反映済みかつ解消済みの公開ブロッカーを復活させるためクローズ、#26は#60で代替しクローズ。残るオープンPRは#14(iOS APNs)・#5(Android署名)の意図的保留2件のみ。統計情報は8/7時点でも「データを使用できません」表示のまま)
@@ -166,21 +168,13 @@
     - 派生課題: 開発者本人のこの購入がPlay Consoleのライセンステストアカウントとして扱われているかは**[未確認]**。未登録の実購入であれば解約しない限り毎月$12.99が実課金される → 未完了項目16として新設(下記)
     - 反映済み: `internal-docs/PRODUCTION_ACCESS.md`チェックリスト項目9・Part 1②・「CCからの質問」を訂正(下記参照)
 
-15. **Android デベロッパーの確認(パッケージ名の登録)**(2026-08-07追記)
+15. **Android デベロッパーの確認(パッケージ名の登録)** ✅完了(2026-08-07)
     - 背景: Play Console に通知。2026-09-30 までに Android に配信する
       全アプリのパッケージ名を登録しないと、Google Play から削除される
     - 対象: `jp.shibuyer.voikerchat`(わかりやすい名前は `Voikerchat`)
-    - 前提確認: Google は既存の Google Play アプリを自動登録するため、
-      「パッケージ名」タブの一覧に既に載っている可能性がある。
-      手動登録の前に一覧を確認すること
-    - 次ステップ: 署名鍵の登録。既存パッケージ名扱いのため、
-      利用可能な公開証明書フィンガープリントのリストから選択する想定。
-      **[未確認]** リストに鍵が表示されない場合は、
-      assets に `adi-registration.properties` を置いた
-      リリース APK を秘密鍵で署名してアップロードする所有権証明が必要
-    - 担当: 人間(Play Console 実画面)。期限: 2026-09-30
-    - 注記: トラック設定の変更にはあたらないため、
-      クローズドテスト期間中に実施しても14日タイマーに影響しない
+    - **確認結果(2026-08-07)**: Play Console「Android デベロッパーの確認」のパッケージ名一覧に`jp.shibuyer.voikerchat`(表示名voikerchat)が**登録済み**として存在し、フィンガープリント1件も「確認済み」ステータスだった。最終更新日時は2026年7月13日で、Googleによる既存Playアプリの自動登録がその時点で完了していたと考えられる。アカウント画面にも「すべてのアプリの登録が完了し、Androidデベロッパーの確認要件を満たしています」と表示されていた[確認済 2026-08-07、Play Console実画面]。手動登録・署名鍵登録(次ステップとして想定していた作業)は不要だった
+    - **注意点**: Play以外で配信するアプリや、今後新たにPlayへ出すアプリ(Beat Booth等)を追加した際は、その都度あらためて登録が必要になる。本項目の完了は`jp.shibuyer.voikerchat`(voikerchat)に限定される
+    - 担当: 人間(Play Console 実画面)完了
     - 出典: https://support.google.com/googleplay/android-developer/answer/16761053
             https://support.google.com/googleplay/android-developer/answer/16984799
 
@@ -214,6 +208,7 @@
 旧「次タスク」の未完了分。下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手はテスト完走(2026-08-14目安)後。
 
 - **RevenueCat Android有効化**(①②③④すべて完了、残るはRTDN接続のみ): ①Google Play Consoleで定期購入商品を作成 ✅完了(2026-07-29、`voikerchat_premium_monthly:monthly-autorenew`、174か国) → ②RevenueCatにAndroidアプリ登録+Google Playサービスアカウント認証 ✅完了(2026-08-04)[本人報告、Claude Code未検証]。Google Cloudプロジェクト`voikerchat`(Firebaseと同一)でPlay Android Developer API/Play Developer Reporting API/Cloud Pub/Sub APIを有効化、サービスアカウント`revenuecat@voikerchat.iam.gserviceaccount.com`(ロール: Pub/Sub編集者+モニタリング閲覧者)を作成しPlay Consoleへ招待(アプリ情報閲覧/売上データ/注文と定期購入の管理)。RevenueCatにPlay StoreアプリをApp ID `appf7acdb482b`で追加、Productインポート成功(Published) → ③Offering/Productをマッピング ✅完了(2026-08-04)。Entitlement `Premium`にAttach(App Store版と併存)、Offering `default`の`$rc_monthly`に追加。**Entitlement識別子の大小文字厳密一致は結果的に`Premium`で確定** → ④ビルドに`REVENUECAT_ANDROID_KEY`を渡す **✅完了(2026-08-07確認)**。Build 18に投入済みであることを、開発者本人の実購入による課金フロー全体の検証(未完了項目14参照)で確認した。**当初の方針(テスト完走後8/14頃まで意図的に保留)からは前倒しで実施された形になっている(いつ・誰が投入したかの経緯記録なし、要追跡)**。コード側の`app_user_id`結線は確認済みで修正不要。**残作業**: Real-Time Developer Notifications接続(2026-08-06以降、RevenueCat側の認証情報反映待ち。トラック設定変更を伴わないためテスト期間中でも着手可)。担当: 人間(ダッシュボード作業)。期限: RTDN接続は8/6以降
+- **返金時のPremium剥奪の調査**(2026-08-07新設、要調査・未着手): `api/revenuecat-webhook.ts`の`REVOKE_EVENT_TYPES`は`EXPIRATION`のみを含み、`GRANT_EVENT_TYPES`には`REFUND_REVERSED`(返金の取り消し=再付与)が含まれている。一方、返金そのもの(単純な`REFUND`相当のイベント)を明示的に扱うコードが存在するかは**[未確認]**。RevenueCatが返金時に具体的にどのイベントタイプを送信するか(`EXPIRATION`として扱われるのか、別種のイベントとして送られ現状無視されているのか)をRevenueCat公式ドキュメントで確認する必要がある。もし後者であれば、返金が成立してもPremium権限がサーバー側で剥奪されず無期限に残り続ける不具合になる。RTDN接続(直上の項目)と同様、ユーザー数が少ないテスト期間中は表面化しにくいが、一般公開後にユーザー数が増えるほど収益漏れリスクが拡大する性質を持つ。担当: 未定。期限: 一般公開前が望ましい
 - **Push通知 Phase2**(submission非必須・機能拡張・「道2」でスコープ外継続): Apple Developer Portal側のcapability有効化・プロファイル再作成は2026-07-26確認時点で既に完了済み(DECISIONS.md参照)。残る手順: APNsキー(`26PUZTM353`、.p8、Drive `00_Project_Credentials`、file ID `1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)をFirebase Console → Cloud Messagingにアップロード → PR #14(iOS APNsエンティトルメント追加、実装済み・App Store公開待ちでマージ保留中)をマージ → 実機でのプッシュ受信テスト。担当: 人間+CC。期限: 未定(App Store公開後)
 - **通知履歴の既存DB行クリーンアップ**(2026-08-06追記、影響軽微): PR #34マージ時点で`is_read=true`かつ`status='scheduled'`のまま残っていた既存行(該当3件、2026-07-31時点で確認)への対処。`getHistory()`が`status='delivered'`のみに絞り込み済みのため画面上には表示されず、ユーザー影響は無い。DBの整合性のみの問題。担当: 未定。期限: 未定
 - **AdMob公開後タスク**(承認状況「要審査」。ストア公開が前提のため公開後に再確認): リワード広告No Fillの再検証(公開直後は在庫が薄い場合があるため数日様子見)/ AdMobコンソールにApp Storeのストアリンクを登録 / `voikerchat.com`に`app-ads.txt`を設置 / AdMobの「準備状況」レビューを確認。担当: 人間。期限: App Store公開後
