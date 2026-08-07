@@ -222,7 +222,6 @@
 - **小タスク: G6ダイアログを権限取得済み時はスキップする改善**(任意)。担当: 未定。期限: 未定
 - **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-14以降)
 - **Google Play Console 定期購入の特典テキスト修正(「Access to all 13 scenes」→18)**: 2026-08-04、シーン数記載監査でコード実装(18シーン)とストア/ドキュメント側の記載乖離を確認した際に発見。`docs/support.html`・`internal-docs/Persona-Design-v1.0.md`・`internal-docs/Onboarding-Flow-v1.0.md`・`internal-docs/Tutorial-Design-v1.0.md`・`internal-docs/T-20-Onboarding-Enhancement-v1.0.md`はリポジトリ側で18に修正済み(PR参照)だが、**Google Play Consoleの定期購入商品(`voikerchat_premium_monthly`)特典テキストの「Access to all 13 scenes」表記はストア側の設定でありコード修正の対象外**。トラック設定変更の運用ルール(本ファイル「運用ルール」節)により、クローズドテスト完走(2026-08-14頃)後に手動で修正すること。担当: 人間。期限: 2026-08-14頃(完走後)
-- **AABサイズ(89.4MB)の削減検討**(一般公開前TODO・2026-08-07調査完了): 実際に生成済みのAAB(Build 18相当)を展開し圧縮後サイズを実測した結果、**内訳の36%(32.29MiB)はユーザーに一切配信されないデバッグシンボル/難読化マッピング**(Android Gradle Pluginのデフォルト挙動、Play Consoleのクラッシュ解析専用)、**29%(26.28MiB)がオンボーディング画像**(3言語×3枚、PR #51で追加)、残りがネイティブライブラリ(3ABI分)・dex等と判明。オンボーディング画像はWebP変換で圧縮後13〜18MiB程度の削減が見込め(工数S、半日以内)、x86_64 ABI除外でAAB表示上さらに約18MiB削減可能(工数XS、ただしスマホユーザーの実ダウンロード量には影響しない)。詳細・削減案の全体像は`internal-docs/reports/aab_size_investigation_20260807.md`参照。**次の確認事項**: Play Consoleの「サイズ増加の警告」が具体的にどの数値(AABファイル自体か、App bundle explorerの端末別ダウンロードサイズか)を指しているか確認すること(Takatoh)。担当: 人間(Play Console確認)+CC(実装、方針確定後)。期限: 一般公開前
 - **iOS MinimumOSVersionの引き上げ(13.0→15.0以上)**(2026-08-07発見、期限明確・優先度低): `ios-release.yml`のApp Store Connectアップロードログに`WARN: [altool.100302E50] MinimumOSVersion too low. This app has a MinimumOSVersion of 13.0. Starting in Spring 2027, all iOS apps must have a MinimumOSVersion of 15.0 or later in order to be uploaded to App Store Connect or submitted for distribution. (90068)`という警告が1.0.0+19・1.0.0+20とも継続的に出ている。現時点ではアップロード自体は成功しており緊急対応は不要だが、**2027年春以降はこの警告が提出そのもののブロッカーになる**。Xcodeプロジェクトの`IPHONEOS_DEPLOYMENT_TARGET`引き上げと、対応するテスト・古いiOSバージョン切り捨ての影響確認が必要。担当: 未定。期限: 2027年春(Apple公式期限)より十分前
 - **AI応答の英訳表示(タップ方式)**(着手条件付きバックログ、2026-08-06方針決定): テスターフィードバック(`internal-docs/TESTER-FEEDBACK.md`Q2・Q5)を受け、常時日英併記は不採用と決定(学習者が日本語を読まなくなり推測して理解する過程が失われるため)。代わりに既存の辞書ツール(難語Top3・なぞり選択)と同じ「タップで英訳を取得」オンデマンド方式を採用する方針。実装は案A(タップ時にAPIで英訳取得)。案B(応答生成と同時に英訳も生成)は出力トークンがほぼ倍増するため不採用。詳細はDECISIONS.md 2026-08-06参照。**着手条件**: 次回以降のテスターフィードバックで同じ要望が再度出た場合(無料枠5→10引き上げでQ3の不満が解消され、要望自体が再度出ないか経過観察する)。担当: 未定。期限: 未定(判断待ち)
 - **オフライン起動時間のさらなる短縮**(任意・優先度低、2026-08-06追記): PR #59(タイムアウト+Wave並列化+premium_usersトピック同期のバックグラウンド化)適用後も、機内モードでの起動は目標8秒に対し実測約15秒程度(実機検証3回目、体感・正確な計測なし)。**要調査**: Wave 2に残る直列待ちの可能性(例: `if (supabaseResult == success)`ブロック内の`reconcileHistoryOnLaunch()`/`scheduleDailyReminders()`/`loginWithUserId()`は現状オフライン時は`supabaseResult != success`のため実行されないはずだが、実際に何が15秒の内訳になっているかは未計測。ログにタイムスタンプを仕込む等での再調査が必要)。担当: 未定。期限: 未定
@@ -340,6 +339,13 @@
 
 - 対象: 既存21キー(notification_scheduler)に加え、言語切替UI(PR #8)・通知トグル(PR #11)の新規キーも機械翻訳のまま未レビュー
 - **2026-08-07、Takatohの判断により「本番化前必須」から「公開後の改善候補」へ格下げした**[本人判断 2026-08-07]。理由: 優先度がそこまで高くないと評価されたため。妻への依頼はアクションアイテムから一旦外す(詳細はDECISIONS.md 2026-08-07参照)
+- 担当: 未定。期限: 未定(公開後、必要になった段階で着手を判断)
+
+### [優先: 低] AABサイズの削減(オンボーディング画像の解像度縮小+WebP変換)(2026-08-07、一般公開前TODOから格下げ)
+
+- **[2026-08-07訂正]** 当初「AABサイズ89.4MBの削減」を一般公開前TODOとしていたが、**数字の読み違いに基づく誤った優先度付けだった**。Play Console実画面で確認したところ、Build 18の「新規インストールのサイズ」は**42.4MB**、更新時**32.5MB**、ダウンロード時間**24秒**であり、**サイズ増加の警告は表示されていない**[確認済 2026-08-07、Play Console App Bundle詳細画面]。89.4MBはアップロードするAABファイル自体のサイズであり、レポートの分析どおりBUNDLE-METADATA(32.29 MiB)はユーザーに配信されず、`lib/`も3ABI中1つのみ配信されるため、実際のユーザーのダウンロードサイズとは別物だった。**一般公開のブロッカーではない**
+- 引き続き検討する価値がある点: オンボーディング画像(現状1536×2752、過大)の解像度縮小+WebP変換を併用すれば、実ダウンロード42.4MB→約21MBまで半減できる見込み。ただし目的は「公開ブロッカーの解消」ではなく「インストール離脱率の改善」という別の価値のため、優先度は低・公開後の改善候補と位置づける
+- 詳細は`internal-docs/reports/aab_size_investigation_20260807.md`の追記(Play Console実測値・提案F)参照
 - 担当: 未定。期限: 未定(公開後、必要になった段階で着手を判断)
 
 ## 市場・競合メモ
