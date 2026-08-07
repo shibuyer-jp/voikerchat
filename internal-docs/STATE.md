@@ -37,7 +37,7 @@
 | lefthook pre-push | ✅ 稼働 | analyze/test(`371b1ea`) |
 | プッシュ通知 | 🚧 Phase2へ明示的に先送り(「道2」決定、2026-07-25) | 受信側コード(`remote_notification_service.dart`+main.dart配線+FCM設定一式)は既存のまま維持するが、自動送信基盤の新規構築・APNs関連の追加対応は今回のリリースでは行わない方針を確定(internal-docs/DECISIONS.md 2026-07-25参照)。iOS APNsエンティトルメント(`ios/Runner/DebugProfile.entitlements`・`Release.entitlements`・pbxproj)はPR #14として実装済みだが**マージ保留**(手動署名の固定プロビジョニングプロファイルとentitlementsの不一致でiOSリリースビルドを壊すリスクがあるため)。Phase2着手時の手順は下記「次タスク」3番を参照 |
 | AdMob リワード広告 | ✅ コード完了・実ID設定済 / ⚠️ No Fill(公開後に再検証) | `ad_config.dart`の`_prod*`は実ID設定済(`useTestAds=false`)、`GADApplicationIdentifier`・`SKAdNetworkItems`(PR #16、Google推奨50件)も設定済み。TestFlight Build 8〜10で継続的に`onAdFailedToLoad: code=1 No Fill`(コード側は正常、AdMobサーバーへのリクエスト自体は成功=responseId取得済み)。AdMobコンソール確認の結果、**原因はアプリがApp Store未公開であること**と判断(DECISIONS.md 2026-07-26)。App Store公開後に再検証すること(次タスク参照) |
-| fil訳ネイティブレビュー | 📋 未 | 本番化前必須(妻に依頼) |
+| fil訳ネイティブレビュー | 📋 未 | **公開後の改善候補へ格下げ(2026-08-07)**[本人判断]。妻に依頼予定だったが、優先度がそこまで高くないと判断されアクションアイテムからは一旦外れた |
 | **Androidクローズドテスト配布** | ✅ **Build 18(versionCode 18)配布中**(2026-08-06 13:46 JST「選択したテスターに公開されました」)[確認済 2026-08-07、Play Console実画面] | 2026-08-06、Build 18を配信。**PR #36のAIデータ利用同意画面を含む初のAndroidビルド**であり、タブレット実機で同意画面の表示を確認済み[本人報告 2026-08-07]。**[要確認]** Build 18のビルド時に`--dart-define=REVENUECAT_ANDROID_KEY`を渡したかは未記録(渡していれば購読ボタンが有効化されている。製品版アクセス申請のPart 1②の記述に影響、`internal-docs/PRODUCTION_ACCESS.md`項目9参照)。旧: 2026-08-03、Build 16の審査提出・配布が完了。**usage_logsのplatform/localeはBuild 16配信より前から記録が存在していた**(android/ja=4件、android/en=2件、最終記録00:27 UTC、NULLは233件残存。どのPRで実装されたかは未特定、要追跡)。旧: Alphaトラック「公開」、配布中は**Build 13(versionCode 13)**。main(`1.0.0+15`)より2世代古く、PR #29(価格期間表記)・PR #30(Paywallフッター)が未反映。※実機確認ではBuild 13でも `$12.99/月` は表示されていた(要因未確定)。**次に使えるversionCodeは15**(7・13は使用済で永久予約)。テスター: リスト名「Voikerchat Closed Test - PH」に**確定11名+開発者自身=12アカウント**を登録済み。メールアドレス要確認3名(K.G. / L.B. / R.A.、2026-08-04匿名化)は妻の回答後に追加。**確保可能な上限が15名しかなく、要件(12名以上が14日間連続オプトイン)に対して余裕が2名分しかない**。オプトインURL: `https://play.google.com/apps/testing/jp.shibuyer.voikerchat`(Play Consoleの「リンクをコピー」はストア掲載URLを返すためこちらを使用。実機で表示確認済み)。国/地域: フィリピン・日本の2か国。**タイマーの起点は登録ではなくオプトイン**。新AAB配信でタイマーはリセットされない。募集文面(英語/タガログ語)作成済み、タガログ語は妻のネイティブ確認後に送付(DECISIONS.md 2026-07-29参照) |
 | **daily_limitの日次リセット漏れ修正** | ✅ コード完了・main反映(PR #19) / ⚠️ 実地検証**必須・未実施** | `api/chat.ts`・`api/rate-limit.ts`の両方にあった日次リセット処理が`used_today`のみリセットし`daily_limit`を放置していたバグを修正(広告視聴ボーナスが恒久化する不具合)。定数を`api/_constants.ts`/`lib/constants/rate_limit_constants.dart`に一元化。api/*.ts自動テストを追加していないため、`internal-docs/verification/release_verification_session_20260726.md`のPART B(daily_limit動作検証)実施が必須(省略可の任意項目ではない。DECISIONS.md 2026-07-26参照)。既存データの是正・動作検証は同ドキュメントに統合済み(旧ファイルは実行禁止マーク済み・記録用) |
 | **ストア掲載文の数値非依存化(v1.3→v1.4)** | ✅ 完了・main反映(PR #20) | `internal-docs/Store-Listing-Copy-v1.4.md`。「無料版とプレミアム」段落から具体的回数(5回/日・+5回)を削除し、動的表示に委ねる文言へ変更。ストア本番反映(コンソールへの貼付)はPR #20本文のコピペ用テキストを使用(人間が実行、要)(DECISIONS.md 2026-07-26) |
@@ -185,7 +185,6 @@
 - **Android署名fail-fast**(PR #5、実装済み・マージ保留中): key.properties不在時のdebug鍵フォールバック廃止。Windows Laptopでのローカルgradle検証待ち。担当: 人間。期限: 未定
 - **クロスプラットフォーム課金引き継ぎ**(着手条件付きバックログ): 匿名サインインのみのため、iOSで購入した人がAndroidで利用しても課金が引き継がれない(同一端末の再インストールは`restorePurchases()`で復元されるため実害なし)。解消にはメールログイン等の実アカウント導入が必要(登録画面追加による離脱率上昇とのトレードオフ、DECISIONS.md 2026-07-29参照)。着手条件: リリース後に「機種変更したら課金が消えた」という問い合わせが実際に発生してから判断する。担当: 未定。期限: 未定
 - **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)。担当: 人間。期限: 未定(1.0.0+15審査提出時点での申告状況は本ドキュメント上未確認のため要確認)
-- **fil訳ネイティブレビュー**(妻に依頼) → 本番化: 既存21キー(notification_scheduler)に加え、言語切替UI(PR #8)・通知トグル(PR #11)の新規キーも機械翻訳のまま未レビュー。担当: 人間(妻)。期限: 本番化前
 - **PR #20ストアコピペ反映**: PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映。担当: 人間。期限: 未定
 - **release_verification_session_20260726.mdの残タスク(STEP2/STEP4/STEP5/Phase D/Phase E)**: STEP1(本番データ是正、不要と判断)・STEP3(daily_limit動作検証、実質完了)は2026-07-31に解消済み(DECISIONS.md参照)。残るSTEP2/4/5とPhase D/Eは実機での破壊的操作(アンインストール・端末日時変更)を伴い、テスター61名が稼働中に行うと結果の解釈が困難になるため、クローズドテスト完走(2026-08-14見込み)以降に実施する(検証doc自体の冒頭に方針追記済み)。担当: 人間。期限: 完走後
 - **通知履歴の表示時ローカライズ改修**(任意・優先度低): 現状「配信時点の言語で保持」が仕様(DECISIONS.md 2026-07-26)。ユーザーから改善要望が出た場合のみ着手。担当: 未定。期限: 未定
@@ -290,6 +289,7 @@
 
 ### [優先: 中] 技術的負債
 
+- **Mac(Intel、Xcode 16)の使用可否の正確な記述**(2026-08-07訂正): `ios-release.yml`のコメント(「ローカル(Intel Mac, Xcode 16)ではiOS 26 SDK要件を満たせずApp Store Connectへのアップロードが不可能」)が「Macは(開発に)使えない」と単純化されて伝わることがあるが、正確ではない。**シミュレータ自体は使用可能**であり、App Store提出用スクリーンショットの撮影、iPad Air 11-inch等の各画面サイズでのレイアウト確認には実際に使用した実績がある[本人報告 2026-08-07](例: DECISIONS.md 2026-07-28「iPhone 16 Pro/iPhone 16 Pro Maxシミュレータで確認」)。**正しくは「Macは使えない」ではなく「Macでは配布用IPA(App Store Connectへのアップロード)が作れない」**。配布用IPA作成のみGitHub Actions(macos-26ランナー、Xcode 26)に委ねる構成になっている(`ios-release.yml`、DECISIONS.md 2026-07-26参照)
 - chat.ts のリセット基準が他エンドポイントと不統一(chat.ts: 24時間ローリング / define・hint・recap・vocab-summary: UTC暦日境界)
 - FREE_DAILY_DEFINE_HINT_LIMIT = 30 が define.ts / hint.ts で重複定義
 - recap_service.dart / vocab_summary_service.dart に 429 分岐がなく、上限到達が「一時的な失敗」として表示される
@@ -304,6 +304,12 @@
 - RevenueCatダッシュボードに未使用のEntitlement `Voikerchat Pro`、Offeringの`$rc_annual`/`$rc_lifetime`が残存(2026-08-04のAndroid有効化作業中に発見。実店舗製品との紐付けなし)。完走後に整理
 - voikerchat.comトップページの訴求文言とストア掲載情報の間にズレが残っている可能性(2026-08-04、未確認。次回精査対象)
 - `git stash@{0}`〜`{4}`(ローカル、5件)は移植済み/ビルドノイズ。`stash@{0}`(RevenueCat Android関連の`docs/ANDROID_RELEASE.md`・`docs/STATE.md`編集)は2026-08-04に内容を`internal-docs/`側へ手動移植済みで、原本は意図的にdropせず残置(移植漏れ検証用)。`stash@{1}`〜`{4}`は`pubspec.lock`/生成済みプラグイン登録ファイルのみのビルド成果物ノイズで`docs/`とは無関係。いずれもP4完走後にまとめて整理(`git stash drop`)
+
+### [優先: 低] fil(タガログ語)訳のネイティブレビュー(2026-08-07、本番化前必須から格下げ)
+
+- 対象: 既存21キー(notification_scheduler)に加え、言語切替UI(PR #8)・通知トグル(PR #11)の新規キーも機械翻訳のまま未レビュー
+- **2026-08-07、Takatohの判断により「本番化前必須」から「公開後の改善候補」へ格下げした**[本人判断 2026-08-07]。理由: 優先度がそこまで高くないと評価されたため。妻への依頼はアクションアイテムから一旦外す(詳細はDECISIONS.md 2026-08-07参照)
+- 担当: 未定。期限: 未定(公開後、必要になった段階で着手を判断)
 
 ## 市場・競合メモ
 
