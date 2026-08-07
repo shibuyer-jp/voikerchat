@@ -25,12 +25,13 @@
 | 1 | **Build 18の配信**(PR #36のAIデータ同意画面を含む版) | ✅ **配信済み**(2026-08-06 13:46 JST「選択したテスターに公開されました」、versionCode 18)[確認済 2026-08-07 / Play Console実画面] | 対応不要。AI同意画面の実機動作はタブレット実機で確認済み[本人報告 2026-08-07]。Build 16時代の「テスターが同意画面を経ずに利用中」という懸念は解消 | Play Console クローズドテスト-Alpha 画面、`internal-docs/STATE.md` |
 | 2 | **定期購入の特典テキスト「Access to all 13 scenes」→ 18** | ❌ 未修正 | Play Console → 収益化 → 定期購入 → `voikerchat_premium_monthly` → 基本プラン詳細の特典テキストを手動編集(ストア側設定、コード修正では反映されない) | `internal-docs/STATE.md`バックログ、実装は18シーンが正(`lib/services/scene_service.dart`) |
 | 3 | **ストア掲載情報(ja/en/fil)とデータセーフティ申告の整合** | **[未確認]** | 3言語のストア掲載文(`internal-docs/Store-Listing-Copy-v1.4.md`)が実際にPlay Consoleへ反映済みか、データセーフティ申告のステップ3〜4(「メッセージ→その他のアプリ内メッセージ」「デバイスまたはその他のID」)にチェックが入っているかを実画面で確認 | `internal-docs/STATE.md`項目4「統計情報の共有」隣接記載、DECISIONS.md 2026-07-29(データセーフティ点検) |
-| 4 | **年齢設定の不整合** | **[未確認]** | 利用規約・プライバシーポリシー・Play Consoleのコンテンツレーティング・App Store Connectのレーティングの4箇所が一致しているか確認。法務ページは13歳以上、App Store Connectは18+と記録されているが実物未確認 | `internal-docs/STATE.md`未完了項目6 |
+| 4 | **年齢設定の不整合** | 🔴 **未解消(最優先)**。4箇所中3箇所を確認済み: 利用規約/プライバシーポリシーは18歳以上で一貫[確認済 2026-08-07]、Play Consoleコンテンツレーティングは全年齢[確認済 2026-08-07]、**App Store Connectのレーティングのみ[未確認]のまま残る**。法務文書を13歳以上へ引き下げる改訂案をPR #80として作成済み(未マージ、Takatoh判断待ち) | PR #80のレビュー・採否判断 → App Store Connect実画面の確認 → 4箇所を一致させる | `internal-docs/STATE.md`未完了項目6、PR #80 |
 | 5 | **API原価の実測** | ✅ 完了(Claude Haiku)。全期間実測 n=157、avg入力585/出力69トークン、損益分岐課金率1.86%。**OpenAI TTS(`cloud_tts`)はトークン列がnullで別課金体系のため未算出** | 申請の必須項目ではないが、価格設計の説明材料として使用可。TTS原価は残課題 | `DECISIONS.md` 2026-08-05(続)・2026-08-06 |
 | 6 | **テスターフィードバックの収集** | ✅ 1件収集済み(Q1〜Q5のQ&A形式)。**フィリピン側テスター全体の総意**であることを配偶者より確認[本人報告 2026-08-07]。Build 18配信後の再収集を2026-08-07夜に依頼予定 | `internal-docs/TESTER-FEEDBACK.md` 2節に記録済み。**Part 1③はこの内容で記述可能になった**(下記3節を更新済み) | `internal-docs/TESTER-FEEDBACK.md` |
 | 7 | **Play Consoleのポリシーステータス** | **[未確認]** | 「ポリシー→ポリシーのステータス」の実画面で、未解消の警告がないことを申請直前に確認(過去にBilling Library関連の警告見落としの前例あり) | `DECISIONS.md` 2026-07-29(Billing Library 8教訓) |
 | 8 | **統計情報の共有(外部サービス保証条件)** | 未着手 | 出品者(テスター管理業者)へPlay Console統計を共有 | `internal-docs/STATE.md`未完了項目4 |
 | 9 | **`REVENUECAT_ANDROID_KEY`のBuild 18への投入** | ✅ **完了(2026-08-07確認)**。投入済み。開発者本人が実際にPremium定期購入を購入し、購入→entitlement反映→シーン解放までの課金フロー全体を検証済み[本人報告 2026-08-07] | 対応不要。ただし開発者本人の購入がライセンステスト扱いかは別途[未確認](`internal-docs/STATE.md`未完了項目16) | `internal-docs/STATE.md`未完了項目14・バックログ「RevenueCat Android有効化」④ |
+| 10 | **Google Play AI生成コンテンツポリシーの遵守** | ✅ **対応不要(2026-08-07確認)**。必須要件(アプリ内でのAI応答報告機能)はPR #6(2026-07-24/25)で実装済み | 対応不要。追加調査・実装は無し | `internal-docs/STATE.md`未完了項目19、`internal-docs/reports/ai_generated_content_policy_20260807.md` |
 
 ---
 
