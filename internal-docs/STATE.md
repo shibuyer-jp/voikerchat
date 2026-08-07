@@ -141,6 +141,7 @@
       - +19で確認できた項目: オンボーディングスライド ✅ / AI同意画面 ✅ / 辞書・なぞり選択 ✅ / オフライン起動時の日本語案内表示 ✅(PR #59が期待どおり動作) / 無料枠10回表示 ✅
       - **未検証**: 購入直後のシーン解除(PR #53)。未購入状態を作れず実施できなかった。1.0.0+20の検証時に再試行する
       - **保留**: iPad Air 11-inchでのAI同意画面確認。MacBookのシミュレータで実施予定
+    - **+20実機検証(2026-08-07)**: Premium判定のクライアント/サーバー不整合(未完了項目17)を実機で確認・解消を確認済み(詳細は未完了項目17参照)。**購入直後のシーン解除(PR #53)は+20でも未検証のまま**(+20でもRevenueCatが購読を復元したため未購入状態を作れなかった)。これ以上TestFlight環境で未購入状態を作る手段が無いため、**実機での直接検証は諦め、コードレビューによる確認に留める方針とする**。根拠: Androidで同一症状(購入後もPremiumシーンが解除されない)が再現しPR #53で修正済み、iOS +17でも同一症状を確認済みであり、プラットフォーム固有の問題ではなく共通コードパスの不具合だったことが確定している。実際の購入イベントでのみ踏める経路のため、リスクとしては残るが監視で代替する(公開後、テスターからの同種報告が無いか注視)
     - **[要確認、未完了項目6と関連]** 同検証中に発見した2点(年齢設定の不整合と隣接する論点のため未完了項目6へ紐付けて記録):
       - 購入シートの価格表示が「月額 ¥2,000」。App Store Connectには₱799 PHPで登録した記録があるが、Google PlayはJPY 2,120。プラットフォーム間で日本価格が食い違っている可能性がある
       - 購入シートに「UNRATED」と表示された。年齢レーティングが未設定である可能性がある
@@ -186,7 +187,7 @@
     - リスク: Play Console のライセンステストアカウントとして登録されているかが**[未確認]**。未登録の実購入であれば、解約しない限り毎月$12.99が実課金される
     - 担当: 人間。期限: 速やかに
 
-17. **Premium判定のクライアント/サーバー不整合の修正**(2026-08-07追記) ✅ **実装・前提作業とも完了(2026-08-07)**
+17. **Premium判定のクライアント/サーバー不整合の修正**(2026-08-07追記) ✅ **完了(実機検証済み、2026-08-07)**
     - 症状: iOS 1.0.0+19実機検証(iPhone 16 / iOS 26.5.2)で発見[検証日 2026-08-07]。Premium購入済みユーザーがアプリを削除し再インストールすると、Premiumシーンはロック解除されるのに日次上限は無料枠「10/10」表示・広告視聴案内も出るという矛盾したUIになる
     - 原因: シーンロックはRevenueCatクライアント側(`checkPremiumStatus()`)、日次上限・広告表示はSupabase `rate_limits.is_premium`のみを参照しており判定元が別。再インストール時、RevenueCatはApple/Googleアカウント経由で購読を即座に復元するが、`api/revenuecat-webhook.ts`のGRANTイベントはこの復元では発火しない(TRANSFERは明示的にno-op)ため、新しい匿名user_idに対する`rate_limits`行の`is_premium`が次回のRENEWAL(最大約30日後)まで`false`のまま取り残される
     - Android: シーンロック・レート制限判定・webhook処理のいずれにもプラットフォーム分岐は無く、構造的に同一の不具合が起きる(実機未検証)
@@ -195,8 +196,10 @@
     - **`REVENUECAT_SECRET_KEY`の反映確認** ✅完了(2026-08-07)。追加前は`curl -X POST https://voikerchat.com/api/premium-sync`が`HTTP 500 Missing environment variable(s): REVENUECAT_SECRET_KEY`を返していたが、Vercelへの環境変数追加+Redeploy後に再実行したところ`HTTP 401 {"error":"Missing authentication token"}`に変化したことを確認[確認済 2026-08-07、Claude Code実施]。環境変数が正しく読み込まれ認証チェックまで到達している証拠であり、正常
     - **マイグレーションSQL実行** ✅完了(2026-08-07)。Supabase SQL Editor(voikerchat-prod / main / Primary Database / role postgres)にて`BEGIN; DROP; ADD; COMMIT;`を実行し「Success. No rows returned」を確認。実行前に`pg_constraint`で既存定義を確認したところ、許容値は`session_start`/`message_sent`/`ad_reward`/`quota_reached`/`upsell_shown`/`upsell_clicked`/`upsell_converted`の7件でマイグレーションの記載と完全一致しており、既存行の違反は発生しなかった。現在の`usage_logs_event_check`は上記7件+`premium_sync`の8件[確認済 2026-08-07、Supabase SQL Editor実行結果]。**premium-syncのレート制限・監査ログは現在有効**
     - 優先度の理由: iOSはAndroidの製品版公開(見込み8/21〜25頃)待ちで2週間程度の余裕があり、今回の修正を含めても再提出スケジュールに影響しない。放置すると課金済みユーザーが再インストールのたびに最大30日間「シーンは使えるが上限10回・広告あり」という状態になり、信頼を損なうリスクが高い
+    - **実機検証** ✅完了(2026-08-07、iOS 1.0.0+20、iPhone 16 / iOS 26.5.2、TestFlight)。アプリを削除し+20を新規インストール(匿名user_idを再生成させ、不整合を再現する条件を作った)して確認したところ、A1(起動)・A2(Premiumシーン解放)・A3(残数表示が「50回」のPremium表記。+19では「10/10」の無料枠表記だった)・A4(広告視聴案内が非表示。+19では表示されていた)のすべてが期待どおりとなり、`api/premium-sync.ts`による再照合が正しく機能していることを確認した[検証手順: `internal-docs/verification/ios_build20_verification_20260807.md`]
     - 詳細: `internal-docs/reports/premium_state_mismatch_20260807.md`参照
-    - 担当: CC(実装)完了、人間(マイグレーション実行・Secret Key登録・PRレビュー)完了。残るはiOS 1.0.0+20実機での再検証のみ
+    - 担当: CC(実装)完了、人間(マイグレーション実行・Secret Key登録・PRレビュー・実機検証)すべて完了
+    - **引き続き未検証**: 購入直後のPremiumシーン即時解除(PR #53)。+20でもRevenueCatが購読を復元したため未購入状態を作れず実施できていない。コードレビューによる確認に留める方針とする(Androidで同一症状が再現しPR #53で修正済み、iOS +17でも同一症状を確認しており、プラットフォーム固有の問題でないことは確定している)
 
 ## バックログ(テスト完走後)
 
@@ -218,6 +221,7 @@
 - **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-14以降)
 - **Google Play Console 定期購入の特典テキスト修正(「Access to all 13 scenes」→18)**: 2026-08-04、シーン数記載監査でコード実装(18シーン)とストア/ドキュメント側の記載乖離を確認した際に発見。`docs/support.html`・`internal-docs/Persona-Design-v1.0.md`・`internal-docs/Onboarding-Flow-v1.0.md`・`internal-docs/Tutorial-Design-v1.0.md`・`internal-docs/T-20-Onboarding-Enhancement-v1.0.md`はリポジトリ側で18に修正済み(PR参照)だが、**Google Play Consoleの定期購入商品(`voikerchat_premium_monthly`)特典テキストの「Access to all 13 scenes」表記はストア側の設定でありコード修正の対象外**。トラック設定変更の運用ルール(本ファイル「運用ルール」節)により、クローズドテスト完走(2026-08-14頃)後に手動で修正すること。担当: 人間。期限: 2026-08-14頃(完走後)
 - **AABサイズ(89.4MB)の削減検討**(一般公開前TODO・2026-08-07調査完了): 実際に生成済みのAAB(Build 18相当)を展開し圧縮後サイズを実測した結果、**内訳の36%(32.29MiB)はユーザーに一切配信されないデバッグシンボル/難読化マッピング**(Android Gradle Pluginのデフォルト挙動、Play Consoleのクラッシュ解析専用)、**29%(26.28MiB)がオンボーディング画像**(3言語×3枚、PR #51で追加)、残りがネイティブライブラリ(3ABI分)・dex等と判明。オンボーディング画像はWebP変換で圧縮後13〜18MiB程度の削減が見込め(工数S、半日以内)、x86_64 ABI除外でAAB表示上さらに約18MiB削減可能(工数XS、ただしスマホユーザーの実ダウンロード量には影響しない)。詳細・削減案の全体像は`internal-docs/reports/aab_size_investigation_20260807.md`参照。**次の確認事項**: Play Consoleの「サイズ増加の警告」が具体的にどの数値(AABファイル自体か、App bundle explorerの端末別ダウンロードサイズか)を指しているか確認すること(Takatoh)。担当: 人間(Play Console確認)+CC(実装、方針確定後)。期限: 一般公開前
+- **iOS MinimumOSVersionの引き上げ(13.0→15.0以上)**(2026-08-07発見、期限明確・優先度低): `ios-release.yml`のApp Store Connectアップロードログに`WARN: [altool.100302E50] MinimumOSVersion too low. This app has a MinimumOSVersion of 13.0. Starting in Spring 2027, all iOS apps must have a MinimumOSVersion of 15.0 or later in order to be uploaded to App Store Connect or submitted for distribution. (90068)`という警告が1.0.0+19・1.0.0+20とも継続的に出ている。現時点ではアップロード自体は成功しており緊急対応は不要だが、**2027年春以降はこの警告が提出そのもののブロッカーになる**。Xcodeプロジェクトの`IPHONEOS_DEPLOYMENT_TARGET`引き上げと、対応するテスト・古いiOSバージョン切り捨ての影響確認が必要。担当: 未定。期限: 2027年春(Apple公式期限)より十分前
 - **AI応答の英訳表示(タップ方式)**(着手条件付きバックログ、2026-08-06方針決定): テスターフィードバック(`internal-docs/TESTER-FEEDBACK.md`Q2・Q5)を受け、常時日英併記は不採用と決定(学習者が日本語を読まなくなり推測して理解する過程が失われるため)。代わりに既存の辞書ツール(難語Top3・なぞり選択)と同じ「タップで英訳を取得」オンデマンド方式を採用する方針。実装は案A(タップ時にAPIで英訳取得)。案B(応答生成と同時に英訳も生成)は出力トークンがほぼ倍増するため不採用。詳細はDECISIONS.md 2026-08-06参照。**着手条件**: 次回以降のテスターフィードバックで同じ要望が再度出た場合(無料枠5→10引き上げでQ3の不満が解消され、要望自体が再度出ないか経過観察する)。担当: 未定。期限: 未定(判断待ち)
 - **オフライン起動時間のさらなる短縮**(任意・優先度低、2026-08-06追記): PR #59(タイムアウト+Wave並列化+premium_usersトピック同期のバックグラウンド化)適用後も、機内モードでの起動は目標8秒に対し実測約15秒程度(実機検証3回目、体感・正確な計測なし)。**要調査**: Wave 2に残る直列待ちの可能性(例: `if (supabaseResult == success)`ブロック内の`reconcileHistoryOnLaunch()`/`scheduleDailyReminders()`/`loginWithUserId()`は現状オフライン時は`supabaseResult != success`のため実行されないはずだが、実際に何が15秒の内訳になっているかは未計測。ログにタイムスタンプを仕込む等での再調査が必要)。担当: 未定。期限: 未定
 
