@@ -1,7 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { timingSafeEqual } from 'crypto';
 import { baseDailyLimit } from './_constants';
+import { upsertPremiumStatus } from './_premium';
 
 /**
  * 環境変数（chat.ts と同方式に統一）
@@ -95,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isPremium = action === 'grant';
     const dailyLimit = baseDailyLimit(isPremium);
 
-    await upsertPremiumStatus(supabase, appUserId, isPremium, dailyLimit);
+    await upsertPremiumStatus(supabase, appUserId, isPremium, dailyLimit, 'revenuecat-webhook');
 
     return res.status(200).json({ received: true, action, isPremium, dailyLimit });
   } catch (error: any) {
@@ -128,61 +129,4 @@ function isValidAuthHeader(
   }
 
   return timingSafeEqual(provided, expected);
-}
-
-/**
- * rate_limits の is_premium / daily_limit を upsert する。
- * used_today / last_reset_utc は更新しない（レート制限カウントには干渉しない）。
- */
-async function upsertPremiumStatus(
-  supabase: SupabaseClient,
-  userId: string,
-  isPremium: boolean,
-  dailyLimit: number
-): Promise<void> {
-  const { data: existing, error: selectError } = await supabase
-    .from('rate_limits')
-    .select('user_id')
-    .eq('user_id', userId)
-    .single();
-
-  if (selectError || !existing) {
-    if (selectError) {
-      console.error(
-        'revenuecat-webhook: rate_limits select failed:',
-        selectError.code,
-        selectError.message,
-        selectError.details
-      );
-    }
-    const { error: insertError } = await supabase.from('rate_limits').insert({
-      user_id: userId,
-      used_today: 0,
-      daily_limit: dailyLimit,
-      is_premium: isPremium,
-      last_reset_utc: new Date().toISOString(),
-    });
-    if (insertError) {
-      console.error(
-        'revenuecat-webhook: rate_limits insert failed:',
-        insertError.code,
-        insertError.message,
-        insertError.details
-      );
-    }
-    return;
-  }
-
-  const { error: updateError } = await supabase
-    .from('rate_limits')
-    .update({ is_premium: isPremium, daily_limit: dailyLimit })
-    .eq('user_id', userId);
-  if (updateError) {
-    console.error(
-      'revenuecat-webhook: rate_limits update failed:',
-      updateError.code,
-      updateError.message,
-      updateError.details
-    );
-  }
 }

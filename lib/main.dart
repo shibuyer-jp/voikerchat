@@ -16,6 +16,8 @@ import 'screens/onboarding/onboarding_slides_screen.dart';
 import 'screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/learner_preferences_service.dart';
+import 'services/premium_sync_service.dart';
+import 'services/rate_limit_service.dart';
 import 'services/revenuecat_service.dart';
 import 'services/local_notification_service.dart';
 import 'services/locale_service.dart';
@@ -188,6 +190,39 @@ Future<void> _syncPremiumTopicSubscription(RevenueCatService revenueCat) async {
   }
 }
 
+/// クライアント側RevenueCatがPremiumと判定しているのに、サーバー側
+/// rate_limits.is_premiumがfalseのままの場合のみ、サーバーへ再照合を
+/// リクエストする(2026-08-07: 再インストール時、RevenueCatはApple/Google
+/// アカウント経由で購読を復元するが、新しい匿名user_idに対する
+/// rate_limits行の更新はwebhookのいずれのイベントでも発火しないため、
+/// シーンは解放されるのに日次上限・広告表示は無料枠のままという不整合が
+/// 起きる不具合の対策。internal-docs/reports/premium_state_mismatch_20260807.md
+/// 参照)。サーバー側は本リクエストのisPremium自己申告を一切信用せず、
+/// RevenueCat REST APIに直接問い合わせて再検証してから rate_limits を
+/// 更新する(api/premium-sync.ts)。UI表示に即座の影響は無い副次処理のため
+/// awaitせずバックグラウンドで行う(loginWithUserId成功後にのみ意味を持つ
+/// ため、呼び出し側でその後に限定して呼ぶこと)。
+Future<void> _reconcilePremiumStatus(
+  RevenueCatService revenueCat,
+  String userId,
+) async {
+  try {
+    final clientIsPremium = await revenueCat.checkPremiumStatus();
+    if (!clientIsPremium) return;
+
+    final rateLimit = await RateLimitService(Supabase.instance.client)
+        .getRateLimit(userId);
+    if (rateLimit.isPremium) return;
+
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    if (token == null) return;
+
+    await PremiumSyncService().reconcile(accessToken: token);
+  } catch (e) {
+    logger.info('[main] Premium reconcile skipped: $e');
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -273,6 +308,10 @@ void main() async {
         final linked = await revenueCat.loginWithUserId(userId);
         if (linked) {
           _syncPremiumTopicSubscription(revenueCat);
+          // クライアント/サーバー間のPremium判定不整合の再照合(2026-08-07)。
+          // loginWithUserId成功後(RevenueCatのapp_user_idがSupabaseの
+          // userIdと一致した後)にのみ意味を持つため、この位置で呼ぶ。
+          _reconcilePremiumStatus(revenueCat, userId);
         }
       }
     } catch (e) {

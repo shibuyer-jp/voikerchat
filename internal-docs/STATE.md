@@ -174,6 +174,16 @@
     - リスク: Play Console のライセンステストアカウントとして登録されているかが**[未確認]**。未登録の実購入であれば、解約しない限り毎月$12.99が実課金される
     - 担当: 人間。期限: 速やかに
 
+17. **Premium判定のクライアント/サーバー不整合の修正**(2026-08-07追記) 🔴 **iOS再提出・Android製品版ビルドの両方に含めるべき必須修正**
+    - 症状: iOS 1.0.0+19実機検証(iPhone 16 / iOS 26.5.2)で発見[検証日 2026-08-07]。Premium購入済みユーザーがアプリを削除し再インストールすると、Premiumシーンはロック解除されるのに日次上限は無料枠「10/10」表示・広告視聴案内も出るという矛盾したUIになる
+    - 原因: シーンロックはRevenueCatクライアント側(`checkPremiumStatus()`)、日次上限・広告表示はSupabase `rate_limits.is_premium`のみを参照しており判定元が別。再インストール時、RevenueCatはApple/Googleアカウント経由で購読を即座に復元するが、`api/revenuecat-webhook.ts`のGRANTイベントはこの復元では発火しない(TRANSFERは明示的にno-op)ため、新しい匿名user_idに対する`rate_limits`行の`is_premium`が次回のRENEWAL(最大約30日後)まで`false`のまま取り残される
+    - Android: シーンロック・レート制限判定・webhook処理のいずれにもプラットフォーム分岐は無く、構造的に同一の不具合が起きる(実機未検証)
+    - 修正: `api/premium-sync.ts`新設(ログイン後、クライアント=Premiumかつサーバー=falseの場合のみサーバーへ再照合をリクエスト。サーバー側はクライアントの自己申告を信用せずRevenueCat REST APIへ直接問い合わせて検証してから`rate_limits`を更新)。`lib/main.dart`の`loginWithUserId()`成功後に結線。プラットフォーム共通で効く
+    - 前提として必要な人手作業: `internal-docs/migrations/2026-08-07_add_usage_logs_premium_sync_event.sql`をSupabaseで実行、`REVENUECAT_SECRET_KEY`をVercel環境変数へ追加(RevenueCatダッシュボードの「API keys → Secret keys」から発行)
+    - 優先度の理由: iOSはAndroidの製品版公開(見込み8/21〜25頃)待ちで2週間程度の余裕があり、今回の修正を含めても再提出スケジュールに影響しない。放置すると課金済みユーザーが再インストールのたびに最大30日間「シーンは使えるが上限10回・広告あり」という状態になり、信頼を損なうリスクが高い
+    - 詳細: `internal-docs/reports/premium_state_mismatch_20260807.md`参照
+    - 担当: CC(実装)完了、人間(マイグレーション実行・Secret Key登録・PRレビュー)。期限: iOS 1.0.0+20再提出前
+
 ## バックログ(テスト完走後)
 
 旧「次タスク」の未完了分。下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手はテスト完走(2026-08-14目安)後。
@@ -183,7 +193,7 @@
 - **通知履歴の既存DB行クリーンアップ**(2026-08-06追記、影響軽微): PR #34マージ時点で`is_read=true`かつ`status='scheduled'`のまま残っていた既存行(該当3件、2026-07-31時点で確認)への対処。`getHistory()`が`status='delivered'`のみに絞り込み済みのため画面上には表示されず、ユーザー影響は無い。DBの整合性のみの問題。担当: 未定。期限: 未定
 - **AdMob公開後タスク**(承認状況「要審査」。ストア公開が前提のため公開後に再確認): リワード広告No Fillの再検証(公開直後は在庫が薄い場合があるため数日様子見)/ AdMobコンソールにApp Storeのストアリンクを登録 / `voikerchat.com`に`app-ads.txt`を設置 / AdMobの「準備状況」レビューを確認。担当: 人間。期限: App Store公開後
 - **Android署名fail-fast**(PR #5、実装済み・マージ保留中): key.properties不在時のdebug鍵フォールバック廃止。Windows Laptopでのローカルgradle検証待ち。担当: 人間。期限: 未定
-- **クロスプラットフォーム課金引き継ぎ**(着手条件付きバックログ): 匿名サインインのみのため、iOSで購入した人がAndroidで利用しても課金が引き継がれない(同一端末の再インストールは`restorePurchases()`で復元されるため実害なし)。解消にはメールログイン等の実アカウント導入が必要(登録画面追加による離脱率上昇とのトレードオフ、DECISIONS.md 2026-07-29参照)。着手条件: リリース後に「機種変更したら課金が消えた」という問い合わせが実際に発生してから判断する。担当: 未定。期限: 未定
+- **クロスプラットフォーム課金引き継ぎ**(着手条件付きバックログ): 匿名サインインのみのため、iOSで購入した人がAndroidで利用しても課金が引き継がれない。**[2026-08-07訂正]** 旧記載「同一端末の再インストールは`restorePurchases()`で復元されるため実害なし」はクライアント層のみを見た誤り。実際にはサーバー側`rate_limits.is_premium`は再インストール時に取り残され、次回RENEWALまで最大30日間無料枠のままになる不具合が判明(iOS 1.0.0+19実機検証、未完了項目17・`internal-docs/reports/premium_state_mismatch_20260807.md`参照。`api/premium-sync.ts`で対応済み)。解消にはメールログイン等の実アカウント導入が必要(登録画面追加による離脱率上昇とのトレードオフ、DECISIONS.md 2026-07-29参照)。着手条件: リリース後に「機種変更したら課金が消えた」という問い合わせが実際に発生してから判断する。担当: 未定。期限: 未定
 - **音声のPrivacy開示整合**(submission必須): App Store Connectのプライバシー申告に「音声データ→Appleサーバー送信」を反映(NSSpeechRecognitionUsageDescription対応済、申告のみ)。担当: 人間。期限: 未定(1.0.0+15審査提出時点での申告状況は本ドキュメント上未確認のため要確認)
 - **PR #20ストアコピペ反映**: PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映。担当: 人間。期限: 未定
 - **release_verification_session_20260726.mdの残タスク(STEP2/STEP4/STEP5/Phase D/Phase E)**: STEP1(本番データ是正、不要と判断)・STEP3(daily_limit動作検証、実質完了)は2026-07-31に解消済み(DECISIONS.md参照)。残るSTEP2/4/5とPhase D/Eは実機での破壊的操作(アンインストール・端末日時変更)を伴い、テスター61名が稼働中に行うと結果の解釈が困難になるため、クローズドテスト完走(2026-08-14見込み)以降に実施する(検証doc自体の冒頭に方針追記済み)。担当: 人間。期限: 完走後
