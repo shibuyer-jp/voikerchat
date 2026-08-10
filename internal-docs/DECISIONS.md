@@ -643,3 +643,79 @@ FEEDBACK.mdへ2-2として記録済み、Android 14〜16での動作確認を含
 クローズドテスト完走待ち・`PRODUCTION_ACCESS.md`チェックリストの最終
 確認・統計情報の共有(業者向け、進行中)である**。STATE.md/ROADMAP.md
 双方にこの区別を明記した。
+
+### 2026-08-10(続4) RevenueCat RTDN接続完了、返金時のPremium剥奪バグの発見と対応方針
+
+**RTDN接続の完了**: RevenueCat RTDN(Real-Time Developer Notifications)
+接続が完了した[確認済 2026-08-10、RevenueCatダッシュボード実画面]。
+Topic ID `projects/voikerchat/topics/Play-Store-Notifications`、ステータス
+「Connected to Google」(緑チェック)、Last received: 2026-08-10 4:04 a.m.
+UTC(Play Consoleからのテスト通知を受信)。これによりSTATE.mdバックログ
+「RevenueCat Android有効化」は①〜④+RTDN接続まで全完了となった。
+
+**実施手順が事前調査と異なっていた**: `internal-docs/reports/
+revenuecat_rtdn_investigation_20260807.md`(2026-08-07作成)は、①必要な
+IAMロールは「Pub/Sub編集者」で十分 ②Pub/Subトピックは人間がGCP Console
+で手動作成 ③`google-play-developer-notifications@system.gserviceaccount.com`
+への発行者権限付与は人間が手動実行、と想定していたが、実際には①**Pub/Sub
+管理者(`roles/pubsub.admin`)が必要**(「Pub/Sub編集者」ではトピックの
+IAMポリシー変更権限が無く「Your Google service account credentials do not
+have permission to create a Google Cloud Pub/Sub topic.」エラーで失敗)
+②③**RevenueCatの「Connect to Google」操作が自動実行**、という点で異なって
+いた。レポート本文を訂正し、当初の誤った想定は「3-旧」として記録に残した
+(黙って書き換えない)。運用上の落とし穴として、GCPのロール検索で
+「Pub/Sub Lite 管理者」(別サービス、無効)が「Pub/Sub 管理者」より先に
+表示され誤って選択しやすい点も記録した。所要時間実測は約20分(権限エラーの
+解決を含む)。
+
+**返金時のPremium剥奪バグの発見**: RTDN接続作業と並行して
+`api/revenuecat-webhook.ts`のコードレビューを行った結果、**返金が成立
+してもPremiumが剥奪されない不具合**を発見した。RevenueCatには独立した
+`REFUND`イベント種別が存在せず、返金は`CANCELLATION`イベントの
+`cancel_reason='CUSTOMER_SUPPORT'`として届く(RevenueCat公式ドキュメント
+「Event Types and Fields」で確認、2026-08-10、WebFetchで2回確認・内容
+一致)。現状のコードは`REVOKE_EVENT_TYPES=EXPIRATION`のみで`CANCELLATION`
+を一律`action='none'`として無視しており、返金後もPremiumが残り続ける。
+`EXPIRATION`に頼ることもできない(返金後も自動更新設定が有効なままの
+ことがあり、その場合はRENEWALが先に発火しEXPIRATIONが届かない)。
+
+**2026-06の既存決定「CANCELLATIONでは降格しない。EXPIRATIONのみ降格」
+との関係**: この決定は自発的解約(UNSUBSCRIBE)については**引き続き
+正しい**。自動更新をOFFにしただけのユーザーは期間終了までPremiumを使う
+権利があるという判断は変わらない。問題は、RevenueCatが「解約」と「返金」
+を同一の`CANCELLATION`イベントに集約している点であり、2026-06時点では
+この区別が考慮されていなかった。**本件の対応は既存決定の全面撤回では
+なく、返金ケースに限定した例外の追加**である。
+
+**修正方針**: `cancel_reason`をホワイトリスト方式で判定し、
+`CUSTOMER_SUPPORT`(返金)と明示的に判定できた場合のみrevoke。
+`UNSUBSCRIBE`(自発的解約)・`BILLING_ERROR`(猶予期間中の一時的な支払い
+失敗、剥奪すると回復ユーザーの権利を誤って奪う)・`DEVELOPER_INITIATED`・
+`PRICE_INCREASE`・`UNKNOWN`・値が無い場合は保守的にnoneのまま据え置く。
+`cancel_reason`の全6値はRevenueCat公式ドキュメントで確認済み(実装前に
+公式ドキュメントを再確認する運用に従った結果、チャット側Claudeが把握
+していた3値〈BILLING_ERROR/UNSUBSCRIBE/CUSTOMER_SUPPORT〉に加え
+DEVELOPER_INITIATED/PRICE_INCREASE/UNKNOWNの3値を新たに確認した。
+ホワイトリスト方式のため未知の値も自動的にnoneへ倒れ、安全性への影響は
+無い)。
+
+**マージ方針**: 修正はPR #89(`fix/refund-cancellation-premium-revoke-
+20260810`)として作成した。**Android Build 21が現在Google審査中であり、
+コード変更を含むPRのマージはBuild 22以降にまとめて反映する方針のため、
+PR #89はレビュー・記録用に作成のみでマージは保留する**。実際の返金
+イベントによる動作検証は未実施(検証可能な生きた購読が現時点で存在しない
+ため)。
+
+**未解決の別件(RevenueCat上の購読レコード欠落)**: 上記の調査中に、
+2026-08-06の開発者本人のライセンステスト購読(注文番号
+`GPA.3366-1618-4848-35600`)がRevenueCat側に記録されていないことが
+判明した。Customers → Active subscribers=0人、Expired=0人、Sandbox=4人
+(いずれもentitlementsが無く購入イベントも未記録)[確認済 2026-08-10]。
+Google Play側では購入が成立しているにもかかわらずRevenueCat側にレコードが
+見当たらない状態であり、**原因は特定していない**(RTDN未接続だったこと・
+8/7の実機検証でのアプリ削除/再インストールによる匿名user_id再生成・
+ライセンステスト購読の短期終了、等がcandidateだが断定材料が無い)。実害は
+開発者本人のテスト購読1件が追跡できないのみで、実ユーザー・収益への影響は
+無いと評価した。この結果を受け、`internal-docs/ROADMAP.md`区分3の運用知見
+(「ライセンステスト購読を検証に使う」)も、既存の8/6購読は使えない旨へ
+訂正し、Build 21配信後に新規購入を行って検証する方針へ更新した。
