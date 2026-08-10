@@ -74,14 +74,21 @@ Select-String -Path pubspec.yaml -Pattern "^version:"
 
 **⚠️ 渡し忘れ厳禁(versionCode 7の再発防止)**: 前回のversionCode 7ビルドでは`SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY`を渡し忘れたまま、アプリはクラッシュせず「チャット機能(中核機能)だけが動作しない不良ビルド」としてPlay Consoleに投入されかけた事例がある(`internal-docs/DECISIONS.md` 2026-07-27参照)。`REVENUECAT_ANDROID_KEY`も同じ性質を持つ: 渡し忘れても`lib/services/revenuecat_service.dart`の設計上`Purchases.configure()`が黙ってスキップされるだけでアプリはクラッシュせず、ビルド・アップロード・審査を全て素通りしてから「テスターが購読ボタンを押しても反応しない」という形で初めて発覚する、**サイレント失敗**になる。ビルド実行前に必ずコマンド全文を目視し、`<YOUR_ANDROID_KEY>`が実キーに置き換わっていることを確認すること。
 
+**⚠️ キーの種別を厳密に区別すること(2026-08-10、埋め込みかけインシデントを受け追記)**: RevenueCatには性質の異なる2種類のキーが存在する。
+- **渡すべきキー**: Public SDK Key(RevenueCatダッシュボード「API keys → Public app-specific API keys」)。**`goog_`で始まる**。アプリに埋め込む前提で作られており、解析されても実害は無い
+- **絶対に渡してはいけないキー**: Secret API Key(同ダッシュボード「API keys → Secret keys」)。**`sk_`で始まる**。サーバー専用で、Vercel環境変数`REVENUECAT_SECRET_KEY`(`api/premium-sync.ts`が使用)にのみ設定する。**アプリへ埋め込むと解析により購読データの読み書きが可能になるため絶対に埋め込まない**
+- 2026-08-10の実作業で、`sk_`で始まるSecret API Keyを誤って`REVENUECAT_ANDROID_KEY`へ埋め込みかけるインシデントが発生した(ビルド実行前に気づき未実行、実害なし)
+
 ```powershell
 flutter build appbundle --release `
   --dart-define=SUPABASE_URL=https://rfwbwwhqclabhnbsrygw.supabase.co `
   --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_jirMoWsnc0AtQc4c2tUJ6Q_3uc43qHT `
-  --dart-define=REVENUECAT_ANDROID_KEY=<YOUR_ANDROID_KEY>
+  --dart-define=REVENUECAT_ANDROID_KEY=goog_XXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-`<YOUR_ANDROID_KEY>`は、2026-08-04にRevenueCatダッシュボードへ登録したGoogle Playアプリ(App ID: `appf7acdb482b`、Package name: `jp.shibuyer.voikerchat`)に対して発行されたAndroid用Public API Keyに置き換える。**キーの値自体はこの手順書を含むリポジトリには一切記載しない**(開発者が手元で管理)。
+`<YOUR_ANDROID_KEY>`は、2026-08-04にRevenueCatダッシュボードへ登録したGoogle Playアプリ(App ID: `appf7acdb482b`、Package name: `jp.shibuyer.voikerchat`)に対して発行されたAndroid用Public API Key(`goog_`で始まる)に置き換える。**キーの値自体はこの手順書を含むリポジトリには一切記載しない**(開発者が手元で管理)。
+
+**⚠️ `< >`はプレースホルダ記号であり、実際のコマンドには含めないこと**: 本書中の`<YOUR_ANDROID_KEY>`等の山括弧はプレースホルダを表す記号であり、PowerShellではリダイレクト演算子として解釈される。実行するコマンドには`<`や`>`を含めず、実際のキー文字列(上記コマンド例の`goog_...`のように)へそのまま置き換えること。
 
 **含めない(意図的)**:
 - `USE_TEST_ADS`: 渡さない。デフォルト`false`(本番広告)。`lib/services/ad_config.dart`のコメントに「ストア提出ビルドでは絶対にtrueにしないこと」と明記されている。
@@ -97,7 +104,7 @@ flutter build appbundle --release `
 build\app\outputs\bundle\release\app-release.aab
 ```
 
-前回実績(versionCode 7時点)では約61.6MB。極端にサイズが異なる場合は不要なアセット混入等を疑うこと。
+実績(Build 18・versionCode 18時点、Play Console実画面で確認): AABファイル自体のサイズは約89.4MB。Build 21(versionCode 21)もversionCode変更のみで同ソースからの差分がないため同水準の見込み。**89.4MBはユーザーの実ダウンロードサイズではない**(3ABI中1つのみ配信されBUNDLE-METADATAは配信対象外のため。Play Console上の「新規インストールのサイズ」は42.4MB、更新時32.5MB。詳細は`internal-docs/reports/aab_size_investigation_20260807.md`参照)。極端にサイズが異なる場合は不要なアセット混入等を疑うこと。
 
 ---
 
