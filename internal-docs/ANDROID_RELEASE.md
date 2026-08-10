@@ -66,7 +66,7 @@ Test-Path "android\key.properties"
 Select-String -Path pubspec.yaml -Pattern "^version:"
 ```
 
-`version: 1.0.0+13`になっていることを確認する(Build 13の場合。`flutter.versionCode`/`flutter.versionName`は`android/app/build.gradle.kts`がこの値を直接参照するため、pubspec.yaml側の値が唯一の正)。**なっていなければビルドコマンドを実行する前にpubspec.yamlの更新を先に済ませること。**
+`version: 1.0.0+21`になっていることを確認する(Build 21の場合。`flutter.versionCode`/`flutter.versionName`は`android/app/build.gradle.kts`がこの値を直接参照するため、pubspec.yaml側の値が唯一の正)。**なっていなければビルドコマンドを実行する前にpubspec.yamlの更新を先に済ませること。**
 
 ### 3-2. 実行するコマンド(全文)
 
