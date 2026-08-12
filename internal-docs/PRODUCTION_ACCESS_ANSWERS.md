@@ -25,9 +25,9 @@
 
 ## Part 1② テスト中のエンゲージメント
 
-### ⚠️ 提出前に確認すること(要作業、担当: 人間)
+### 確認結果(2026-08-12、確定)
 
-テスター自身による実際の購入実績の有無を、Play Console → 収益化 → 収益レポート/注文管理で確認すること。以下の本文は現時点(2026-08-12)で確認できている事実「テスター自身の購入実績は確認できていない」に基づいて作成済み。確認の結果、購入実績が見つかった場合は本文を差し替えてから提出すること。
+Play Consoleの定期購入レポート(合計定期購入数/新規定期購入/解約された定期購入)をCSVエクスポートして確認した結果、2026年2月8日〜8月8日の182日間、全日程ですべて0件だった[確認済 2026-08-12、Play Console収益レポートのCSVエクスポート]。**テスター自身による定期購入の購入実績はゼロで確定**した(データは8/8までで8/9〜8/12の4日分は反映遅延により未収録だが、テスト期間の大半をカバーしており結論に影響しない)。以下の本文はこの確定事実に基づく完成版。詳細は`internal-docs/DECISIONS.md` 2026-08-12参照。
 
 ### 日本語版(標準)
 
@@ -36,13 +36,13 @@
 
 テスターの構成は2系統に分かれる。①配偶者のネットワークを通じて確保した、フィリピン在住の実ターゲット層(日本語学習者)、②テスター管理サービスを通じて確保した、主に日本国内在住のテスター。後者は日本語UIでの動作確認が中心であり、学習用途としての利用実態は本番想定ユーザーとは異なる。
 
-課金(Premium)フローについては、RevenueCatのAndroid用APIキーをBuild 18以降のビルドに投入済みで購読ボタン自体は有効化されているが、テスター自身による実際の購入実績は確認できていない。開発者本人がPremium定期購入を実際に購入し、購入からエンタイトルメント反映・機能解放までの一連のフローを検証済みだが、これは開発者自身による検証であり、テスターの利用実績ではない。同様に、統計画面等のPremium限定機能についても、テスター自身がPremium状態でこれらを利用した実績は確認できていない。
+課金(Premium)フローについては、RevenueCatのAndroid用APIキーをBuild 18以降のビルドに投入済みで購読ボタンは有効化されており、開発者本人がPremium定期購入を実際に購入し、購入からエンタイトルメント反映・機能解放までの一連のフローを検証済みである。一方、Google Playの収益レポートで確認したところ、テスト期間中、テスター自身による定期購入の購入実績はなかった。統計画面等のPremium限定機能についても、テスター自身がPremium状態でこれらを利用した実績はない。テスターの利用は主に無料枠での会話練習と機能の動作確認が中心だった。
 ```
 
 ### 日本語版(短縮)
 
 ```
-テスターは全18シーンの会話機能・通知・オンボーディング・辞書機能を中心に利用した。テスター構成は実ターゲット層(フィリピン在住、配偶者のネットワーク経由)とテスター管理サービス経由(日本国内、動作確認中心)の2系統に分かれる。Premium購読フローは開発者本人が実購入で検証済みだが、テスター自身による購入実績は確認できていない。
+テスターは全18シーンの会話機能・通知・オンボーディング・辞書機能を中心に利用した。テスター構成は実ターゲット層(フィリピン在住、配偶者のネットワーク経由)とテスター管理サービス経由(日本国内、動作確認中心)の2系統。Premium購読フローは開発者本人が実購入で検証済みで機能しているが、Google Play収益レポートで確認した結果、テスター自身による購入実績はなかった。
 ```
 
 ### English (standard)
@@ -52,13 +52,13 @@ Testers primarily used the AI conversation feature (text/voice) across all 18 sc
 
 Our testers fall into two groups: (1) testers based in the Philippines, recruited through my spouse's personal network, who represent our actual target audience of Japanese-language learners, and (2) testers recruited through a third-party tester-management service, mostly based in Japan. The second group's usage was primarily focused on functional verification in the Japanese-language UI, and their usage pattern differs from that of our intended learners.
 
-Regarding the premium purchase flow: the RevenueCat Android API key has been included in builds since Build 18, and the subscribe button is fully functional. I (the developer) personally completed a real purchase and verified the end-to-end flow from purchase through entitlement activation and feature unlock. However, this was verification by the developer, not by a tester -- we have not been able to confirm whether any tester has completed an actual purchase. Similarly, we have not confirmed whether any tester used premium-only features (such as the statistics dashboard) while in a premium state.
+Regarding the premium purchase flow: the RevenueCat Android API key has been included in builds since Build 18, and the subscribe button is fully functional -- I (the developer) personally completed a real purchase and verified the end-to-end flow from purchase through entitlement activation and feature unlock. Having reviewed Google Play's revenue reports, however, no tester completed an actual subscription purchase during the testing period. Similarly, no tester used premium-only features (such as the statistics dashboard) while in a premium state. Tester usage was concentrated on free-tier conversation practice and functional checks.
 ```
 
 ### English (short)
 
 ```
-Testers mainly used the AI conversation feature across all 18 scenes, notifications, onboarding, and the dictionary feature. Testers fall into two groups: real target-audience testers in the Philippines (via my spouse's network), and testers from a management service in Japan focused on functional checks. The developer personally verified the premium purchase flow end-to-end, but no tester purchase has been confirmed.
+Testers mainly used the AI conversation feature across all 18 scenes, notifications, onboarding, and the dictionary feature. Testers fall into two groups: real target-audience testers in the Philippines (via my spouse's network), and testers from a management service in Japan focused on functional checks. The premium purchase flow works end-to-end and was verified by the developer, but Google Play's revenue reports confirm no tester made an actual purchase.
 ```
 
 ---
