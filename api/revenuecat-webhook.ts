@@ -27,7 +27,23 @@ const GRANT_EVENT_TYPES = new Set([
 // is_premium=false / daily_limit=5 に戻すイベント。
 // CANCELLATION（自動更新OFF）は契約期間終了まで本来アクセス権が残るため対象外。
 // 実際のアクセス喪失は EXPIRATION のみで判定する。
+// （2026-06決定。ただし返金は下記 REFUND_CANCEL_REASONS で例外扱いする）
 const REVOKE_EVENT_TYPES = new Set(['EXPIRATION']);
+
+// RevenueCat には独立した REFUND イベント種別が無く、返金は CANCELLATION
+// イベントの cancel_reason='CUSTOMER_SUPPORT' として届く（RevenueCat公式
+// ドキュメント「Event Types and Fields」で確認、2026-08-10）。
+// 2026-06決定（CANCELLATIONでは降格しない）は自発的解約（UNSUBSCRIBE）には
+// 引き続き正しいが、解約と返金が同一イベント種別に集約されているため、
+// 返金ケースに限り例外としてここで降格する。
+//
+// ホワイトリスト方式: CUSTOMER_SUPPORT と明示的に判定できた場合のみ revoke。
+// cancel_reason の他の既知の値（UNSUBSCRIBE / BILLING_ERROR /
+// DEVELOPER_INITIATED / PRICE_INCREASE / UNKNOWN）や値が無い場合は
+// 保守的に none とし、正当な権利を誤って剥奪しない。
+// 特に BILLING_ERROR は猶予期間中の一時的な失敗のため、ここで revoke すると
+// 猶予期間中に課金が回復したユーザーの権利を誤って剥奪してしまう。
+const REFUND_CANCEL_REASONS = new Set(['CUSTOMER_SUPPORT']);
 
 /**
  * POST /api/revenuecat-webhook
@@ -68,6 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const appUserId: string | undefined = event?.app_user_id;
     const eventType: string | undefined = event?.type;
     const entitlementIds: string[] = event?.entitlement_ids ?? [];
+    const cancelReason: string | undefined = event?.cancel_reason;
 
     if (!appUserId || !eventType) {
       // 不正/想定外のペイロード。リトライさせても無意味なので 200 で受理して終える。
@@ -79,18 +96,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       entitlementIds.includes('Premium') ||
       entitlementIds.includes('voikerchat_premium');
 
+    const isRefundCancellation =
+      eventType === 'CANCELLATION' &&
+      !!cancelReason &&
+      REFUND_CANCEL_REASONS.has(cancelReason);
+
     let action: 'grant' | 'revoke' | 'none' = 'none';
     if (isTargetEntitlement && GRANT_EVENT_TYPES.has(eventType)) {
       action = 'grant';
     } else if (isTargetEntitlement && REVOKE_EVENT_TYPES.has(eventType)) {
       action = 'revoke';
+    } else if (isTargetEntitlement && isRefundCancellation) {
+      action = 'revoke';
     }
 
     if (action === 'none') {
       // TEST / TRANSFER / BILLING_ISSUE / PRODUCT_CHANGE / SUBSCRIPTION_PAUSED /
-      // NON_RENEWING_PURCHASE / CANCELLATION 等はログのみ・DB書き込みなし。
-      console.log(`revenuecat-webhook: no-op for event type ${eventType} (user ${appUserId})`);
+      // NON_RENEWING_PURCHASE / CANCELLATION(返金以外) 等はログのみ・DB書き込みなし。
+      // CANCELLATION は cancel_reason を後から追跡できるようログへ含める。
+      const cancelReasonSuffix =
+        eventType === 'CANCELLATION' ? ` cancel_reason=${cancelReason ?? '(missing)'}` : '';
+      console.log(
+        `revenuecat-webhook: no-op for event type ${eventType} (user ${appUserId})${cancelReasonSuffix}`
+      );
       return res.status(200).json({ received: true, action: 'none' });
+    }
+
+    if (action === 'revoke' && isRefundCancellation) {
+      console.log(
+        `revenuecat-webhook: refund detected via CANCELLATION cancel_reason=CUSTOMER_SUPPORT (user ${appUserId}), revoking Premium`
+      );
     }
 
     const isPremium = action === 'grant';
