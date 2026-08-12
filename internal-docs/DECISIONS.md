@@ -780,3 +780,135 @@ sns_playbook.md`(SNSショート動画運用プレイブックv1.0)はTokyo Bibl
 プラットフォーム・言語・コンテンツのいずれも一致せず流用できない。`internal-
 docs/GROWTH_PLAN.md`に陳腐化している旨を注記した。`shibuyer-ops`リポジトリ
 側のファイル自体は本件では変更していない。
+
+## 2026-08-12 Android Build 21 配信完了確認・統計情報の共有(2回目)
+
+**Build 21 の配信完了を確認**
+- Play Console クローズドテスト(Alphaトラック)のリリース一覧で
+  「21 (1.0.0) / 選択したテスターに公開されました /
+  バージョンコード: 1件 / 8月10日 12:11 に公開」を確認
+  [確認済 2026-08-12、Play Console実画面]
+- 2026-08-10 時点で「配信完了は未確認」としていた記載は解消。
+  業者依頼「テスト中にアップデートを2〜3回」は
+  Build 16(8/3配信)/ Build 18(8/6配信)/ Build 21(8/10 12:11配信)の
+  3回で完全に充足した
+
+**クローズドテストの進捗**
+- Play Console 表示「12人のテスターが12日間連続でオプトインしています」
+  [確認済 2026-08-12、Play Console実画面]
+- 起算 2026-07-30 19:31 JST → 8/13で13日、8/14で14日到達。
+  完走見込み 2026-08-14 は従来どおり変更なし
+
+**統計情報の共有(2回目)を実施**
+- 2026-08-12 午前、Play Console 統計情報が一時的に表示可能になったが、
+  スクリーンショット取得を試みた時点で再びGoogle側の障害告知
+  (「現在、一部の1日のアクティブユーザー(DAU)データをご利用いただけません。
+  Googleは現在、この問題の解決に取り組んでいます」)が表示され、
+  3指標とも数値を取得できない状態に戻った[確認済 2026-08-12、Play Console実画面]
+- 判断: データが揃うのを待たず、現況報告として送付する。
+  理由は下記のとおり
+  - 業者の保証条件は「統計情報の共有を1回以上」であり、
+    完全なデータの提出ではない
+  - Google側の障害はこちらでコントロール不能
+  - 完走(8/14)→ 製品版アクセス申請という日程上、待つメリットがない
+- 送付内容: 3指標の現況(取得不能である旨)+ 障害告知バナーのスクリーンショット
+  + オプトイン12日目の表示 + アップデート3回の配信完了日
+- 実施日: 2026-08-12(送付完了)
+
+**運用知見**
+- Play Console の統計情報は、一度表示されるようになっても再び
+  「データを使用できません」に戻ることがある(Google側の障害による)。
+  表示された時点で即座にスクリーンショットを取得すべき
+
+### 2026-08-12(続) PR #89 マージ(返金時のPremium剥奪)
+
+**保留理由の解消**: PR #89の当初のマージ保留理由「Android Build 21が
+審査中のためマージ保留」は、**技術的には無関係だったことが判明**した。
+`api/revenuecat-webhook.ts`はサーバーサイド専用のVercelファンクションで
+あり、AAB(Androidビルド)には一切含まれない。Vercelへのデプロイは
+mainブランチへのpushで独立して走るため、Android側の審査状況とは
+本来何の関係もなかった。Build 21の配信完了が確認できたことで保留理由
+自体は解消したが、上記のとおりその前提が最初から成立していなかった。
+
+**マージ前レビューの実施**: マージ前に以下6項目のレビューを実施した。
+
+1. **mainへのリベース**: 不要と確認。PR作成後にmainが4コミット進んでいたが、
+   いずれも`internal-docs/`のドキュメント更新のみ(PR #90・#91およびその
+   マージコミット)で、`api/revenuecat-webhook.ts`には一切触れていなかった。
+   GitHub側も`mergeable: MERGEABLE` / `mergeStateStatus: CLEAN`を返しており、
+   コンフリクトなし
+2. **cancel_reasonの網羅性**: RevenueCat公式ドキュメント
+   (`event-types-and-fields`)をWebFetchで再確認した結果、`cancel_reason`は
+   **全7値**存在し、PR作成時に把握していた6値
+   (CUSTOMER_SUPPORT/UNSUBSCRIBE/BILLING_ERROR/DEVELOPER_INITIATED/
+   PRICE_INCREASE/UNKNOWN)に加えて**`SUBSCRIPTION_PAUSED`**が存在することが
+   新たに判明した。ただし公式ドキュメントの注記により、
+   `SUBSCRIPTION_PAUSED`は**`EXPIRATION`イベント専用(Google Playのみ)**で
+   `CANCELLATION`イベントの`cancel_reason`としては出現しない。PR #89の
+   ホワイトリスト分岐は`eventType === 'CANCELLATION'`の場合のみを対象と
+   しており、`EXPIRATION`は既存の`REVOKE_EVENT_TYPES`でcancel_reasonを
+   見ずに無条件revokeされるため、**この7番目の値の見落としは実害なし**。
+   CANCELLATION用のホワイトリストとしては以下の6値で網羅として正しいと
+   確認した:
+
+   | cancel_reason | 判定 | 理由 |
+   |---|---|---|
+   | `CUSTOMER_SUPPORT` | **revoke** | 返金 |
+   | `UNSUBSCRIBE` | none | 自発的解約(期間内は権利あり) |
+   | `BILLING_ERROR` | none | 猶予期間中、支払い回復の可能性あり |
+   | `DEVELOPER_INITIATED` | none | 保守的に据え置き |
+   | `PRICE_INCREASE` | none | 保守的に据え置き |
+   | `UNKNOWN` | none | 保守的に据え置き |
+   | (未知の値・値の欠落) | **none(安全側)** | ホワイトリスト方式のデフォルト |
+
+   想定外の値のデフォルト挙動も確認済み: `isRefundCancellation`は
+   `REFUND_CANCEL_REASONS.has(cancelReason)`によるホワイトリスト判定であり、
+   未知の値・欠落は自動的に`false`(=剥奪しない側)にフォールバックする
+3. **EXPIRATION経由の既存ロジックへの影響**: 影響なしを確認。
+   `REVOKE_EVENT_TYPES = new Set(['EXPIRATION'])`は無変更で、新設の
+   `isRefundCancellation`分岐は`eventType === 'CANCELLATION'`のみを対象と
+   する独立した`else if`
+4. **usage_logsへの監査ログ**: **欠落を確認**。
+   `api/revenuecat-webhook.ts`は`upsertPremiumStatus()`経由で`rate_limits`
+   テーブルのみを更新しており、`usage_logs`への書き込みは(このPRの
+   新規追加分を含め)一切存在しない。剥奪の痕跡は`console.log`
+   (Vercelファンクションログ、保持期間が短い)にしか残らない。
+   `api/premium-sync.ts`の`logSyncAttempt()`(event=`premium_sync`)に
+   相当する仕組みがwebhook側には無い。マージ自体はブロックしないが、
+   STATE.mdバックログへ「revenuecat-webhookの監査ログ欠落」として記録した
+5. **flutter analyze / flutter test**: CI実行結果(`gh pr checks 89`)で
+   全緑を確認。`Analyze & Test`×2・`Build Android (debug)`×2・
+   `flutter-test`・Vercel Preview deployすべてpass。Dartコード変更が
+   無いため当然だが、CI上でも実証済み
+   - 副次的な発見: リポジトリに`tsconfig.json`が存在しないため、
+     PRのTest planにある`tsc --noEmit`は実際にはヘルプを出力して終了する
+     だけで型チェックとして機能していない(既存の構造的な問題、
+     PR #89固有ではない)。実ファイルを明示指定して型チェックを独自実行
+     したところ、`api/revenuecat-webhook.ts`・`api/_premium.ts`・
+     `api/_constants.ts`(このPRが触るファイル)はエラーなし。ただし
+     `api/premium-sync.ts`を含めるとSupabase型の非互換エラーが5件出た
+     — これはこのPRが触っていない既存ファイルの既存の型エラーであり、
+     PR #89とは無関係(pre-existing)。STATE.md技術的負債へ記録した
+6. **本番反映の影響評価**: マージするとVercel経由で即座に本番反映される。
+   ただし現状、実ユーザーの課金はゼロ、生きている購読は開発者本人の
+   ライセンステスト分のみ。この分岐が発火する条件
+   (`CANCELLATION` + `cancel_reason=CUSTOMER_SUPPORT`)は実際の返金でしか
+   到達しないため、今マージしても実害が生じうる対象が現状存在しないと
+   評価した
+
+**マージ判断**: 上記レビューを踏まえ「今マージすべき」と推奨し、
+Takatohが承認。根拠は(a)実害が発生しうる対象(実際の返金イベント)が
+現状ゼロで待つことにリスク低減効果が無い、(b)このバグは実収益が発生
+する前(製品版一般公開)には必ず解消しておくべき事項であり、早期に
+マージして本番で稼働させておくほうが、後から実際の返金が起きたときに
+未検証コードが初稼働するより安全、(c)保留理由だったAndroid審査状況が
+無関係と判明した以上、保留する技術的理由が無い、の3点。
+
+**マージ実施**: 2026-08-12、`gh pr merge 89 --merge`で通常マージ
+(merge commit `6026ff9`)。Vercel両プロジェクト(`voikerchat` /
+`voikerchat-x621`)のデプロイ成功をコミットステータスAPIで確認済み
+[確認済 2026-08-12]。
+
+**未検証事項**: 実際の返金イベントによる動作検証は未実施
+(検証可能な生きた購読が現時点で存在しないため)。公開後の運用課題として
+STATE.mdバックログ「返金分岐の発火監視」へ記録した。
