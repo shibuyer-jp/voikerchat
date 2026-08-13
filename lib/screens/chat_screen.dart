@@ -1269,7 +1269,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Future<void> _openPaywall() async {
     final unlocked = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => const PaywallScreen()),
+      MaterialPageRoute(builder: (_) => const PaywallScreen(source: 'quota_limit')),
     );
     if (unlocked == true && mounted) {
       setState(() => _isPremium = true);

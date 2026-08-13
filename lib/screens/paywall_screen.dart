@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voikerchat/l10n/app_localizations.dart';
+import '../services/analytics_service.dart';
 import '../services/revenuecat_service.dart';
 import '../theme/app_colors.dart';
 
@@ -10,7 +12,15 @@ import '../theme/app_colors.dart';
 /// (PremiumUpsellDialog/Banner)から遷移する共通の購入導線。
 /// 購入・復元が成功した場合は `Navigator.pop(context, true)` で呼び出し元に通知する。
 class PaywallScreen extends StatefulWidget {
-  const PaywallScreen({super.key});
+  /// 流入元(usage_logs.metadata.source)。'quota_limit'(上限到達ダイアログ経由)
+  /// / 'locked_scene'(ロックシーンタップ経由)。将来呼び出し箇所が増えた際に
+  /// unknownが混ざらないよう、既定値は持たせない(呼び出し元で必ず明示する)。
+  final String source;
+
+  /// ロックシーン経由の場合の対象シーンID(usage_logs.metadata.scene)。
+  final String? sceneId;
+
+  const PaywallScreen({super.key, required this.source, this.sceneId});
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -18,8 +28,15 @@ class PaywallScreen extends StatefulWidget {
 
 class _PaywallScreenState extends State<PaywallScreen> {
   final _revenueCatService = RevenueCatService();
+  final _analyticsService =
+      AnalyticsService.getInstance(Supabase.instance.client);
   String? _dynamicPrice;
   bool _isProcessing = false;
+
+  Map<String, dynamic> get _analyticsMetadata => {
+        'source': widget.source,
+        if (widget.sceneId != null) 'scene': widget.sceneId,
+      };
 
   // RevenueCat未configured(APIキー未注入)時は購読ボタンを無効化する。
   // main.dart起動時に一度だけinitialize()されるため、画面表示時点で確定済み。
@@ -29,6 +46,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
   void initState() {
     super.initState();
     _loadPrice();
+    _analyticsService.logEvent(
+      event: AnalyticsEvent.upsellShown,
+      isPremium: _revenueCatService.isPremium,
+      metadata: _analyticsMetadata,
+    );
   }
 
   /// RevenueCat の Offering から現地価格を取得する。
@@ -48,8 +70,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _purchase() async {
+  Future<void> _purchase({bool isRetry = false}) async {
     if (_isProcessing) return;
+    // purchasePremium()は成功時に内部の_isPremiumをtrueへ書き換えるため、
+    // 購入後にgetterを読むと常にtrueになってしまう。is_premiumは「そのイベント
+    // 発生時点でPremiumだったか」という観測値であり、upsell_convertedも
+    // 他イベントと同じく購入前の状態を記録すべきなので、ここで先にキャプチャ
+    // しておく。
+    final wasPremiumBeforePurchase = _revenueCatService.isPremium;
+    // リトライダイアログ経由の再帰呼び出し(下記_purchase(isRetry: true))でも
+    // 毎回記録する(意図どおり。metadata.retryで区別でき、試行回数の可視化に
+    // 使える)。
+    _analyticsService.logEvent(
+      event: AnalyticsEvent.upsellClicked,
+      isPremium: wasPremiumBeforePurchase,
+      metadata: {
+        ..._analyticsMetadata,
+        if (isRetry) 'retry': true,
+      },
+    );
     setState(() => _isProcessing = true);
     final l = AppLocalizations.of(context);
 
@@ -74,6 +113,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
       Navigator.pop(context); // 処理中ダイアログを閉じる
 
       if (result['success'] == true) {
+        _analyticsService.logEvent(
+          event: AnalyticsEvent.upsellConverted,
+          isPremium: wasPremiumBeforePurchase,
+          metadata: _analyticsMetadata,
+        );
         Navigator.pop(context, true); // ペイウォール自体を成功として閉じる
         return;
       }
@@ -89,7 +133,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
         final retry = await _showRetryDialog(message);
         if (retry == true && mounted) {
           setState(() => _isProcessing = false);
-          await _purchase();
+          await _purchase(isRetry: true);
           return;
         }
       } else {
@@ -138,6 +182,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
+  // 復元(restorePurchases)の成功はupsell_convertedとして記録しない(意図的)。
+  // 新規課金ではなく既存購読の復元のため、アップセル効果測定の対象外とする。
   Future<void> _restore() async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);

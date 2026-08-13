@@ -57,10 +57,12 @@ class SceneSelectionScreen extends StatelessWidget {
 
   /// ロック済みプレミアムシーンをタップ → ペイウォールへ遷移。
   /// 購入/復元成功で戻ってきたら呼び出し元にPremium状態の再取得を促す。
-  Future<void> _openPaywall(BuildContext context) async {
+  Future<void> _openPaywall(BuildContext context, {required String sceneId}) async {
     final unlocked = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => const PaywallScreen()),
+      MaterialPageRoute(
+        builder: (_) => PaywallScreen(source: 'locked_scene', sceneId: sceneId),
+      ),
     );
     if (unlocked == true) {
       onPremiumUnlocked?.call();
@@ -244,7 +246,7 @@ class SceneSelectionScreen extends StatelessWidget {
       isLocked: isLocked,
       accentColor: scene.accentColor,
       onTap: isLocked
-          ? () => _openPaywall(context)
+          ? () => _openPaywall(context, sceneId: scene.id.toString())
           : () => _openScene(context, scene),
     );
   }
