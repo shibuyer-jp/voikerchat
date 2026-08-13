@@ -1296,3 +1296,109 @@ STATE.mdバックログに残置する。
   だったため実効性を懸念していたが、その直後の実装で早速、本来検出
   されるべきだった型の不整合を実際に捕まえた最初の事例。strict化の
   狙いどおりの効果が出たことの記録として残す
+
+### 2026-08-13 usage_logsアップセルファネル計測基盤(PR-A/PR-B)
+
+**背景**: `session_start`/`upsell_shown`/`upsell_clicked`/`upsell_converted`
+のinsertがリポジトリ全体でゼロで、アップセル効果測定(Paywall表示→
+ボタン押下→課金)の基盤が存在しなかった。`usage_logs.session_id`も
+全エンドポイントで常にNULLだった。マイグレーションを発生させない設計
+(`usage_logs_event_check`は既に4イベントを許可済み、`session_id`列も
+既存)を前提に、クライアント完結のPR-Aとサーバー側配線を伴うPR-Bに
+分割して実施した。
+
+**PR-A(`api/services/analytics_service.dart`新設)**:
+- `logEvent()`単一エントリポイント、fire-and-forget(insert失敗は
+  `debugPrint`のみで握りつぶし、呼び出し元へ一切伝播しない)
+- `metadata.source`で流入元(`quota_limit`/`locked_scene`)を区別する
+  ため、`PaywallScreen`に`source`を**必須引数**として追加(既定値なし、
+  将来3箇所目が増えた際にunknownが混ざるのを防ぐ)
+- `upsell_clicked`はリトライ時も`metadata.retry`付きで重複記録する
+  (意図どおり。試行回数の可視化に使える)
+- `restorePurchases()`の復元成功は`upsell_converted`に含めない(新規
+  課金ではないため)
+- **レビュー指摘・修正**: `upsell_converted`の`is_premium`を当初`true`
+  固定にしていたが、Takatohの指摘により購入前の状態(他イベントと同じ
+  `_revenueCatService.isPremium`)へ修正。`is_premium`は「そのイベント
+  発生時点でPremiumだったか」という観測値であり、`converted`行だけ
+  `true`にすると`is_premium=false`で絞った際にconverted行が除外され、
+  ファネルの絞り込み率が正しく出せなくなるため。`purchasePremium()`が
+  成功時に内部の`_isPremium`を書き換えるため、`_purchase()`冒頭で
+  購入前の値を先にキャプチャして使い回す実装にした
+- テストは`insertRow`/`currentUserId`の差し替え口を用意し、
+  `SupabaseClient`自体のモック(`.from().insert()`が`PostgrestFilterBuilder<T>`
+  という具象クラスを返すため型的に困難)を回避した
+
+**PR-B(`api/_validation.ts`に`sanitizeSessionId()`新設)**:
+- 6エンドポイント(`chat`/`define`/`hint`/`recap`/`vocab-summary`/`tts`)
+  に`session_id`を配線。不正なUUID形式は`null`に落としリクエスト自体は
+  失敗させない(既存の`sanitizeLocale`/`sanitizePlatform`と同方針)
+- `api/tts.ts`の`model`未記録も同時に修正(`gpt-4o-mini-tts`を
+  `CLOUD_TTS_MODEL`定数化)
+- クライアント側は`chat_screen.dart`の`getOrCreateSession()`戻り値
+  (従来は捨てていた)を`_sessionId`として保持し、6箇所へ配線
+
+**マージ**: R2(#97)と同様「api/を含むためクローズドテスト完走確認後」
+という判断も検討したが、Takatohの判断により**#100(package-lock)・
+#98(tsconfig)を同条件で既にマージし本番疎通確認まで済ませている実績を
+踏まえ、#97・#103にも同じ基準を適用してすぐにマージ**した。マージ直後に
+`/api/chat`・`rate-limit`・`premium-sync`・`define`・`hint`・`recap`・
+`vocab-summary`・`tts`・`revenuecat-webhook`の9エンドポイントを疎通確認し、
+いずれも異常なし(500なし、想定どおりの401/405)。
+
+**関連**: STATE.md改善候補「usage_logsの残る記録漏れ」をクローズ。
+
+### 2026-08-13 tsconfig.jsonの`lib`未指定はブラウザ前提の型が紛れ込む温床(strict:true化の副産物)
+
+**発見の経緯**: R3で新設した`api/tsconfig.json`は当初`lib`を明示していな
+かった。TypeScriptは`lib`未指定の場合、`target`の値によらず既定でDOM
+(`lib.dom.d.ts`)を含める。このため`api/premium-sync.ts`の
+`fetch()`/`Response.json()`はDOMの型(`json(): Promise<any>`)で解決され、
+`data?.subscriber`のようなアクセスが`any`扱いで素通りしていた。
+
+`package-lock.json`のコミット(依存バージョン固定)後、`types: ["node"]`
+のみを追加した段階では`lib`が依然DOMを含んでいたため、この問題は
+表面化しなかった。`lib: ["ES2020"]`(DOM除外)を明示して初めて、
+Node実行環境(`@vercel/node`、実際にDOMは存在しない)の型解決で
+`Response.json()`が`unknown`寄りの型になり、`subscriber`アクセスが
+型エラーとして検出された(TS2339)。`RevenueCatSubscriberResponse`型を
+新設して解消(`as any`は不使用)。
+
+**教訓(横展開可能な一般知見)**: **`tsconfig.json`で`lib`を省略すると、
+実行環境(Node)に存在しないブラウザ専用の型(DOM)が黙って紛れ込む。**
+`@vercel/node`のようなNode実行環境向けの`tsconfig.json`では、`lib`を
+明示的に環境に合わせて指定すべきで、省略に頼ってはならない。今回は
+DOMの緩い型(`any`)が実際の型不整合を覆い隠していたケース。他の
+TypeScript/Node系プロジェクトでも同様の見落としが起きうる。
+
+**strict化の検証結果**: ロック済み依存バージョン下、`lib`をDOM除外+
+`types: ["node"]`にした状態で`api/`配下全ファイルのエラーは0件と確認
+できたため、Takatohの判断により`strict: true`へ引き上げた。引き上げ後
+の再測定でも新規エラーは発生していない。
+
+### 2026-08-13 市場調査(育成就労制度・B2Bルート・ASO方針)の確定
+
+Gemini調査をchat-Claudeが検証したうえでの決定。詳細な根拠は
+`internal-docs/Competitor-Insights.md` 2026-08-13(追補)・
+`internal-docs/GROWTH_PLAN.md`「ASO方針」参照。
+
+- **育成就労の100時間市場には参入しない** | 2027年4月施行の育成就労
+  制度が受入企業に課すA2相当100時間講習は、認定日本語教育機関による
+  双方向リアルタイム講習(人間の有資格教員が前提)が要件であり、
+  Voikerchatのような自習型AIアプリはどう設計してもこの100時間に
+  カウントされない。要件上不可能なため、この市場への参入は検討しない
+- **送出機関向けB2Bは追求せず、応募前求職者向けB2Cで臨む** | フィリピン
+  送出機関(PRA)はDMW規制により候補者から仲介手数料を徴収できず学習
+  ツール購入の予算・動機に乏しい。一方、応募前の求職者本人が自費で
+  N5/N4対策に投じる相場(₱3,000〜10,000程度[未検証])はVoikerchat
+  Premium(₱799/月)の射程内。新規B2Bプロダクトは開発せず、既存の
+  B2Cアプリのままストア掲載文・機能訴求の寄せ方で対応する
+- **ストア掲載文はアプリ名を「Voikerchat - Speak Japanese」とし、
+  タガログ語は使用しない** | フィリピンのストア内検索は英語が9割以上。
+  `learn japanese`は最激戦区で新規アプリでは順位が付かないため、
+  アプリ名では中核機能(音声会話練習)を反映した`Speak`を採用し、
+  `learn japanese`はGoogle Playの短い説明・App Storeのキーワード欄で
+  拾う。`JLPT`はアプリ名に出さない(模擬試験機能が無いため低評価
+  リスク)。反映は製品版アクセス申請の審査完了後(ストア掲載情報の
+  変更も審査対象のため)。根拠・確定文言は`internal-docs/GROWTH_PLAN.md`
+  参照

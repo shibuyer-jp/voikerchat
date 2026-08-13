@@ -17,11 +17,7 @@
 
 - **Androidクローズドテスト**: 14日タイマー進行中(起算 2026-07-30 19:31 JST)。2026-08-12時点で12日目、完走見込みは**2026-08-14前後**[確認済 2026-08-12、Play Console実画面]。Build 21(versionCode 21)の配信完了済み(2026-08-10 12:11配信)。業者依頼「テスト中にアップデートを2〜3回」はBuild 16/18/21の3回で**完全充足**。
 - **iOS**: 1.0.0+20が**App Review承認 → 「Pending Developer Release」到達済み**(2026-08-10)。方針は「Androidの完走を待って同時公開」を維持、ただし2026-08-14での同時公開は成立せず具体的な公開日は未確定(詳細は未完了項目13参照)。
-- **mainマージ待ちPR一覧(2026-08-13時点)**: `gh pr list`で随時実数を確認すること。
-  - PR #98(`api/tsconfig.json`新設・型チェックCI導入、R3)・PR #100(package-lock.jsonコミット)は**マージ済み**(本文中の旧記載を訂正)
-  - PR #97: `api/revenuecat-webhook.ts`へのusage_logs監査ログ追加(R2)。base: main
-  - PR #99: internal-docs再編、本書はこのPRの一部(R4)。#98マージ後にbaseブランチが削除された影響でGitHubにより自動closeされ、同一内容でPR #101として再作成済み(base: main)
-  - PR #97・#101いずれもmainへのマージはクローズドテスト完走確認後に人間が判断する(#97はVercel自動デプロイでテスター61名使用中の本番APIに即反映されるため。#101はドキュメントのみで本番影響なし)
+- **2026-08-13の一連の変更はすべてmainへマージ済み**: R1〜R4(PR #96・#97・#98・#100・#101)、usage_logsアップセル計測PR-A/PR-B(PR #102・#103)。マージ後、本番8エンドポイント(`/api/chat`・`rate-limit`・`premium-sync`・`define`・`hint`・`recap`・`vocab-summary`・`tts`・`revenuecat-webhook`)の疎通を都度確認済み、異常なし。詳細はDECISIONS.md 2026-08-13系列参照
   - PR #14(iOS APNsエンティトルメント)・PR #5(Android署名fail-fast)は上記とは無関係の長期保留PR。詳細はバックログ参照
 
 ## 未完了項目(クローズドテスト期間中に対応)
@@ -50,7 +46,7 @@
 
 ## 直近の変更(最新1件のみ。過去分はDECISIONS.md参照)
 
-**2026-08-13**: R1(GitHub PAT平文埋め込み、削除・全リポジトリ走査を実施のうえ「PATの新規発行・差し替え・revokeは実施しない」とTakatohが判断、PR #96マージ済み)・R2(`api/revenuecat-webhook.ts`へのusage_logs監査ログ追加、PR #97作成)・R3(`api/tsconfig.json`新設・型チェックCI導入、premium-sync.tsの既存Supabase型エラー5件を解消、PR #98作成)・R4(internal-docs再編、STATE.mdを126,151→20,531 bytesへ圧縮、`internal-docs/ARCHIVE.md`・`internal-docs/OPERATIONS-NOTES.md`を新設、`ROADMAP.md`を廃止しSTATE.mdへ一本化、PR #99作成)を実施。PR #97・#98・#99はいずれもクローズドテスト完走確認後に人間がマージ判断(上記「進行中」参照)。詳細はDECISIONS.md 2026-08-13参照。
+**2026-08-13**: R1(GitHub PAT平文埋め込み、削除・全リポジトリ走査を実施のうえ「PATの新規発行・差し替え・revokeは実施しない」とTakatohが判断)・R2(`api/revenuecat-webhook.ts`へのusage_logs監査ログ追加)・R3(`api/tsconfig.json`新設・型チェックCI導入、`strict: true`まで到達、premium-sync.tsの既存Supabase型エラー6件を解消)・R4(internal-docs再編、STATE.mdを126,151→20,531 bytesへ圧縮、`internal-docs/ARCHIVE.md`・`internal-docs/OPERATIONS-NOTES.md`を新設、`ROADMAP.md`を廃止しSTATE.mdへ一本化)・package-lock.jsonのコミット(依存バージョン固定)・usage_logsアップセルファネル計測基盤(PR-A: session_start/upsell_shown/upsell_clicked/upsell_converted、PR-B: 6エンドポイントへのsession_id配線+tts.tsのmodel記録)を実施し、いずれもmainへマージ済み。詳細はDECISIONS.md 2026-08-13系列参照。
 
 ## 確定定数(変更時はDECISIONSに記録)
 - App: Voikerchat / `jp.shibuyer.voikerchat` / voikerchat.com(Dynadot) / Team ID `S6XJP274T2`
@@ -67,7 +63,7 @@
 | 機能 | 状態 | 備考 |
 |------|------|------|
 | 認証・チャット・usage_logs・analytics/rate-limit認証統一・Supabaseエラーログ化・i18n(通知/premium文言)・通知機能一式・ストリーク(端末間整合性・リセット実装)・アプリ内UI言語切替・チャット画面AppBar省略修正・アカウント削除・badges・音声会話(PTT+TTS)・lefthook pre-push | ✅ 完了・main反映・安定稼働 | 実装経緯・PR番号はARCHIVE.md「STATE.md全文バックアップ」の旧「機能ステータス」表を参照 |
-| プレミアム(RevenueCat) | ✅ 配線済み | webhook→`rate_limits.is_premium`。CANCELLATIONは降格せず、EXPIRATION・返金(cancel_reason=CUSTOMER_SUPPORT)のみ降格(PR #89、2026-08-12マージ)。監査ログ追加はPR #97(マージ待ち) |
+| プレミアム(RevenueCat) | ✅ 配線済み | webhook→`rate_limits.is_premium`。CANCELLATIONは降格せず、EXPIRATION・返金(cancel_reason=CUSTOMER_SUPPORT)のみ降格(PR #89、2026-08-12マージ)。監査ログ追加はPR #97(2026-08-13マージ済み) |
 | daily_limit日次リセット漏れ修正・ストア掲載文数値非依存化・プレミアム案内文数値除去・Paywall文言監査/価格表示/フッター化/購読ボタン制御・Androidクローズドテスト配布(Build 16/18/21)・Google Play価格引き下げ・AI生成コンテンツポリシー遵守 | ✅ 完了・main反映 | 詳細はARCHIVE.md参照 |
 | プッシュ通知 | 🚧 Phase2へ先送り(「道2」決定) | 受信側コードは維持、自動送信基盤の新規構築・APNs追加対応は今回リリースでは行わない。PR #14(iOS APNsエンティトルメント)は実装済み・マージ保留 |
 | AdMobリワード広告 | ✅ コード完了・実ID設定済み / ⚠️ No Fill継続 | 原因はApp Store未公開と判断(DECISIONS.md 2026-07-26)。公開後に再検証(バックログ参照) |
@@ -101,7 +97,7 @@
 - 旧Vercelデプロイ(`*.vercel.app`個別URL)の`internal-docs/`分離前スナップショット露出懸念(プレビュードメインは認証保護済み、個別URLは未確認)。担当: 未定
 
 **製品機能(公開後、ROADMAP.md区分4より移行・Competitor-Insights.md 2026-08-10追補由来)**
-- 年額プラン追加[優先: 高]: RevenueCatに`$rc_annual`追加、両ストア登録、Paywall2プラン対応。競合が年額主力(月換算2,316〜2,367円)なのに対しVoikerchatに年額プランが無いのは構造的弱点。着手時期: 公開直後。担当: 未定
+- 年額プラン追加[優先: 高、公開後の収益改善の筆頭]: RevenueCatに`$rc_annual`追加、両ストア登録、Paywall2プラン対応。競合が年額主力(月換算2,316〜2,367円、LingoDeerは月額₱999に対し年額₱5,990=月換算₱499)なのに対しVoikerchatは月額単体提示のみで、月額単体提示ではコンバージョン率が著しく低いと推測される[未検証]。RevenueCat側に未使用の`$rc_annual`/`$rc_lifetime`が既に存在するため受け皿はある(下記技術的負債「RevenueCatダッシュボードに未使用のEntitlement」と関連)。実施にはPlay Console/App Store Connect双方の商品追加とPaywall UI改修(新ビルド)が必要なため公開前には着手しない。着手時期: 公開直後。担当: 未定。期限: 一般公開後(2026-08-13追記)
 - 学習スコアの可視化[優先: 高]: 会話数・連続日数・使用語彙数など、追加AI呼び出し無しで実装できる範囲から着手(トークンコストゼロ)。着手時期: 公開直後。担当: 未定
 - 無料トライアル(全機能開放)[優先: 中]: 初回3日間など短めから試し実績を見て延長判断。トークンコスト増に注意。着手時期: 公開後、運用が落ち着いてから。担当: 未定
 - ユーザー定義シーン[優先: 中]: プロンプト長増によるキャッシュ効率低下、ユーザー入力の不適切設定対策が必須。着手時期: 公開後。担当: 未定
@@ -112,7 +108,7 @@
 
 ### [優先: 高]
 - 上限到達時に「次に使えるまでの残り時間」を表示。GET /api/rate-limitのレスポンス拡張要否から調査。iOS/Android両対応必須。担当: 未定
-- usage_logsの残る記録漏れ: session_id全箇所未使用、tts.tsのmodel未記録、session_start/upsell_shown/upsell_clicked/upsell_converted のinsertがゼロ(アップセル効果測定の基盤が無い)。対応時期: 完走後(本番APIへの変更を避けるため)。担当: 未定
+- ~~usage_logsの残る記録漏れ~~ → **解消(2026-08-13)**: session_id全箇所未使用→6エンドポイント(chat/define/hint/recap/vocab-summary/tts)に配線(PR-B)。tts.tsのmodel未記録→`gpt-4o-mini-tts`を記録(PR-B)。session_start/upsell_shown/upsell_clicked/upsell_converted のinsertがゼロ→`lib/services/analytics_service.dart`新設で計測基盤を追加(PR-A)。マイグレーションはいずれも不要(既存の8値CHECK制約・既存列を使用)。詳細はDECISIONS.md 2026-08-13参照
 
 ### [優先: 中]
 - fil(タガログ語)UIの妥当性検証: テスターにセブアノ語話者を確認済み。フィードバックで使いやすさを確認。担当: 未定
