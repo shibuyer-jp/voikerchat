@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=18.x"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p api/tsconfig.json"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.107.0",
     "@supabase/supabase-js": "^2.108.2"

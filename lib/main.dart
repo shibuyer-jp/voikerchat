@@ -15,6 +15,7 @@ import 'screens/onboarding/level_result_screen.dart';
 import 'screens/onboarding/onboarding_slides_screen.dart';
 import 'screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/analytics_service.dart';
 import 'services/learner_preferences_service.dart';
 import 'services/premium_sync_service.dart';
 import 'services/rate_limit_service.dart';
@@ -290,6 +291,17 @@ void main() async {
   _syncPremiumTopicSubscription(revenueCat);
 
   if (supabaseResult == _SupabaseInitResult.success) {
+    // アプリ起動を1回だけ記録する(usage_logsアップセル計測基盤、2026-08-13)。
+    // 匿名認証完了後(RLSがauth.uid()を要求するため、この位置より前だと弾かれる)。
+    // fire-and-forgetのため起動シーケンスをブロックしない。
+    final startupUserId = Supabase.instance.client.auth.currentUser?.id;
+    if (startupUserId != null) {
+      AnalyticsService.getInstance(Supabase.instance.client).logEvent(
+        event: AnalyticsEvent.sessionStart,
+        isPremium: revenueCat.isPremium,
+      );
+    }
+
     try {
       // 毎日リマインダー(8/12/19)を予約 + 起動時リコンサイル
       // (予定を過ぎたscheduled履歴をdeliveredへ確定)。

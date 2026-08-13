@@ -1113,3 +1113,186 @@ git remote URLに現行のclassic PAT(repoスコープ・有効期限なし)が�
 
 この判断により、STATE.md「技術的負債」節の該当項目は「未対応」から
 「判断のうえ据え置き」へ更新した(本ファイル該当節・STATE.md参照)。
+
+### 2026-08-13 api/にtsconfig.json新設・型チェックCI導入(R3)
+
+**事実の訂正**: STATE.mdの2026-08-12記載「tsconfig.jsonが無いためCIの
+`tsc --noEmit`はヘルプを出力して終了するだけ」は誤りだった。正しくは
+`.github/workflows/`(`ci-cd.yml`/`flutter-ci.yml`/`ios-release.yml`)・
+`lefthook.yml`・`package.json`(`scripts`セクション自体が存在しなかった)
+のいずれにも**`tsc`を呼び出す箇所が一切存在しなかった**。「tscが形骸化
+している」のではなく「tscが一度も呼ばれていない」が正しい状態だった。
+
+**premium-sync.tsの既存エラー5件の原因を特定・解消**: R2(revenuecat-webhook
+監査ログ追加)実装中に、`api/premium-sync.ts`の`logSyncAttempt()`と同じ
+構造の関数を`api/revenuecat-webhook.ts`に新設したところ同種のエラーが
+新たに発生したことから、`supabase`引数の型を`ReturnType<typeof
+createClient>`で受けている箇所に原因があると当たりを付けていた
+(2026-08-13、R2 PR #97参照)。R3で検証した結果、これが5件全ての唯一の
+原因と確定した。`api/_premium.ts`の`upsertPremiumStatus`・
+`api/analytics.ts`・`api/chat.ts`は同じ`supabase`変数を素の
+`SupabaseClient`型(`@supabase/supabase-js`からimport)で受けており
+エラーが発生していなかったため、`logSyncAttempt()`の型宣言のみを
+`SupabaseClient`に変更したところ5件とも解消し、`api/`配下15ファイル
+全てで型エラーゼロになることをアドホックな`tsc`実行(ファイル明示指定)
+で確認した。`api/`配下を横断走査した結果、`ReturnType<typeof
+createClient>`パターンの使用は`premium-sync.ts`のこの1箇所のみで、
+他に同種の問題は存在しなかった。
+
+**tsconfig.jsonの設計**: `api/tsconfig.json`を新設。`strict`は全面
+有効化すると既存ファイルで大量にエラーが出るリスクがあったため、まず
+`strict: false`(デフォルト)で通る状態を作る方針とした(実際には現状
+0エラーで通ったため、`strict`を上げる作業は別途の技術的負債として
+STATE.mdに残す)。`include`は`api/**/*.ts`に限定し、Flutter側の型検査と
+混在しないようにした。`target: ES2020`・`module: commonjs`は
+`@vercel/node`の実行環境(Node 18+)に合わせた。
+
+**CI導入**: `.github/workflows/api-typecheck.yml`を新設。Flutterの
+セットアップが不要なため`flutter-ci.yml`/`ci-cd.yml`とは完全に分離し、
+`npm install`→`npm run typecheck`のみの軽量ジョブとした
+(`package-lock.json`は`.gitignore`対象でリポジトリに存在しないため
+`npm ci`は使えず、`actions/setup-node`の`cache: npm`もロックファイル
+前提のため未使用とした。初回のCI実行(2026-08-13)で`npm ci`が
+`Dependencies lock file is not found`で即失敗することを確認し、
+`npm install`へ修正した)。`pull_request`・`push`の両方で実行する。
+既存エラーは解消済みだったが、ローカル環境とCI実行環境(Node/npmの
+バージョン差異等)で結果が変わりうるため、初回は`continue-on-error: true`
+として非ブロッキングで導入した。実際にCI(Ubuntu runner、Node 18.20.8)で
+`npm install`→`npm run typecheck`を実行し、0エラーで完了することを
+run 31657619201で確認できたため、同PR内で`continue-on-error: true`を
+外しブロッキング化した(2026-08-13)。なお`npm install`時に
+`@supabase/supabase-js`等がNode 22以上を要求する`EBADENGINE`警告が
+出ている(`package.json`の`engines.node`は`>=18.x`のまま)。ビルド自体は
+失敗しないため今回は対応せず、技術的負債として指摘のみ残す
+(次にNode 18サポートが実際に切れる依存関係更新のタイミングで対応)。
+
+**バックログ「api/*.tsのテスト基盤整備」との関係**: 本件は`tsc --noEmit`
+による型チェックのみを対象とし、jest/vitest等によるユニットテスト基盤の
+整備は含まない。両者は別軸の課題であり、テスト基盤整備は引き続き
+STATE.mdバックログに残置する。
+
+### 2026-08-13 internal-docs再編(R4): STATE.md圧縮・ROADMAP.md廃止・ARCHIVE.md/OPERATIONS-NOTES.md新設
+
+**背景**: STATE.mdが126,151 bytes(482行)まで肥大化し、全体の大部分を
+完了済み事項の記録が占めていた(「セッション開始時に必ず読む」運用の
+ファイルとしては現在地への到達コストが高い状態)。加えて`ROADMAP.md`
+(2026-08-07新設)がSTATE.mdの未完了項目・バックログと内容が重複する
+二重管理になっており、`PRODUCTION_ACCESS.md`とSTATE.mdの間で実際に
+5日間の記載不整合が起きた教訓(2026-08-12判明)と同型の構造的リスクを
+抱えていた。
+
+**実測値の訂正**: 起案書(`CC_INSTRUCTIONS_R4_STATE_REORG.md`、2026-08-13
+午前時点)記載の数値(122,609 bytes)は、着手時点では既にR1〜R3の3件の
+変更により126,151 bytesへ増加していた。再編は起案書の数値ではなく着手時
+点の実測値を対象に実施した。
+
+**実施内容**:
+1. 事前バックアップとして、再編前のSTATE.md全文を`internal-docs/ARCHIVE.md`
+   冒頭へコードブロックとして全文コピーした(情報欠落時の安全網)
+2. STATE.mdヘッダの「最終更新」ブロック(旧21件)を`ARCHIVE.md`へ移動し、
+   最新1件のみを要約して残した。各件の内容がDECISIONS.mdの対応する日付の
+   節に既に記載されていることを、日付文字列でのgrep突合により確認した
+   (逐語比較ではなく、STATE.md側の各エントリが元々「詳細はDECISIONS.md
+   日付参照」と明記していた既存の相互参照慣行に基づく確認)
+3. 未完了項目のうち完了済み16件(1・2・3・4・6・7・8・9・10・11・14・
+   15・16・17・18・19)を元の番号を見出しに保持したまま`ARCHIVE.md`へ
+   全文移動。実際に未完了なのは5・12・13の3件のみで、番号は振り直さず
+   STATE.md側に残した(他文書からの「未完了項目N」参照が多数あるため)
+4. `ROADMAP.md`を廃止しSTATE.mdへ一本化した(Takatoh決定済み事項として
+   選択肢を再提示せず実行)。ROADMAP.md区分1〜4を1項目ずつ精査し、
+   STATE.md側に存在しなかった項目(本番アクセス申請までにクリアしたい
+   「ストア掲載情報の見直し(ASO)」「公開日のレビュー依頼準備」、公開後の
+   製品機能候補6件: 年額プラン追加・学習スコアの可視化・無料トライアル・
+   ユーザー定義シーン・在日フィリピン人向け実用シーン追加・Google Play
+   対象年齢層拡大検討)をSTATE.mdのバックログ/改善候補へ期限・優先度付きで
+   移した。ROADMAP.md全文は`ARCHIVE.md`へ全文退避のうえ、ファイル自体は
+   削除した
+5. 完了項目の本文に埋もれていた再利用可能な運用知見9件(Play Console
+   テスター数表示の仕様、14日タイマーの非リセット条件、統計情報表示の
+   スクリーンショット即取得、ライセンステスト購入確認はメール優先、
+   RevenueCat RTDN接続に必要なIAMロール、ライセンステスト購読を使った
+   webhook検証の効率化、Mac配布用IPA制約の正確な理解、外部サービス実画面
+   確認の原則、二重管理が不整合を生むという教訓)を`internal-docs/
+   OPERATIONS-NOTES.md`(新設)へ抽出・集約した
+6. 「機能ステータス」表を圧縮(完了・安定稼働機能は1行にまとめ、詳細は
+   ARCHIVE.mdの全文バックアップを参照する形にした)。「確定定数」節は
+   一字も変更せず、バイト単位での一致を確認した
+7. 新規ドキュメント作成ルールをCLAUDE.mdへ追記した(STATE.md/DECISIONS.md
+   との情報境界を1文で説明できること、更新タイミング・担当が決まっている
+   ことを新規作成の条件とする。ROADMAP.mdの二重管理を教訓とする)
+8. `internal-docs/`配下でROADMAP.mdを参照していた5ファイル
+   (Competitor-Insights.md・GROWTH_PLAN.md・PRODUCTION_ACCESS.md・
+   reports/ai_generated_content_policy_20260807.md)の参照をSTATE.md/
+   ARCHIVE.mdへの参照に更新した。**DECISIONS.mdの過去のROADMAP.md言及
+   (8箇所)は意図的に変更していない**(DECISIONS.mdは追記専用・削除禁止の
+   決定履歴であり、当時ROADMAP.mdが存在し参照されていたこと自体が正確な
+   歴史的記録のため。「判断に迷い、残す側に倒した」箇所として明記する)
+
+**結果(サイズ)**: STATE.md 126,151 bytes(482行) → 20,531 bytes(153行)。
+目標(35,000 bytes前後)を下回ったが、3未完了項目・確定定数・圧縮済み
+機能ステータス・バックログ/改善候補・市場メモ・関連ドキュメント索引という
+必須構成要素をすべて含んだ結果であり、無理な水増しはしていない。
+`internal-docs/ARCHIVE.md`(新設、完了事項全文)は213,039 bytes、
+`internal-docs/OPERATIONS-NOTES.md`(新設)は運用知見9件。
+
+**検証**: 情報欠落は、ARCHIVE.md冒頭の全文バックアップと再編前スナップ
+ショットとの完全一致(diff、改行コードCRLF/LFの差異を除き差分ゼロ)で
+構造的に担保した。「未完了項目N」参照(外部10ファイル)は番号を維持した
+ため破損なし。「確定定数」節はdiffで内容完全一致を確認。ROADMAP.mdへの
+参照はARCHIVE.md自体とDECISIONS.mdの過去記録を除き解消済み(grep確認)。
+
+### 2026-08-13(続) R4フォローアップ: 圧縮しすぎによる現在地把握の欠落を是正
+
+**背景**: Takatohから、STATE.mdが目標35,000 bytesを下回る20,531 bytesに
+着地したことについて、「現在地の把握に必要な情報までARCHIVE.mdへ移して
+いないか」の確認依頼を受けた。検証方法として「再編後のSTATE.mdだけを
+読んで7つの問いに全て答えられるか」という具体的なテストが指定された。
+
+**検証結果**: 7問中5問は問題なく回答できたが、2問で実質的な欠落が
+見つかった。
+1. 「現在mainマージ待ちのPRは何番か」→ **不可**。「進行中」節はPR #97・
+   #98のみを記載しており、本PR自体(#99、R4)がSTATE.mdのどこにも
+   登場しなかった。原因: 該当コミットをPR #99作成前に書いたための
+   自己参照の欠落(構造的な見落とし、圧縮のしすぎではない)
+2. 「Supabase・Vercel・RevenueCatの識別子は分かるか」→ **不可**。
+   「確定定数」節にはVercelプロジェクトID・RevenueCatのApp ID等は
+   あったが、**Supabaseのプロジェクトref(`rfwbwwhqclabhnbsrygw`)が
+   どこにも無かった**。原因: 旧「機能ステータス」表の1行目にのみ
+   記載されており、その行を圧縮した際にこの識別子を確定定数へ
+   引き継ぐのを失念した(圧縮判断のミス)
+3. 「公開前に必ず片付けるべき項目は何か」→ 回答は可能だが、未完了項目
+   5・12・13とバックログ2件を横断して読む必要があり、旧STATE.mdに
+   あった「残るのは完走待ちのみである」という1行の総括が失われていた
+   (軽微な低下、致命的ではない)
+
+**対応**:
+1. 「進行中」節に「mainマージ待ちPR一覧」を新設し、PR #97・#98・#99を
+   base branch・マージ方針とともに明記(PR #14・#5は無関係の長期保留PR
+   として区別)
+2. 「確定定数」節にSupabaseプロジェクトref行を追加。**「確定定数は
+   一字も変えない」という3-9の検証条件は、再編作業中の不用意な改変を
+   防ぐためのものであり、今回のように欠落が判明した際に正しい情報を
+   復元することを禁じる趣旨ではないと解釈した**。追加した1行は旧
+   「機能ステータス」表に既に存在していた事実の転記であり、新規の
+   確認・推測は含まない
+3. 「未完了項目」節冒頭に「公開前に必ず片付けるべき項目はこの3件+
+   バックログ2件のみ」という総括行を追加した
+
+**結果**: STATE.md 20,531 → 21,570 bytes(40,000以内を維持)。7問すべて
+再検証し、STATE.mdのみで回答可能なことを確認した。
+
+**教訓**: サイズ目標の達成(bytes数)と情報の十分性は別の指標である。
+今後STATE.mdを圧縮する際は、bytes数の確認だけでなく、本件のような
+「特定の問いに答えられるか」形式のチェックを実施すること。特に
+自己参照(このドキュメント変更自体を表すPR番号)は、コミット時点では
+存在しないため機械的なチェックで検出できず、意識して確認する必要が
+ある。
+
+- 2026-08-13 | usage_logsのsession_id配線(PR-B)で、`sanitizeSessionId()`
+  (戻り値`string | null`)を`api/chat.ts`の`logUsage()`(`sessionId?: string`、
+  `string | undefined`のみ許容)へ渡そうとしたところ`strict: true`下で
+  型エラーになった。`sessionId`の型を`string | null`へ拡張して解消
+  (ロジック変更なし) | R3で`strict: true`へ引き上げた際「エラー0件」
+  だったため実効性を懸念していたが、その直後の実装で早速、本来検出
+  されるべきだった型の不整合を実際に捕まえた最初の事例。strict化の
+  狙いどおりの効果が出たことの記録として残す

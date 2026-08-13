@@ -19,6 +19,7 @@ class HintService {
   Future<Map<String, dynamic>> getHint({
     required String context,
     String? sceneId,
+    String? sessionId,
   }) async {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     if (token == null) {
@@ -36,6 +37,7 @@ class HintService {
               'sceneId': sceneId,
               'locale': LocaleService.resolveLocaleCodeForLogging(),
               'platform': currentPlatformCode(),
+              'sessionId': sessionId,
             }),
           )
           .timeout(const Duration(seconds: 10));

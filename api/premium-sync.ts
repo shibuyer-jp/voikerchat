@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { baseDailyLimit } from './_constants';
 import { upsertPremiumStatus } from './_premium';
 import { sanitizeLocale, sanitizePlatform } from './_validation';
@@ -154,6 +154,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 /**
+ * RevenueCat REST API v1 (GET /v1/subscribers/{app_user_id}) のレスポンス形状。
+ * 実際に使用するフィールドのみを宣言する(公式ドキュメント「Subscriber
+ * Attributes」のentitlementsオブジェクト、キーはentitlement識別子)。
+ */
+interface RevenueCatEntitlement {
+  expires_date: string | null;
+}
+
+interface RevenueCatSubscriberResponse {
+  subscriber?: {
+    entitlements?: Record<string, RevenueCatEntitlement>;
+  };
+}
+
+/**
  * RevenueCat REST API (GET /v1/subscribers/{app_user_id}) へ問い合わせ、
  * 対象entitlementが実際にactiveかを検証する。
  * 戻り値: true=active確認 / false=未加入と確認 / null=問い合わせ自体に失敗(判定不能)
@@ -182,7 +197,7 @@ async function verifyActiveEntitlement(appUserId: string): Promise<boolean | nul
       return null;
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as RevenueCatSubscriberResponse;
     const entitlements = data?.subscriber?.entitlements ?? {};
     const now = Date.now();
 
@@ -206,7 +221,7 @@ async function verifyActiveEntitlement(appUserId: string): Promise<boolean | nul
  * usage_logsへの監査ログ書き込み(best-effort、失敗を握り潰す。他エンドポイントと同方針)。
  */
 async function logSyncAttempt(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   userId: string,
   result: 'granted' | 'already_premium' | 'verified_inactive' | 'revenuecat_unreachable',
   locale: unknown,

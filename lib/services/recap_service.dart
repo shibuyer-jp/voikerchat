@@ -20,6 +20,7 @@ class RecapService {
   Future<Map<String, dynamic>> getRecap({
     required String conversation,
     String? sceneId,
+    String? sessionId,
   }) async {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     if (token == null) {
@@ -37,6 +38,7 @@ class RecapService {
               'sceneId': sceneId,
               'locale': LocaleService.resolveLocaleCodeForLogging(),
               'platform': currentPlatformCode(),
+              'sessionId': sessionId,
             }),
           )
           // vocab-summary と同様、Vercelコールドスタート+モデル応答を考慮して長め
