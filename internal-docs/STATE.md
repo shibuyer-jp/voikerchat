@@ -17,12 +17,18 @@
 
 - **Androidクローズドテスト**: 14日タイマー進行中(起算 2026-07-30 19:31 JST)。2026-08-12時点で12日目、完走見込みは**2026-08-14前後**[確認済 2026-08-12、Play Console実画面]。Build 21(versionCode 21)の配信完了済み(2026-08-10 12:11配信)。業者依頼「テスト中にアップデートを2〜3回」はBuild 16/18/21の3回で**完全充足**。
 - **iOS**: 1.0.0+20が**App Review承認 → 「Pending Developer Release」到達済み**(2026-08-10)。方針は「Androidの完走を待って同時公開」を維持、ただし2026-08-14での同時公開は成立せず具体的な公開日は未確定(詳細は未完了項目13参照)。
-- **api/監査ログ・型チェック整備(R2/R3、2026-08-13)**: PR #97(revenuecat-webhookへのusage_logs監査ログ追加)・PR #98(api/tsconfig.json新設・型チェックCI導入)を作成済み。いずれもmainへのマージはクローズドテスト完走確認後に人間が判断する(Vercel自動デプロイでテスター61名使用中の本番APIに即反映されるため)。
-- **internal-docs再編(R4、2026-08-13)**: 本書を含む再編作業を実施中。詳細は本書末尾「直近の変更」・DECISIONS.md 2026-08-13参照。
+- **mainマージ待ちPR一覧(2026-08-13時点)**: `gh pr list`で随時実数を確認すること。
+  - PR #97: `api/revenuecat-webhook.ts`へのusage_logs監査ログ追加(R2)。base: main
+  - PR #98: `api/tsconfig.json`新設・型チェックCI導入(R3)。base: main
+  - PR #99: internal-docs再編、本書はこのPRの一部(R4)。base: #98のブランチ(#98マージ後mainへ自動付け替え)
+  - PR #97・#98・#99いずれもmainへのマージはクローズドテスト完走確認後に人間が判断する(#97・#98はVercel自動デプロイでテスター61名使用中の本番APIに即反映されるため。#99はドキュメントのみで本番影響なし)
+  - PR #14(iOS APNsエンティトルメント)・PR #5(Android署名fail-fast)は上記とは無関係の長期保留PR。詳細はバックログ参照
 
 ## 未完了項目(クローズドテスト期間中に対応)
 
 > 完了済み項目(1・2・3・4・6・7・8・9・10・11・14・15・16・17・18・19)は`internal-docs/ARCHIVE.md`「完了済み未完了項目」節へ全文移動済み(番号は維持)。
+
+**公開前に必ず片付けるべき項目はこの3件+バックログ2件のみ**: 5(本番アクセス申請、要作業ゼロで完走待ちのみ)・12(iOS Sandbox課金検証、コードレビュー確認で代替済み、追加作業なし)・13(iOSの公開タイミング判断、Takatohの決定待ち)。加えてバックログ「本番アクセス申請までにクリアしたいこと」のASO見直し・公開日のレビュー依頼準備(いずれも2026-08-14目安)。これ以外の項目(バックログ・改善候補)はすべて公開後でよい。
 
 5. **本番環境へのアクセス申請**
    - 担当: 人間 / 検証: 申請フォームの送信完了 / 期限: 完走確認後すみやかに
@@ -44,10 +50,11 @@
 
 ## 直近の変更(最新1件のみ。過去分はDECISIONS.md参照)
 
-**2026-08-13**: R1(GitHub PAT平文埋め込み、削除・全リポジトリ走査を実施のうえ「PATの新規発行・差し替え・revokeは実施しない」とTakatohが判断、PR #96マージ済み)・R2(`api/revenuecat-webhook.ts`へのusage_logs監査ログ追加、PR #97作成)・R3(`api/tsconfig.json`新設・型チェックCI導入、premium-sync.tsの既存Supabase型エラー5件を解消、PR #98作成)を実施。R2・R3はいずれもクローズドテスト完走確認後に人間がマージ判断。続けてinternal-docs再編(R4)に着手し、STATE.mdを122,609→126,151→本書(再編後)へ圧縮、`internal-docs/ARCHIVE.md`・`internal-docs/OPERATIONS-NOTES.md`を新設、`ROADMAP.md`を廃止しSTATE.mdへ一本化した。詳細はDECISIONS.md 2026-08-13参照。
+**2026-08-13**: R1(GitHub PAT平文埋め込み、削除・全リポジトリ走査を実施のうえ「PATの新規発行・差し替え・revokeは実施しない」とTakatohが判断、PR #96マージ済み)・R2(`api/revenuecat-webhook.ts`へのusage_logs監査ログ追加、PR #97作成)・R3(`api/tsconfig.json`新設・型チェックCI導入、premium-sync.tsの既存Supabase型エラー5件を解消、PR #98作成)・R4(internal-docs再編、STATE.mdを126,151→20,531 bytesへ圧縮、`internal-docs/ARCHIVE.md`・`internal-docs/OPERATIONS-NOTES.md`を新設、`ROADMAP.md`を廃止しSTATE.mdへ一本化、PR #99作成)を実施。PR #97・#98・#99はいずれもクローズドテスト完走確認後に人間がマージ判断(上記「進行中」参照)。詳細はDECISIONS.md 2026-08-13参照。
 
 ## 確定定数(変更時はDECISIONSに記録)
 - App: Voikerchat / `jp.shibuyer.voikerchat` / voikerchat.com(Dynadot) / Team ID `S6XJP274T2`
+- Supabaseプロジェクト: ref `rfwbwwhqclabhnbsrygw`(Tokyo)。表示名`voikerchat-prod`(2026-08-01確認。旧称"Japanese-learning-app"という記載は古い)
 - Vercelプロジェクト: `voikerchat-x621`(env: SUPABASE_URL / SUPABASE_SERVICE_KEY=service_role / ANTHROPIC_API_KEY)
 - APIエンドポイント(api/): chat / rate-limit / analytics / revenuecat-webhook / delete-account
 - フリーミアム: 無料5回/日(広告+5、最大10、当日限り)/ プレミアム$12.99月(50回/日・全18シーン・広告なし)。値の唯一の定義元は`api/_constants.ts`(サーバー)/`lib/constants/rate_limit_constants.dart`(クライアントfallback)。シーン数はT-34で13→18に拡張済み(基本8+アニメ5+実用5、`lib/services/scene_service.dart`)
