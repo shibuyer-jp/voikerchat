@@ -218,7 +218,7 @@ async function logSyncAttempt(
       event: 'premium_sync',
       platform: sanitizePlatform(platform),
       locale: sanitizeLocale(locale),
-      metadata: { result },
+      metadata: { source: 'premium-sync', result },
     });
     if (error) {
       console.error('premium-sync: usage_logs insert failed:', error.code, error.message);
