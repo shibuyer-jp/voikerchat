@@ -302,7 +302,7 @@ Takatohの判断が必要だった項目(年齢設定の不整合〈未完了項
 - **PR #20ストアコピペ反映**: PR #20本文のコピペ用テキスト(en-US/ja-JP)をGoogle Play Console/App Store Connectの該当欄に反映。担当: 人間。期限: 未定
 - **release_verification_session_20260726.mdの残タスク(STEP2/STEP4/STEP5/Phase D/Phase E)**: STEP1(本番データ是正、不要と判断)・STEP3(daily_limit動作検証、実質完了)は2026-07-31に解消済み(DECISIONS.md参照)。残るSTEP2/4/5とPhase D/Eは実機での破壊的操作(アンインストール・端末日時変更)を伴い、テスター61名が稼働中に行うと結果の解釈が困難になるため、クローズドテスト完走(2026-08-14見込み)以降に実施する(検証doc自体の冒頭に方針追記済み)。担当: 人間。期限: 完走後
 - **通知履歴の表示時ローカライズ改修**(任意・優先度低): 現状「配信時点の言語で保持」が仕様(DECISIONS.md 2026-07-26)。ユーザーから改善要望が出た場合のみ着手。担当: 未定。期限: 未定
-- **api/*.tsのテスト基盤整備**(任意): jest/vitest等のTSテスト基盤・tsconfig.json・testスクリプトが皆無。前提としてこのMacへのNode.jsインストールも必要。改善候補「技術的負債」の`api/にtsconfig.json/lint設定が存在しない`と同一課題。担当: 未定。期限: 未定
+- **api/*.tsのテスト基盤整備**(任意): jest/vitest等のTSテスト基盤・testスクリプトが皆無。前提としてこのMacへのNode.jsインストールも必要。**[2026-08-13更新]** `tsconfig.json`は技術的負債節の別項目としてR3で新設済み(型チェックのみ)。本項目は型チェックとは別軸のjest/vitest等によるユニットテスト基盤整備を指しており、型チェック導入後も引き続き未着手のまま残る。担当: 未定。期限: 未定
 - **シーンのお気に入り機能**(任意・条件付きバックログ): 未完成のまま放置されていたハートボタンは削除済み(DECISIONS.md 2026-07-26)。再検討条件: (a) シーン数が20を超えた段階、(b) 実装する場合は「一覧・絞り込み」までセットで設計、(c) 代替案(「最近使ったシーン」)も比較対象、(d) 判断は公開後のusage_logs(scene_idの分布)を確認してから。担当: 未定。期限: 未定
 - **小タスク: G6ダイアログを権限取得済み時はスキップする改善**(任意)。担当: 未定。期限: 未定
 - **本番Supabaseの検証用バックアップテーブルを削除**: 対象 `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`。検証: `information_schema.tables`に該当テーブルが存在しないこと。2026-07-31に本番DBで存在を確認。テスト期間中は本番DB操作を避けるため保留。担当: 未定。期限: 完走後(2026-08-14以降)
@@ -409,9 +409,10 @@ Takatohの判断が必要だった項目(年齢設定の不整合〈未完了項
 - chat.ts のリセット基準が他エンドポイントと不統一(chat.ts: 24時間ローリング / define・hint・recap・vocab-summary: UTC暦日境界)
 - FREE_DAILY_DEFINE_HINT_LIMIT = 30 が define.ts / hint.ts で重複定義
 - recap_service.dart / vocab_summary_service.dart に 429 分岐がなく、上限到達が「一時的な失敗」として表示される
-- api/ に tsconfig.json / lint 設定が存在しない
-  - **[2026-08-12追記]** tsconfig.jsonが無いため、CIの`tsc --noEmit`はヘルプを出力して終了するだけで、**TypeScript型チェックは実質一度も機能していない**[確認済 2026-08-12、CCによる検証(PR #89レビュー時)]
-  - 実ファイルを明示指定して型チェックを実行したところ、`api/premium-sync.ts`にSupabase型の非互換エラーが5件存在する(PR #89とは無関係の既存エラー。実機検証済みのため実害は無いと考えられるが[推測]、原因は未調査)
+- ~~api/ に tsconfig.json / lint 設定が存在しない~~ → **tsconfig.json新設・型チェックCI導入で解消(2026-08-13、R3)**
+  - **[2026-08-12記載の訂正、2026-08-13]** 「tsconfig.jsonが無いためCIの`tsc --noEmit`はヘルプを出力して終了するだけ」という2026-08-12の記載は誤りだった。正しくは**`tsc`を呼び出す箇所自体が`.github/workflows/`・`lefthook.yml`・`package.json`のいずれにも一切存在しなかった**(2026-08-13にCCが全ワークフロー・lefthookの設定・`package.json`の`scripts`欄の不在を確認して訂正)。`api/`配下15ファイルはCI・pre-pushのいずれでも一度も型検査されていなかった
+  - **[2026-08-13解消]** 実ファイルを明示指定して型チェックを実行したところ`api/premium-sync.ts`に存在したSupabase型の非互換エラー5件(2026-08-12発見)は、原因調査の結果、`logSyncAttempt()`の`supabase`引数を`ReturnType<typeof createClient>`型で受けていたことが唯一の原因と判明(他のファイルが使う素の`SupabaseClient`型と噛み合わない)。`_premium.ts`の`upsertPremiumStatus`等と同じ`SupabaseClient`型(`@supabase/supabase-js`からimport)に変更したところ5件とも解消し、`api/`配下15ファイル全てが型エラーゼロになることを確認した(R2実装時に`api/revenuecat-webhook.ts`へ新設した`logWebhookEvent()`で同種のエラーを再現・特定できたことが手がかりになった)
+  - **[2026-08-13新設]** `api/tsconfig.json`(`strict: false`、`target: ES2020`、`include: ["**/*.ts"]`、Flutter側と混ざらないよう`api/`配下に限定)、`package.json`に`scripts.typecheck`(`tsc --noEmit -p api/tsconfig.json`)、`.github/workflows/api-typecheck.yml`(Flutterジョブとは分離、`pull_request`/`push`で実行)を追加。既存エラーは解消済みだが、CI実環境での初回実行結果を確認するまでは`continue-on-error: true`として非ブロッキングにしてある。詳細はDECISIONS.md 2026-08-13参照
 - Vercel プロジェクトが2つ存在(voikerchat / voikerchat-x621)。**`voikerchat.com`/`www.voikerchat.com`は`voikerchat-x621`にのみ割り当て済み(2026-08-03、`vercel domains inspect`で確認)だが、pushの都度両プロジェクトへデプロイが走る構成のまま**。`voikerchat`側は`voikerchat.vercel.app`のみで本番トラフィックには使われていない。完走後に整理すべき技術的負債(不要なデプロイ・Secretsの重複等)
 - `lib/screens/ai_data_consent_screen.dart`のAI同意画面オーバーフロー対策(2026-08-03発見、PR #36) → **解決済(PR #40、実機確認 2026-08-04 / Android 15、フォントサイズ最大)**。本文を`SingleChildScrollView`に、同意/非同意ボタンを`Scaffold.bottomNavigationBar`へ分離しPaywall(PR #30)と同じ方針に統一。実機(Xiaomi 23073RPBFG、Android 15、フォントサイズ最大)でレイアウト崩れが無いこと、「同意して続ける」→次画面遷移が正常動作することを確認済み。**「同意しない」ボタンの動作は未検証**(同一Column内の兄弟要素のため今回は確認を省略、DECISIONS.md参照)。iPad Air 11-inch(iOS)での確認はまだ実施していない
 - ~~Build 16にAIデータ利用同意画面が含まれていない~~ → **解消済(2026-08-06、Build 18配信)**。タブレット実機で同意画面の表示を確認済み[本人報告 2026-08-07]。ただし**ストアのデータセーフティ申告(App Store Guideline 5.1.1(i)/5.1.2(i)対応で追加した開示内容)との整合は引き続き[未確認]**。製品版申請前に必ず確認すること(`internal-docs/PRODUCTION_ACCESS.md`チェックリスト項目3)

@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { baseDailyLimit } from './_constants';
 import { upsertPremiumStatus } from './_premium';
 import { sanitizeLocale, sanitizePlatform } from './_validation';
@@ -206,7 +206,7 @@ async function verifyActiveEntitlement(appUserId: string): Promise<boolean | nul
  * usage_logsへの監査ログ書き込み(best-effort、失敗を握り潰す。他エンドポイントと同方針)。
  */
 async function logSyncAttempt(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   userId: string,
   result: 'granted' | 'already_premium' | 'verified_inactive' | 'revenuecat_unreachable',
   locale: unknown,

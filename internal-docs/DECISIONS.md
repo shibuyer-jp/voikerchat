@@ -1113,3 +1113,50 @@ git remote URLに現行のclassic PAT(repoスコープ・有効期限なし)が�
 
 この判断により、STATE.md「技術的負債」節の該当項目は「未対応」から
 「判断のうえ据え置き」へ更新した(本ファイル該当節・STATE.md参照)。
+
+### 2026-08-13 api/にtsconfig.json新設・型チェックCI導入(R3)
+
+**事実の訂正**: STATE.mdの2026-08-12記載「tsconfig.jsonが無いためCIの
+`tsc --noEmit`はヘルプを出力して終了するだけ」は誤りだった。正しくは
+`.github/workflows/`(`ci-cd.yml`/`flutter-ci.yml`/`ios-release.yml`)・
+`lefthook.yml`・`package.json`(`scripts`セクション自体が存在しなかった)
+のいずれにも**`tsc`を呼び出す箇所が一切存在しなかった**。「tscが形骸化
+している」のではなく「tscが一度も呼ばれていない」が正しい状態だった。
+
+**premium-sync.tsの既存エラー5件の原因を特定・解消**: R2(revenuecat-webhook
+監査ログ追加)実装中に、`api/premium-sync.ts`の`logSyncAttempt()`と同じ
+構造の関数を`api/revenuecat-webhook.ts`に新設したところ同種のエラーが
+新たに発生したことから、`supabase`引数の型を`ReturnType<typeof
+createClient>`で受けている箇所に原因があると当たりを付けていた
+(2026-08-13、R2 PR #97参照)。R3で検証した結果、これが5件全ての唯一の
+原因と確定した。`api/_premium.ts`の`upsertPremiumStatus`・
+`api/analytics.ts`・`api/chat.ts`は同じ`supabase`変数を素の
+`SupabaseClient`型(`@supabase/supabase-js`からimport)で受けており
+エラーが発生していなかったため、`logSyncAttempt()`の型宣言のみを
+`SupabaseClient`に変更したところ5件とも解消し、`api/`配下15ファイル
+全てで型エラーゼロになることをアドホックな`tsc`実行(ファイル明示指定)
+で確認した。`api/`配下を横断走査した結果、`ReturnType<typeof
+createClient>`パターンの使用は`premium-sync.ts`のこの1箇所のみで、
+他に同種の問題は存在しなかった。
+
+**tsconfig.jsonの設計**: `api/tsconfig.json`を新設。`strict`は全面
+有効化すると既存ファイルで大量にエラーが出るリスクがあったため、まず
+`strict: false`(デフォルト)で通る状態を作る方針とした(実際には現状
+0エラーで通ったため、`strict`を上げる作業は別途の技術的負債として
+STATE.mdに残す)。`include`は`api/**/*.ts`に限定し、Flutter側の型検査と
+混在しないようにした。`target: ES2020`・`module: commonjs`は
+`@vercel/node`の実行環境(Node 18+)に合わせた。
+
+**CI導入**: `.github/workflows/api-typecheck.yml`を新設。Flutterの
+セットアップが不要なため`flutter-ci.yml`/`ci-cd.yml`とは完全に分離し、
+`npm ci`(既存の`package-lock.json`を使用)→`npm run typecheck`のみの
+軽量ジョブとした。`pull_request`・`push`の両方で実行する。既存エラーは
+解消済みだが、ローカル環境とCI実行環境(Node/npmのバージョン差異等)で
+結果が変わりうるため、初回のCI実行結果を確認するまでは
+`continue-on-error: true`として非ブロッキングにした。CI実行結果を
+確認し次第、このフラグを外す(担当: CC)。
+
+**バックログ「api/*.tsのテスト基盤整備」との関係**: 本件は`tsc --noEmit`
+による型チェックのみを対象とし、jest/vitest等によるユニットテスト基盤の
+整備は含まない。両者は別軸の課題であり、テスト基盤整備は引き続き
+STATE.mdバックログに残置する。
