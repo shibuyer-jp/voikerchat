@@ -18,6 +18,7 @@ class VocabSummaryService {
   Future<Map<String, dynamic>> getSummary({
     required String conversation,
     String? sceneId,
+    String? sessionId,
   }) async {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     if (token == null) {
@@ -35,6 +36,7 @@ class VocabSummaryService {
               'sceneId': sceneId,
               'locale': LocaleService.resolveLocaleCodeForLogging(),
               'platform': currentPlatformCode(),
+              'sessionId': sessionId,
             }),
           )
           // Vercelコールドスタート+モデル応答を考慮して長め(15秒で失敗報告あり)

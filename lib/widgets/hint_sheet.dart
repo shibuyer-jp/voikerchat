@@ -10,8 +10,9 @@ import '../theme/app_colors.dart';
 class HintSheet extends StatefulWidget {
   final String context;
   final String? sceneId;
+  final String? sessionId;
 
-  const HintSheet({super.key, required this.context, this.sceneId});
+  const HintSheet({super.key, required this.context, this.sceneId, this.sessionId});
 
   @override
   State<HintSheet> createState() => _HintSheetState();
@@ -24,7 +25,11 @@ class _HintSheetState extends State<HintSheet> {
   @override
   void initState() {
     super.initState();
-    _future = _hintService.getHint(context: widget.context, sceneId: widget.sceneId);
+    _future = _hintService.getHint(
+      context: widget.context,
+      sceneId: widget.sceneId,
+      sessionId: widget.sessionId,
+    );
   }
 
   @override

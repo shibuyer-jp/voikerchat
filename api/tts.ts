@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { sanitizeLocale, sanitizePlatform } from './_validation';
+import { sanitizeLocale, sanitizePlatform, sanitizeSessionId } from './_validation';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey =
@@ -46,6 +46,9 @@ const DEFAULT_VOICE: VoiceProfile = {
 
 const MAX_TEXT_LENGTH = 1000;
 
+// usage_logs.model と OpenAI APIリクエストの両方で使う(値の重複定義を避ける)。
+const CLOUD_TTS_MODEL = 'gpt-4o-mini-tts';
+
 /**
  * POST /api/tts
  *
@@ -83,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   try {
-    const { token, text, sceneId, locale, platform } = req.body || {};
+    const { token, text, sceneId, locale, platform, sessionId } = req.body || {};
 
     if (!token) {
       return res.status(401).json({ error: 'Missing authentication token' });
@@ -152,7 +155,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini-tts',
+        model: CLOUD_TTS_MODEL,
         voice: profile.voice,
         instructions: profile.instructions,
         input: text,
@@ -174,6 +177,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { error: logError } = await supabase.from('usage_logs').insert({
         user_id: userId,
         event: 'message_sent',
+        session_id: sanitizeSessionId(sessionId),
+        model: CLOUD_TTS_MODEL,
         is_premium: isPremium,
         platform: sanitizePlatform(platform),
         locale: sanitizeLocale(locale),

@@ -109,6 +109,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isSending = false;
   String? _userId;
+  String? _sessionId;
   RateLimit? _rateLimit;
   bool _isPremium = false;
   int _currentStreak = 0;
@@ -163,11 +164,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         supabase: Supabase.instance.client,
       );
 
-      // Get or create session
-      await _messageService.getOrCreateSession(
+      // Get or create session(usage_logsのファネル計測でsession_idとして流用、2026-08-13)
+      final session = await _messageService.getOrCreateSession(
         userId: _userId!,
         sceneId: widget.sceneId,
       );
+      _sessionId = session.id;
 
       // Load existing messages and rate limit status
       await _loadMessages();
@@ -259,13 +261,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     final engine = await _resolveTtsEngine();
     if (engine is CloudTtsEngine) {
       try {
-        await engine.speak(text, sceneId: widget.sceneId);
+        await engine.speak(text, sceneId: widget.sceneId, sessionId: _sessionId);
         return;
       } catch (e) {
         logger.info('Cloud TTS failed, falling back to device TTS: $e');
       }
     }
-    await _deviceTtsEngine.speak(text, sceneId: widget.sceneId);
+    await _deviceTtsEngine.speak(text, sceneId: widget.sceneId, sessionId: _sessionId);
   }
 
   /// 現在再生中かもしれない両エンジンをまとめて停止する(呼び分けの追跡コストを避ける)。
@@ -723,6 +725,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             'difficultyHint': _difficultyFeedback,
           'locale': LocaleService.resolveLocaleCodeForLogging(),
           'platform': currentPlatformCode(),
+          'sessionId': _sessionId,
         }),
       );
 
@@ -1405,6 +1408,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         messageContent: message.content,
         sceneId: widget.sceneId,
         sceneLevel: widget.sceneData['level'] as String?,
+        sessionId: _sessionId,
       ),
     );
   }
@@ -1417,6 +1421,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         term: term,
         context: messageContent,
         sceneId: widget.sceneId,
+        sessionId: _sessionId,
       ),
     );
   }
@@ -1455,6 +1460,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       builder: (context) => HintSheet(
         context: _buildRecentContext(),
         sceneId: widget.sceneId,
+        sessionId: _sessionId,
       ),
     );
     if (chosen != null && chosen.isNotEmpty && mounted) {
@@ -1479,6 +1485,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       builder: (context) => VocabSummarySheet(
         conversation: conversation,
         sceneId: widget.sceneId,
+        sessionId: _sessionId,
       ),
     );
   }
