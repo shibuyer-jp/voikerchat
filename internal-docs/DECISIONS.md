@@ -1287,3 +1287,12 @@ STATE.mdバックログに残置する。
 自己参照(このドキュメント変更自体を表すPR番号)は、コミット時点では
 存在しないため機械的なチェックで検出できず、意識して確認する必要が
 ある。
+
+- 2026-08-13 | usage_logsのsession_id配線(PR-B)で、`sanitizeSessionId()`
+  (戻り値`string | null`)を`api/chat.ts`の`logUsage()`(`sessionId?: string`、
+  `string | undefined`のみ許容)へ渡そうとしたところ`strict: true`下で
+  型エラーになった。`sessionId`の型を`string | null`へ拡張して解消
+  (ロジック変更なし) | R3で`strict: true`へ引き上げた際「エラー0件」
+  だったため実効性を懸念していたが、その直後の実装で早速、本来検出
+  されるべきだった型の不整合を実際に捕まえた最初の事例。strict化の
+  狙いどおりの効果が出たことの記録として残す
