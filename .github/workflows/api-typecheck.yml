@@ -18,10 +18,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
 
+      # package-lock.json は .gitignore 対象(リポジトリに存在しない)ため、
+      # npm ci ではなく npm install を使う(cache: npm もロックファイル
+      # 前提のため未使用)。
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # 2026-08-13時点で既知のエラーは解消済み(STATE.md参照)だが、
       # 初回のCI実環境での実行結果を確認するまでは非ブロッキングとしておく。

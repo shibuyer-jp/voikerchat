@@ -1149,11 +1149,15 @@ STATE.mdに残す)。`include`は`api/**/*.ts`に限定し、Flutter側の型検
 
 **CI導入**: `.github/workflows/api-typecheck.yml`を新設。Flutterの
 セットアップが不要なため`flutter-ci.yml`/`ci-cd.yml`とは完全に分離し、
-`npm ci`(既存の`package-lock.json`を使用)→`npm run typecheck`のみの
-軽量ジョブとした。`pull_request`・`push`の両方で実行する。既存エラーは
-解消済みだが、ローカル環境とCI実行環境(Node/npmのバージョン差異等)で
-結果が変わりうるため、初回のCI実行結果を確認するまでは
-`continue-on-error: true`として非ブロッキングにした。CI実行結果を
+`npm install`→`npm run typecheck`のみの軽量ジョブとした
+(`package-lock.json`は`.gitignore`対象でリポジトリに存在しないため
+`npm ci`は使えず、`actions/setup-node`の`cache: npm`もロックファイル
+前提のため未使用とした。初回のCI実行(2026-08-13)で`npm ci`が
+`Dependencies lock file is not found`で即失敗することを確認し、
+`npm install`へ修正した)。`pull_request`・`push`の両方で実行する。
+既存エラーは解消済みだが、ローカル環境とCI実行環境(Node/npmの
+バージョン差異等)で結果が変わりうるため、初回のCI実行結果を確認する
+までは`continue-on-error: true`として非ブロッキングにした。CI実行結果を
 確認し次第、このフラグを外す(担当: CC)。
 
 **バックログ「api/*.tsのテスト基盤整備」との関係**: 本件は`tsc --noEmit`
