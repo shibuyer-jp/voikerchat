@@ -1155,10 +1155,16 @@ STATE.mdに残す)。`include`は`api/**/*.ts`に限定し、Flutter側の型検
 前提のため未使用とした。初回のCI実行(2026-08-13)で`npm ci`が
 `Dependencies lock file is not found`で即失敗することを確認し、
 `npm install`へ修正した)。`pull_request`・`push`の両方で実行する。
-既存エラーは解消済みだが、ローカル環境とCI実行環境(Node/npmの
-バージョン差異等)で結果が変わりうるため、初回のCI実行結果を確認する
-までは`continue-on-error: true`として非ブロッキングにした。CI実行結果を
-確認し次第、このフラグを外す(担当: CC)。
+既存エラーは解消済みだったが、ローカル環境とCI実行環境(Node/npmの
+バージョン差異等)で結果が変わりうるため、初回は`continue-on-error: true`
+として非ブロッキングで導入した。実際にCI(Ubuntu runner、Node 18.20.8)で
+`npm install`→`npm run typecheck`を実行し、0エラーで完了することを
+run 31657619201で確認できたため、同PR内で`continue-on-error: true`を
+外しブロッキング化した(2026-08-13)。なお`npm install`時に
+`@supabase/supabase-js`等がNode 22以上を要求する`EBADENGINE`警告が
+出ている(`package.json`の`engines.node`は`>=18.x`のまま)。ビルド自体は
+失敗しないため今回は対応せず、技術的負債として指摘のみ残す
+(次にNode 18サポートが実際に切れる依存関係更新のタイミングで対応)。
 
 **バックログ「api/*.tsのテスト基盤整備」との関係**: 本件は`tsc --noEmit`
 による型チェックのみを対象とし、jest/vitest等によるユニットテスト基盤の

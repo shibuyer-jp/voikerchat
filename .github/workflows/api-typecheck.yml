@@ -25,9 +25,5 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # 2026-08-13時点で既知のエラーは解消済み(STATE.md参照)だが、
-      # 初回のCI実環境での実行結果を確認するまでは非ブロッキングとしておく。
-      # 解消を確認でき次第このフラグは外す。
       - name: Run typecheck
         run: npm run typecheck
-        continue-on-error: true
