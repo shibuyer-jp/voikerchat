@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { timingSafeEqual } from 'crypto';
 import { baseDailyLimit } from './_constants';
 import { upsertPremiumStatus } from './_premium';
@@ -119,6 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log(
         `revenuecat-webhook: no-op for event type ${eventType} (user ${appUserId})${cancelReasonSuffix}`
       );
+      await logWebhookEvent(supabase, appUserId, 'none', eventType, cancelReason);
       return res.status(200).json({ received: true, action: 'none' });
     }
 
@@ -132,6 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const dailyLimit = baseDailyLimit(isPremium);
 
     await upsertPremiumStatus(supabase, appUserId, isPremium, dailyLimit, 'revenuecat-webhook');
+    await logWebhookEvent(supabase, appUserId, action, eventType, cancelReason);
 
     return res.status(200).json({ received: true, action, isPremium, dailyLimit });
   } catch (error: any) {
@@ -140,6 +142,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error: 'Internal server error',
       message: error?.message || 'Unknown error',
     });
+  }
+}
+
+/**
+ * usage_logsへの監査ログ書き込み(best-effort、失敗を握り潰す。premium-sync.tsと同方針)。
+ *
+ * usage_logs.event の CHECK 制約は8値固定で新値の追加は本番DBマイグレーションを
+ * 要するため、既存の 'premium_sync' を再利用し metadata.source='webhook' で
+ * premium-sync.ts(source='premium-sync')側と区別する(2026-08-13、R2)。
+ * webhookペイロードには platform/locale が含まれないため、それらの列は
+ * 埋めずNULLのままにする(CHECK制約に抵触させないため無理に埋めない)。
+ */
+async function logWebhookEvent(
+  supabase: SupabaseClient,
+  userId: string,
+  action: 'grant' | 'revoke' | 'none',
+  eventType: string | undefined,
+  cancelReason: string | undefined
+): Promise<void> {
+  try {
+    const metadata: Record<string, unknown> = {
+      source: 'webhook',
+      event_type: eventType,
+      action,
+    };
+    if (eventType === 'CANCELLATION' && cancelReason) {
+      metadata.cancel_reason = cancelReason;
+    }
+
+    const { error } = await supabase.from('usage_logs').insert({
+      user_id: userId,
+      event: 'premium_sync',
+      metadata,
+    });
+    if (error) {
+      console.error('revenuecat-webhook: usage_logs insert failed:', error.code, error.message);
+    }
+  } catch (err) {
+    console.error('revenuecat-webhook: failed to log webhook event:', err);
   }
 }
 
