@@ -11,12 +11,14 @@ class WordLookupSheet extends StatefulWidget {
   final String term;
   final String context;
   final String? sceneId;
+  final String? sessionId;
 
   const WordLookupSheet({
     super.key,
     required this.term,
     required this.context,
     this.sceneId,
+    this.sessionId,
   });
 
   @override
@@ -34,6 +36,7 @@ class _WordLookupSheetState extends State<WordLookupSheet> {
       term: widget.term,
       context: widget.context,
       sceneId: widget.sceneId,
+      sessionId: widget.sessionId,
     );
   }
 

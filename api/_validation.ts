@@ -17,3 +17,14 @@ export function sanitizePlatform(value: unknown): string | null {
     ? value
     : null;
 }
+
+// usage_logs.session_id は uuid 型。conversation_sessions.id
+// (lib/services/message_service.dart で Uuid().v4() 生成)を想定するが、
+// クライアントからの入力は信用せず、不正な形式は null に落として
+// insert 自体は失敗させない(リクエストをブロックしない)。
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function sanitizeSessionId(value: unknown): string | null {
+  return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
+}

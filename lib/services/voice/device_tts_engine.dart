@@ -11,8 +11,9 @@ class DeviceTtsEngine implements TtsEngine {
   bool get isSpeaking => _service.isSpeaking;
 
   @override
-  Future<void> speak(String text, {required String sceneId}) {
+  Future<void> speak(String text, {required String sceneId, String? sessionId}) {
     // 端末TTSはキャラクター音声を選べない(OS標準の日本語音声のみ)。
+    // sessionIdはサーバー呼び出しが無いため未使用(インターフェース適合のみ)。
     return _service.speak(text);
   }
 

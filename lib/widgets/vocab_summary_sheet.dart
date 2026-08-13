@@ -20,8 +20,14 @@ import '../theme/app_colors.dart';
 class VocabSummarySheet extends StatefulWidget {
   final String conversation;
   final String? sceneId;
+  final String? sessionId;
 
-  const VocabSummarySheet({super.key, required this.conversation, this.sceneId});
+  const VocabSummarySheet({
+    super.key,
+    required this.conversation,
+    this.sceneId,
+    this.sessionId,
+  });
 
   @override
   State<VocabSummarySheet> createState() => _VocabSummarySheetState();
@@ -43,10 +49,12 @@ class _VocabSummarySheetState extends State<VocabSummarySheet> {
       _recapService.getRecap(
         conversation: widget.conversation,
         sceneId: widget.sceneId,
+        sessionId: widget.sessionId,
       ),
       _vocabSummaryService.getSummary(
         conversation: widget.conversation,
         sceneId: widget.sceneId,
+        sessionId: widget.sessionId,
       ),
     ]);
   }

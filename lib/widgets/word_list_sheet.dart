@@ -12,12 +12,14 @@ class WordListSheet extends StatefulWidget {
   final String messageContent;
   final String? sceneId;
   final String? sceneLevel;
+  final String? sessionId;
 
   const WordListSheet({
     super.key,
     required this.messageContent,
     this.sceneId,
     this.sceneLevel,
+    this.sessionId,
   });
 
   @override
@@ -35,6 +37,7 @@ class _WordListSheetState extends State<WordListSheet> {
       context: widget.messageContent,
       sceneId: widget.sceneId,
       sceneLevel: widget.sceneLevel,
+      sessionId: widget.sessionId,
     );
   }
 

@@ -2,7 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { PREMIUM_DAILY_LIMIT, FREE_DAILY_LIMIT, baseDailyLimit } from './_constants';
-import { sanitizeLocale, sanitizePlatform } from './_validation';
+import { sanitizeLocale, sanitizePlatform, sanitizeSessionId } from './_validation';
 
 /**
  * 環境変数（名前ゆれ・新旧キーに両対応）
@@ -65,7 +65,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       difficultyHint,
       locale,
       platform,
+      sessionId,
     } = req.body || {};
+    const sanitizedSessionId = sanitizeSessionId(sessionId);
 
     // 1. トークン検証（getUser はHS256/非対称鍵いずれの署名でも検証可能）
     if (!token) {
@@ -102,6 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await logUsage(supabase, {
         userId,
         event: 'quota_reached',
+        sessionId: sanitizedSessionId,
         isPremium,
         locale,
         platform,
@@ -133,6 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await logUsage(supabase, {
       userId,
       event: 'message_sent',
+      sessionId: sanitizedSessionId,
       model: 'claude-haiku-4-5-20251001',
       isPremium,
       inputTokens: response.usage.input_tokens,
@@ -389,7 +393,7 @@ async function logUsage(
   params: {
     userId: string;
     event: UsageEvent;
-    sessionId?: string;
+    sessionId?: string | null;
     model?: string;
     isPremium?: boolean;
     inputTokens?: number;

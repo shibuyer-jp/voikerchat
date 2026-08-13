@@ -21,6 +21,7 @@ class DictionaryService {
     required String term,
     required String context,
     String? sceneId,
+    String? sessionId,
   }) async {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     if (token == null) {
@@ -39,6 +40,7 @@ class DictionaryService {
               'sceneId': sceneId,
               'locale': LocaleService.resolveLocaleCodeForLogging(),
               'platform': currentPlatformCode(),
+              'sessionId': sessionId,
             }),
           )
           .timeout(const Duration(seconds: 10));
@@ -67,6 +69,7 @@ class DictionaryService {
     required String context,
     String? sceneId,
     String? sceneLevel,
+    String? sessionId,
   }) async {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     if (token == null) {
@@ -86,6 +89,7 @@ class DictionaryService {
               'sceneLevel': sceneLevel,
               'locale': LocaleService.resolveLocaleCodeForLogging(),
               'platform': currentPlatformCode(),
+              'sessionId': sessionId,
             }),
           )
           .timeout(const Duration(seconds: 15));

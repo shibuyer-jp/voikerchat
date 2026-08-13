@@ -26,7 +26,7 @@ class CloudTtsEngine implements TtsEngine {
   bool get isSpeaking => _player.playing;
 
   @override
-  Future<void> speak(String text, {required String sceneId}) async {
+  Future<void> speak(String text, {required String sceneId, String? sessionId}) async {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     if (token == null) {
       throw Exception('No auth token for cloud TTS');
@@ -42,6 +42,7 @@ class CloudTtsEngine implements TtsEngine {
             'sceneId': sceneId,
             'locale': LocaleService.resolveLocaleCodeForLogging(),
             'platform': currentPlatformCode(),
+            'sessionId': sessionId,
           }),
         )
         .timeout(const Duration(seconds: 15));
