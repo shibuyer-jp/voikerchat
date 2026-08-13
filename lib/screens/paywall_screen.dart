@@ -72,12 +72,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _purchase({bool isRetry = false}) async {
     if (_isProcessing) return;
+    // purchasePremium()は成功時に内部の_isPremiumをtrueへ書き換えるため、
+    // 購入後にgetterを読むと常にtrueになってしまう。is_premiumは「そのイベント
+    // 発生時点でPremiumだったか」という観測値であり、upsell_convertedも
+    // 他イベントと同じく購入前の状態を記録すべきなので、ここで先にキャプチャ
+    // しておく。
+    final wasPremiumBeforePurchase = _revenueCatService.isPremium;
     // リトライダイアログ経由の再帰呼び出し(下記_purchase(isRetry: true))でも
     // 毎回記録する(意図どおり。metadata.retryで区別でき、試行回数の可視化に
     // 使える)。
     _analyticsService.logEvent(
       event: AnalyticsEvent.upsellClicked,
-      isPremium: _revenueCatService.isPremium,
+      isPremium: wasPremiumBeforePurchase,
       metadata: {
         ..._analyticsMetadata,
         if (isRetry) 'retry': true,
@@ -109,7 +115,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (result['success'] == true) {
         _analyticsService.logEvent(
           event: AnalyticsEvent.upsellConverted,
-          isPremium: true,
+          isPremium: wasPremiumBeforePurchase,
           metadata: _analyticsMetadata,
         );
         Navigator.pop(context, true); // ペイウォール自体を成功として閉じる

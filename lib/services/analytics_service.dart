@@ -50,6 +50,14 @@ class AnalyticsService {
     return _instance!;
   }
 
+  /// テスト間でシングルトンを持ち越さないためのリセット(getInstance()を
+  /// 使うテストでのみ必要。差し替え口経由で直接AnalyticsService(...)を
+  /// 生成するテストには不要)。
+  @visibleForTesting
+  static void resetInstanceForTesting() {
+    _instance = null;
+  }
+
   /// usage_logsへイベントを記録する(fire-and-forget)。
   void logEvent({
     required String event,
