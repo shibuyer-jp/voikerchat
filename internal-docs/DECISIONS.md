@@ -1084,3 +1084,31 @@ PRODUCTION_ACCESS.md`3節Part 1②・チェックリストの「申請前に確�
 いた唯一の前提作業(テスター購入実績のPlay Console側確認)が解消したことで、
 製品版アクセス申請の**申請前チェック項目は全て完了し、残るのはクローズド
 テスト完走(2026-08-14前後見込み)待ちのみ**となった。
+
+### 2026-08-13 GitHub PAT平文埋め込み(R1): 削除・走査は実施、PAT差し替えは据え置き
+
+**実施した対応**: `Documents/voikerchat`(2026-06-29時点の古い別チェックアウト、
+git remote URLにPAT `ghp_Y86Ne...`が平文で埋め込まれていた)を、未コミット・
+未push作業の棚卸し(サルベージすべきものなしと確認: `feat/anon-auth`はorigin
+と完全同期、`main`は未pushコミットなし、`stash@{0}`は現行リポジトリに
+コミット`40bd0fa`で既に取り込み済みの陳腐化した重複)の後、CCが削除した。
+続けてローカル全13リポジトリ(`voikerchat`本体に加え`nexus-repo`/`beat-booth`/
+`shibuyer-ops`/`tabiroll`/`tokyo-bible`/`harmone`等)の`git remote -v`・
+`.git/config`、および`.netrc`/`.git-credentials`/global credential helper
+を走査したが、他にPAT埋め込み箇所は存在しなかった。
+
+**新PAT発行・差し替え・旧PATのrevokeは「実施しない」とTakatohが判断した**。
+根拠:
+- 平文が存在していたのは本人のPC/OneDriveのみで、第三者への共有経路が
+  なく、実際に漏洩した形跡はゼロ
+- 一方、過去にキー系の切り替えで原因特定に数日を要した実績があり、
+  8/14の製品版アクセス申請を控えた時期に自動化基盤(CC・chat-Claude双方が
+  依存)を触るリスクの方が高いと評価した
+
+**代替の担保**:
+1. OneDriveのごみ箱・バージョン履歴の消去(担当: 人間)
+2. GitHub Security logの定期確認(担当: 人間)
+3. 将来PATを第三者と共有する場面が生じた時点で再検討する
+
+この判断により、STATE.md「技術的負債」節の該当項目は「未対応」から
+「判断のうえ据え置き」へ更新した(本ファイル該当節・STATE.md参照)。
