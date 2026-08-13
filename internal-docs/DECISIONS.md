@@ -1088,7 +1088,8 @@ PRODUCTION_ACCESS.md`3節Part 1②・チェックリストの「申請前に確�
 ### 2026-08-13 GitHub PAT平文埋め込み(R1): 削除・走査は実施、PAT差し替えは据え置き
 
 **実施した対応**: `Documents/voikerchat`(2026-06-29時点の古い別チェックアウト、
-git remote URLにPAT `ghp_Y86Ne...`が平文で埋め込まれていた)を、未コミット・
+git remote URLに現行のclassic PAT(repoスコープ・有効期限なし)が平文で
+埋め込まれていた)を、未コミット・
 未push作業の棚卸し(サルベージすべきものなしと確認: `feat/anon-auth`はorigin
 と完全同期、`main`は未pushコミットなし、`stash@{0}`は現行リポジトリに
 コミット`40bd0fa`で既に取り込み済みの陳腐化した重複)の後、CCが削除した。
@@ -1106,8 +1107,8 @@ git remote URLにPAT `ghp_Y86Ne...`が平文で埋め込まれていた)を、�
   依存)を触るリスクの方が高いと評価した
 
 **代替の担保**:
-1. OneDriveのごみ箱・バージョン履歴の消去(担当: 人間)
-2. GitHub Security logの定期確認(担当: 人間)
+1. OneDriveのごみ箱・バージョン履歴の消去 → **実施済み(2026-08-13、人間)**
+2. GitHub Security logの定期確認(担当: 人間、未実施)
 3. 将来PATを第三者と共有する場面が生じた時点で再検討する
 
 この判断により、STATE.md「技術的負債」節の該当項目は「未対応」から
