@@ -17,6 +17,20 @@
 
 - **Androidクローズドテスト**: **完走(2026-08-14)**。製品版アクセス申請を**2026-08-14 09:04 JST に提出済み**。審査中(通常7日、8/21頃結果見込み)。
 - **iOS**: 1.0.0+20が**App Review承認 → 「Pending Developer Release」到達済み**(2026-08-10)。同時公開で確定(2026-08-14決定)。公開日はAndroidの製品版リリースが公開中になった時点。撤退期限2026-09-05。詳細は未完了項目13参照。
+- **計測入り新ビルド(Build 22)の作成**: PR-A/PR-Bの計測コードが
+  Build 21(2026-08-10配信)・iOS 1.0.0+20のいずれにも含まれていないことが
+  2026-08-14のusage_logs検証で判明した(session_start/upsell_shown/
+  upsell_clicked/upsell_convertedがいずれも0件)。Android/iOSとも
+  1.0.0+22 で作り直す。
+  **実行順序(厳守)**: ①pubspecバンプ ②Android AABビルド
+  ③iOS 1.0.0+22 を ios-release.yml でビルド ④**③の成功を確認してから**
+  iOS 1.0.0+20 の Pending Developer Release を破棄 ⑤iOS 1.0.0+22 を
+  App Reviewへ提出。**④を先に行わないこと**(ビルド失敗時に戻せる
+  承認済み版を失うため)。
+  **配信前検証**: Build 22 をクローズドテストトラックへ配信し、実機で
+  起動・Paywall表示を行ったうえで usage_logs に session_start /
+  upsell_shown が記録されることを確認する。確認できるまで製品版へ
+  上げないこと。
 - **2026-08-13の一連の変更はすべてmainへマージ済み**: R1〜R4(PR #96・#97・#98・#100・#101)、usage_logsアップセル計測PR-A/PR-B(PR #102・#103)。マージ後、本番8エンドポイント(`/api/chat`・`rate-limit`・`premium-sync`・`define`・`hint`・`recap`・`vocab-summary`・`tts`・`revenuecat-webhook`)の疎通を都度確認済み、異常なし。詳細はDECISIONS.md 2026-08-13系列参照
   - PR #14(iOS APNsエンティトルメント)・PR #5(Android署名fail-fast)は上記とは無関係の長期保留PR。詳細はバックログ参照
 
@@ -39,6 +53,16 @@
       iOSを単独で先行公開する(Androidの再リジェクト等でiOSが長期間
       待機状態に置かれることを防ぐため)
     - 担当: 人間。期限: 撤退期限 2026-09-05
+
+20. **usage_logs の実DB CHECK制約とスキーマドキュメントの乖離**
+    - 2026-08-14のusage_logs検証で、`Database-Schema-v1.0.md` の
+      CHECK制約に存在しないイベント `premium_sync` が7件
+      (2026-08-07〜08-14)記録されていることが判明した。実DBの制約が
+      後から変更されたか、スキーマドキュメントが古いかのいずれか。
+    - 作業: Supabaseで実際のCHECK制約を確認し、
+      `Database-Schema-v1.0.md` を実態に合わせて更新する。制約側に
+      `premium_sync` が無いのに書き込めている場合は原因を調査する
+    - 担当: 人間+CC。期限: 一般公開後(公開ブロッカーではない)
 
 ## 直近の変更(最新1件のみ。過去分はDECISIONS.md参照)
 
@@ -122,6 +146,10 @@
 - ~~usage_logsの残る記録漏れ~~ → **解消(2026-08-13)**: session_id全箇所未使用→6エンドポイント(chat/define/hint/recap/vocab-summary/tts)に配線(PR-B)。tts.tsのmodel未記録→`gpt-4o-mini-tts`を記録(PR-B)。session_start/upsell_shown/upsell_clicked/upsell_converted のinsertがゼロ→`lib/services/analytics_service.dart`新設で計測基盤を追加(PR-A)。マイグレーションはいずれも不要(既存の8値CHECK制約・既存列を使用)。詳細はDECISIONS.md 2026-08-13参照
 
 ### [優先: 中]
+- **quota_reached イベントがほぼ記録されていない**: 2026-08-14の検証で
+  全期間を通じて1件(2026-07-30)のみと判明。上限到達の監視ができない
+  状態にある。無料枠が実ユーザーに足りているかを判断する先行指標に
+  なるため、配線の要否を調査する。着手時期: 一般公開後。担当: 未定
 - **辞書(define)の無料上限の見直し**: `FREE_DAILY_DEFINE_HINT_LIMIT = 30` が
   chat側の上限(20)より緩いのに1回あたり単価が高く、コスト構成比トップに
   なっている(2026-08-14測定)。**公開前は変更しない**(テスターが評価した
