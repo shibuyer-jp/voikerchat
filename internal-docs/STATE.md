@@ -39,11 +39,13 @@
 
 > 完了済み項目(1・2・3・4・5・6・7・8・9・10・11・12・14・15・16・17・18・19)は`internal-docs/ARCHIVE.md`「完了済み未完了項目」節へ全文移動済み(番号は維持)。
 
-**公開前に人間の判断を要する項目はゼロになった**: 5(本番アクセス申請)は2026-08-14に提出完了し以後は審査結果待ち、12(iOS Sandbox課金検証)はコードレビュー確認で代替済み、13(iOSの公開タイミング)はAndroid/iOS同時公開で確定済み(撤退期限 2026-09-05)。**残るのは審査待ちと、バックログ「本番アクセス申請までにクリアしたいこと」のASO見直し・公開日のレビュー依頼準備のみ**で、いずれも審査待ち期間(〜2026-08-21頃)に消化する。これ以外の項目(バックログ・改善候補)はすべて公開後でよい。
+**公開前に人間の判断を要する項目はゼロになった**: 5(本番アクセス申請)は2026-08-14に提出完了し以後は審査結果待ち、12(iOS Sandbox課金検証)はコードレビュー確認で代替済み、13(iOSの公開タイミング)はAndroid/iOS同時公開で確定済み(撤退期限 2026-09-05)。**残るのは審査待ちと、バックログ「審査待ち期間中にクリアしたいこと」のASO見直し・公開日のレビュー依頼準備のみ**で、いずれも審査待ち期間(〜2026-08-21頃)に消化する。これ以外の項目(バックログ・改善候補)はすべて公開後でよい。
 
 13. **iOSの公開タイミング判断** ✅ 方針確定(2026-08-14)
-    - 状態: 1.0.0+20は「Pending Developer Release」で待機中(2026-08-10到達)
-    - **決定: Android/iOS同時公開で確定**。iOSのReleaseボタンは、Androidの
+    - 状態: 1.0.0+20が「Pending Developer Release」で待機中(2026-08-10到達)だが、
+      計測コード反映のため **1.0.0+22 に差し替える**(「進行中」の該当ブロック参照)。
+      **公開対象は +22**
+    - **決定: Android/iOS同時公開で確定**。**1.0.0+22 の**Releaseボタンは、Androidの
       製品版リリースがPlay Consoleの実画面で「公開中」になったことを
       確認してから押す(App Store側の反映に最大24時間程度かかりうるため、
       半日程度先行させる運用も可)
@@ -73,7 +75,7 @@
 - App: Voikerchat / `jp.shibuyer.voikerchat` / voikerchat.com(Dynadot) / Team ID `S6XJP274T2`
 - Supabaseプロジェクト: ref `rfwbwwhqclabhnbsrygw`(Tokyo)。表示名`voikerchat-prod`(2026-08-01確認。旧称"Japanese-learning-app"という記載は古い)
 - Vercelプロジェクト: `voikerchat-x621`(env: SUPABASE_URL / SUPABASE_SERVICE_KEY=service_role / ANTHROPIC_API_KEY)
-- APIエンドポイント(api/): chat / rate-limit / analytics / revenuecat-webhook / delete-account
+- APIエンドポイント(api/): chat / define / hint / recap / vocab-summary / tts / rate-limit / premium-sync / ad-reward / analytics / revenuecat-webhook / delete-account(2026-08-14、`api/`実走査により是正。`_`始まりのファイルは共有ヘルパーでエンドポイントではない)
 - フリーミアム: 無料5回/日(広告+5、最大10、当日限り)/ プレミアム$12.99月(50回/日・全18シーン・広告なし)。値の唯一の定義元は`api/_constants.ts`(サーバー)/`lib/constants/rate_limit_constants.dart`(クライアントfallback)。シーン数はT-34で13→18に拡張済み(基本8+アニメ5+実用5、`lib/services/scene_service.dart`)
 - サポート: voikerchat.support@gmail.com(forward→takatoh01@gmail.com)。kizunavi.support は非運用 / APNs `.p8`: Drive `00_Project_Credentials`(`1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)
 - 設計書: repo `internal-docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
@@ -94,8 +96,8 @@
 
 下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手は製品版アクセス審査の結果が出るまで待つ。1項目3行以内に圧縮。詳細な経緯はDECISIONS.mdまたは`internal-docs/reports/`配下の個別レポートを参照。
 
-**本番アクセス申請までにクリアしたいこと(2026-08-14目安、ROADMAP.md区分2より移行)**
-- **ストア掲載情報の見直し(ASO)**: フィリピン人学習者が実際に検索する語(Japanese / Nihongo / Tagalog等)がタイトル・短い説明に入っているか確認。`internal-docs/GROWTH_PLAN.md`参照。担当: 人間。期限: 2026-08-14目安
+**審査待ち期間中にクリアしたいこと(〜2026-08-21目安、ROADMAP.md区分2より移行)**
+- **ストア掲載情報の見直し(ASO)**: フィリピン人学習者が実際に検索する語(Japanese / Nihongo / Tagalog等)がタイトル・短い説明に入っているか確認。`internal-docs/GROWTH_PLAN.md`参照。担当: 人間。期限: 2026-08-21目安
 - **公開日のレビュー依頼準備**: 配偶者経由の実テスター(16名)へ、公開日にレビュー投稿を依頼できるよう事前に声をかけておく。公開日確定後に実施。`internal-docs/GROWTH_PLAN.md`参照。担当: 人間
 
 **運用・技術(公開前後)**
