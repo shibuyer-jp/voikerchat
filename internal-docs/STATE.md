@@ -11,26 +11,21 @@
   - `internal-docs/OPERATIONS-NOTES.md` — 再利用可能な運用知見・手順の罠。都度更新
   - 新規ドキュメントを作る際のルールはCLAUDE.md「internal-docsに新しいファイルを作るときのルール」を参照。`ROADMAP.md`(2026-08-07新設)がSTATE.mdと内容重複する二重管理になり2026-08-13に廃止した教訓による
 - 外部サービス(Play Console / App Store Connect等)の配布状況・ステータスは、必ず実画面で確認してから記録する(Android versionCode 7の配布状況誤認が教訓。詳細はOPERATIONS-NOTES.md参照)
-- 製品版アクセス審査の結果が出るまで、Play Consoleのトラック設定を一切変更しない(テスターリスト、国/地域、リリース構成)。既存オプトインの切断リスクがあるため。**ただし新AAB配信は例外**(14日タイマーはリセットされない、Build 16/18/21で実績あり。詳細はOPERATIONS-NOTES.md参照)
+- **製品版アクセスの審査完了まで**、Play Consoleのトラック設定を一切変更しない(テスターリスト、国/地域、リリース構成)。既存オプトインの切断リスクがあるため。**ただし新AAB配信は例外**(14日タイマーはリセットされない、Build 16/18/21/22で実績あり。詳細はOPERATIONS-NOTES.md参照)
+- **申請の受付時点ではGoogleからメールは届かない**(結果が出た時にのみ通知)。受信箱に通知が無いことを「未申請」の根拠にしない。申請状況はPlay Console「製品版へのアクセス」画面で確認する(2026-08-14の誤認が教訓)
 
 ## 進行中
 
-- **Androidクローズドテスト**: **完走(2026-08-14)**。製品版アクセス申請を**2026-08-14 09:04 JST に提出済み**。審査中(通常7日、8/21頃結果見込み)。
-- **iOS**: 1.0.0+20が**App Review承認 → 「Pending Developer Release」到達済み**(2026-08-10)。同時公開で確定(2026-08-14決定)。公開日はAndroidの製品版リリースが公開中になった時点。撤退期限2026-09-05。詳細は未完了項目13参照。
-- **計測入り新ビルド(Build 22)の作成**: PR-A/PR-Bの計測コードが
-  Build 21(2026-08-10配信)・iOS 1.0.0+20のいずれにも含まれていないことが
-  2026-08-14のusage_logs検証で判明した(session_start/upsell_shown/
-  upsell_clicked/upsell_convertedがいずれも0件)。Android/iOSとも
-  1.0.0+22 で作り直す。
-  **実行順序(厳守)**: ①pubspecバンプ ②Android AABビルド
-  ③iOS 1.0.0+22 を ios-release.yml でビルド ④**③の成功を確認してから**
-  iOS 1.0.0+20 の Pending Developer Release を破棄 ⑤iOS 1.0.0+22 を
-  App Reviewへ提出。**④を先に行わないこと**(ビルド失敗時に戻せる
-  承認済み版を失うため)。
-  **配信前検証**: Build 22 をクローズドテストトラックへ配信し、実機で
-  起動・Paywall表示を行ったうえで usage_logs に session_start /
-  upsell_shown が記録されることを確認する。確認できるまで製品版へ
-  上げないこと。
+- **Android製品版アクセス**: **2026-08-14 09:04 JST に申請フォーム提出済み → 審査中**[確認済 2026-08-14、Play Console実画面]。Googleの案内では審査は通常7日程度、それ以上かかる場合もあり。結果は**アカウント所有者宛のメール**で通知される。承認見込みは**2026-08-21前後**。
+- **Androidクローズドテスト**: 14日要件を完走(起算 2026-07-30 19:31 JST)。審査中も継続稼働させる。Build 22(versionCode 22)を2026-08-14 12:15 JSTに配信済み(usage_logsアップセル計測を含む最初のビルド)。業者依頼「テスト中にアップデートを2〜3回」はBuild 16/18/21/22の4回で**完全充足**。
+- **iOS**: 1.0.0+20が**App Review承認 → 「Pending Developer Release」到達済み**(2026-08-10)。**Android/iOS同時公開で確定済み**(撤退期限 2026-09-05)。Android製品版アクセスの承認見込みが2026-08-21前後のため、同時公開日はその直後を想定。詳細は未完了項目13参照。
+- **iOS 1.0.0+22への計測コード反映(未着手)**: Android側はBuild 22で
+  計測コード(PR-A/PR-B)を反映済みだが、iOSはまだ1.0.0+20のまま
+  (計測コード無し)。同時公開に向けて、Android承認が近づいた時点で
+  ①iOS 1.0.0+22をios-release.ymlでビルド ②**成功を確認してから**
+  1.0.0+20のPending Developer Releaseを破棄 ③1.0.0+22をApp Reviewへ
+  提出、の順で作業する。**②を①より先に行わないこと**(ビルド失敗時に
+  戻せる承認済み版を失うため)。担当: 人間+CC。
 - **2026-08-13の一連の変更はすべてmainへマージ済み**: R1〜R4(PR #96・#97・#98・#100・#101)、usage_logsアップセル計測PR-A/PR-B(PR #102・#103)。マージ後、本番8エンドポイント(`/api/chat`・`rate-limit`・`premium-sync`・`define`・`hint`・`recap`・`vocab-summary`・`tts`・`revenuecat-webhook`)の疎通を都度確認済み、異常なし。詳細はDECISIONS.md 2026-08-13系列参照
   - PR #14(iOS APNsエンティトルメント)・PR #5(Android署名fail-fast)は上記とは無関係の長期保留PR。詳細はバックログ参照
 
@@ -38,7 +33,7 @@
 
 > 完了済み項目(1・2・3・4・5・6・7・8・9・10・11・12・14・15・16・17・18・19)は`internal-docs/ARCHIVE.md`「完了済み未完了項目」節へ全文移動済み(番号は維持)。
 
-**公開前に必ず片付けるべき項目はゼロ**。項目5(本番環境へのアクセス申請)・12(iOS Sandbox課金検証)はいずれもクローズ済み、項目13(iOSの公開タイミング判断)は方針確定済み(撤退期限2026-09-05)。残るはAndroid製品版アクセス申請の審査結果待ち(通常7日、8/21頃結果見込み)と、公開当日の作業のみである。
+**公開前に人間の判断を要する項目はゼロになった**: 5(本番アクセス申請)は2026-08-14に提出完了し以後は審査結果待ち、12(iOS Sandbox課金検証)はコードレビュー確認で代替済み、13(iOSの公開タイミング)はAndroid/iOS同時公開で確定済み(撤退期限 2026-09-05)。**残るのは審査待ちと、バックログ「本番アクセス申請までにクリアしたいこと」のASO見直し・公開日のレビュー依頼準備のみ**で、いずれも審査待ち期間(〜2026-08-21頃)に消化する。これ以外の項目(バックログ・改善候補)はすべて公開後でよい。
 
 13. **iOSの公開タイミング判断** ✅ 方針確定(2026-08-14)
     - 状態: 1.0.0+20は「Pending Developer Release」で待機中(2026-08-10到達)
@@ -66,7 +61,7 @@
 
 ## 直近の変更(最新1件のみ。過去分はDECISIONS.md参照)
 
-**2026-08-13**: R1(GitHub PAT平文埋め込み、削除・全リポジトリ走査を実施のうえ「PATの新規発行・差し替え・revokeは実施しない」とTakatohが判断)・R2(`api/revenuecat-webhook.ts`へのusage_logs監査ログ追加)・R3(`api/tsconfig.json`新設・型チェックCI導入、`strict: true`まで到達、premium-sync.tsの既存Supabase型エラー6件を解消)・R4(internal-docs再編、STATE.mdを126,151→20,531 bytesへ圧縮、`internal-docs/ARCHIVE.md`・`internal-docs/OPERATIONS-NOTES.md`を新設、`ROADMAP.md`を廃止しSTATE.mdへ一本化)・package-lock.jsonのコミット(依存バージョン固定)・usage_logsアップセルファネル計測基盤(PR-A: session_start/upsell_shown/upsell_clicked/upsell_converted、PR-B: 6エンドポイントへのsession_id配線+tts.tsのmodel記録)を実施し、いずれもmainへマージ済み。詳細はDECISIONS.md 2026-08-13系列参照。
+**2026-08-14**: Build 22(versionCode 22)をクローズドテストへ配信(12:15 JST、usage_logsアップセル計測を含む最初のビルド)。**製品版アクセス申請を提出(09:04 JST)、審査中へ移行**。あわせて運用ルールに「申請受付時点ではGoogleからメールが届かない」旨を追記(受信箱の無通知を未申請と誤認した教訓)。前日2026-08-13分(R1〜R4、usage_logs計測PR-A/PR-B、PR #96〜#103)の詳細はDECISIONS.md 2026-08-13系列参照。
 
 ## 確定定数(変更時はDECISIONSに記録)
 - App: Voikerchat / `jp.shibuyer.voikerchat` / voikerchat.com(Dynadot) / Team ID `S6XJP274T2`
