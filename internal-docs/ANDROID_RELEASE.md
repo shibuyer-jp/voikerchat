@@ -66,7 +66,7 @@ Test-Path "android\key.properties"
 Select-String -Path pubspec.yaml -Pattern "^version:"
 ```
 
-`version: 1.0.0+21`になっていることを確認する(Build 21の場合。`flutter.versionCode`/`flutter.versionName`は`android/app/build.gradle.kts`がこの値を直接参照するため、pubspec.yaml側の値が唯一の正)。**なっていなければビルドコマンドを実行する前にpubspec.yamlの更新を先に済ませること。**
+`version: 1.0.0+22`になっていることを確認する(Build 22の場合。以降のビルドでも、この記述は「その時点でビルド対象とするversionCode」に読み替えること。pubspec.yaml側の値が唯一の正である点は変わらない。`flutter.versionCode`/`flutter.versionName`は`android/app/build.gradle.kts`がこの値を直接参照するため)。**なっていなければビルドコマンドを実行する前にpubspec.yamlの更新を先に済ませること。**
 
 ### 3-2. 実行するコマンド(全文)
 
@@ -137,9 +137,25 @@ SHA256: 32:6E:51:4F:85:70:30:1E:92:3A:10:53:B5:D4:69:29:04:3C:9E:60:8E:7E:D5:2F:
 実機(クローズドテスト経由でインストールしたビルド)でPaywall画面(`lib/screens/paywall_screen.dart`)を開き、以下を確認する。3-2でのdart-define渡し忘れは実行時エラーを一切出さないため、**この画面確認が渡し忘れを検知できる唯一の手段**。
 
 1. 「購読する」ボタンがグレーアウトしていないこと(`_purchasingAvailable`= `revenueCatService.isConfigured`。falseだと自動的にグレーアウトする設計)
-2. 表示価格がARBのフォールバック値`$12.99`(`premiumPriceFallback`、`lib/l10n/app_ja.arb`)固定表示ではなく、Google Play Consoleで設定した現地価格(例: 日本ならJPY 2,120)になっていること。フォールバック値のまま表示される場合は`Purchases.getOfferings()`が失敗しているか、RevenueCatダッシュボード側のOffering/Product未マッピングを疑う
+2. 表示価格がARBのフォールバック値`$12.99`(`premiumPriceFallback`、`lib/l10n/app_ja.arb`)固定表示ではなく、Google Play Consoleで設定した現地価格(例: 日本ならJPY 1,818、フィリピンならPHP 713)になっていること。**JPY 2,120 / PHP 895 は2026-08-07の値下げ前の旧価格であり、これが表示された場合はOffering取得の失敗ではなく価格設定の巻き戻りを疑うこと**(値下げの経緯はARCHIVE.md該当項目参照)。フォールバック値のまま表示される場合は`Purchases.getOfferings()`が失敗しているか、RevenueCatダッシュボード側のOffering/Product未マッピングを疑う
 
 いずれかを満たさない場合、購入テストには進まず、まず3-2のコマンドで`REVENUECAT_ANDROID_KEY`を渡し忘れていないか、次に`internal-docs/STATE.md`の「RevenueCat Android有効化」進捗(Offering/Productマッピング完了状況)を確認する。
+
+**計測イベントの記録確認(Build 22以降で必須)**: 実機でアプリを
+更新・起動しPaywallを開いたうえで、Supabase SQL Editorで下記を
+実行し `session_start` と `upsell_shown` が記録されることを確認する。
+2026-08-14に、PR-Aの計測コードがリリース済みのどのビルドにも
+含まれていなかった事例が発生したため(詳細はDECISIONS.md
+2026-08-14参照)、計測系のコードを追加した場合はマージ確認だけで
+済ませず必ず実機で記録を確認すること。
+
+```sql
+select event, count(*) as n, max(created_at) as latest
+from usage_logs
+where created_at >= current_date
+group by event
+order by n desc;
+```
 
 ---
 
