@@ -205,7 +205,7 @@ async function checkAndIncrementRateLimit(
       if (fetchError) {
         console.error('rate_limits select failed:', fetchError.code, fetchError.message, fetchError.details);
       }
-      // レコードなし → デフォルト作成（Premium: 50回/日、無料: 5回/日）
+      // レコードなし → デフォルト作成（値は api/_constants.ts が唯一の定義元）
       const { error: insertError } = await supabase.from('rate_limits').insert({
         user_id: userId,
         used_today: 1,
