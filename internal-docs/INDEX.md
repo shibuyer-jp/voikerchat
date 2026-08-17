@@ -29,7 +29,7 @@ CLAUDE.md「Claude(チャット)とCC の分担ルール」参照)。棚卸し(�
 
 | パス | 説明 | 追記専用か否か |
 |---|---|---|
-| `internal-docs/STATE.md` | 現在状態の唯一の正(single source of truth)。セッション開始時に必ず読む | 都度更新 |
+| `internal-docs/STATE.md` | 現在状態の唯一の正(single source of truth)。**やることリスト(バックログ)の唯一の置き場でもある**(2026-08-17、書式はCLAUDE.md「バックログ項目の書式ルール」参照)。セッション開始時に必ず読む | 都度更新 |
 | `internal-docs/DECISIONS.md` | 決定の履歴(「いつ・何を・なぜ」) | 追記専用 |
 | `internal-docs/ARCHIVE.md` | STATE.mdから退避した完了済み事項の全文 | 追記専用 |
 | `internal-docs/tasks/PROGRESS.md` | Phase A品質ゲートのタスク進捗台帳(現在地の唯一の真実、STATE.mdとは別軸) | 都度更新 |
@@ -156,7 +156,7 @@ CLAUDE.md「Phase A 品質ゲート」節に対応。着手前に`tasks/RUNBOOK.
 | `internal-docs/tasks/T-34_premium-pro-scenes.md` | T-34個別タスク仕様(プレミアム専門シーン5本+Kaigotalkデータ設計) | 固定(完了後は実装が正) |
 | `internal-docs/tasks/T-35_premium-tts.md` | T-35個別タスク仕様(高品質TTS導入) | 固定(完了後は実装が正) |
 | `internal-docs/tasks/T-36_learner-support-carryover.md` | T-36個別タスク仕様(Web版学習サポート機能の移植) | 固定(完了後は実装が正) |
-| `internal-docs/tasks/BACKLOG-Phase2.md` | Phase 2(リリース後)候補と出典トレーサビリティ | 都度更新 |
+| `internal-docs/tasks/BACKLOG-Phase2.md` | Phase 2(リリース後)候補と出典トレーサビリティ(Web版→Flutter移行での機能漏れ防止台帳)。**STATE.mdのやることリストとは目的が異なり統合していない**(2026-08-17精査、機能候補の出典管理 vs 運用・リリースタスク管理で重複なしと判断) | 都度更新 |
 | `internal-docs/tasks/GEMINI-DELEGATION.md` | Gemini分担タスク(トークン余剰の活用) | 都度更新 |
 
 ## 過去のスレッド引き継ぎ(歴史的記録・2026-06〜07)
