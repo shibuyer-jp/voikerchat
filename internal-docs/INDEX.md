@@ -178,7 +178,8 @@ CLAUDE.md「Phase A 品質ゲート」節に対応。着手前に`tasks/RUNBOOK.
 
 | パス | 説明 | 追記専用か否か |
 |---|---|---|
-| `shibuyer-ops/memory/handoff_*.md`(2026-07-11以降、約30件) | セッションhandoff。ファイル名の日付・連番で検索する | 追記型(新規ファイルを追加) |
+| `shibuyer-ops/memory/README.md` | **2026-08-17に運用廃止**。2026-08-07以前のセッションhandoff記録として保存。新規追加はしない(セッション記録は`voikerchat/internal-docs/STATE.md`/`DECISIONS.md`へ一本化) | 固定 |
+| `shibuyer-ops/memory/handoff_*.md`(2026-07-11〜2026-08-07、約30件) | セッションhandoff。ファイル名の日付・連番で検索する。**2026-08-17廃止、新規追加なし**(上記README.md参照) | 固定 |
 | `shibuyer-ops/memory/archive/handoff_*.md`(2026-07-05〜10、23件) | 上記のうち古いものをarchiveへ移動済み | 固定 |
 | `shibuyer-ops/memory/gtm_decisions_20260713.md` / `gtm_decisions_20260715.md` | GTM関連の決定ログ | 固定 |
 | `shibuyer-ops/memory/ios_screenshot_procedure_20260716.md` | iOSスクリーンショット撮影手順のメモ | 固定 |
