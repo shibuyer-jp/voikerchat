@@ -30,6 +30,7 @@ CLAUDE.md「Claude(チャット)とCC の分担ルール」参照)。棚卸し(�
 | パス | 説明 | 追記専用か否か |
 |---|---|---|
 | `internal-docs/STATE.md` | 現在状態の唯一の正(single source of truth)。**やることリスト(バックログ)の唯一の置き場でもある**(2026-08-17、書式はCLAUDE.md「バックログ項目の書式ルール」参照)。セッション開始時に必ず読む | 都度更新 |
+| `internal-docs/TRIGGERS.md` | イベント駆動の実行リスト。「何が起きたら何をするか」のみを持つ(日付駆動のSTATE.mdバックログとは排他的に使い分け、2026-08-17新設)。セッション開始時にSTATE.mdと合わせて必ず読む | 都度更新(実行後は該当節を削除しDECISIONS.mdへ記録) |
 | `internal-docs/DECISIONS.md` | 決定の履歴(「いつ・何を・なぜ」) | 追記専用 |
 | `internal-docs/ARCHIVE.md` | STATE.mdから退避した完了済み事項の全文 | 追記専用 |
 | `internal-docs/tasks/PROGRESS.md` | Phase A品質ゲートのタスク進捗台帳(現在地の唯一の真実、STATE.mdとは別軸) | 都度更新 |
@@ -203,3 +204,4 @@ CLAUDE.md「Phase A 品質ゲート」節に対応。着手前に`tasks/RUNBOOK.
 
 - 2026-08-17: 新設時点で`internal-docs/`配下のmdファイル67件を全件分類。未分類5件(うち3件はshibuyer-ops側)
 - `internal-docs/`配下のサブディレクトリ(`reports/` `verification/` `migrations/` `tasks/`)は上表にファイル単位で展開済み
+- 2026-08-17(同日追加分): `internal-docs/TRIGGERS.md`新設に伴い68件目として上表(今の状態を知りたい節)へ追加
