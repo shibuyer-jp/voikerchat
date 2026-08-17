@@ -21,7 +21,7 @@ CI が最終ゲートだが、**push 前に必ずローカルで緑を確認す�
 4. `flutter test`
 
 ## Git
-- identity: `Takatoh Shibuyer` / `takatoh01@gmail.com`
+- identity: Git identity は「状態管理の絶対ルール」節を参照(このファイル内で唯一の定義箇所とする)
 - 1 バッチ = 1 コミット単位。メッセージは簡潔（日本語可）。
 - push 後、CI の `Analyze & Test` / `flutter-test` / `Build Android(debug)` が緑になるまで確認。
 - push前検証は lefthook(pre-push)で自動実行（analyze/test）。緑でなければpushはブロック。
@@ -40,7 +40,7 @@ CI が最終ゲートだが、**push 前に必ずローカルで緑を確認す�
 - **日時は UTC 基準で保持し、表示時のみローカル整形する**
   → `notification_history_model` の `secondsSinceReceived` / `relativeTimeLabel(l10n, seconds)` パターンに揃える。`DateTime` のタイムゾーン直接演算は避ける。
 - **マジックナンバーは定数へ集約する**（`lib/constants/` 等）
-  → 例: `FREE_DAILY_LIMIT = 5` / 広告視聴 `+5` / `MAX_DAILY = 10` / `PREMIUM_PRICE_USD = 12.99`。`if (count > 5)` を直書きしない。
+  → 定数の実値はこのファイルに書かない(`api/_constants.ts` / `lib/constants/` が唯一の定義元)。`if (count > 5)` のような直書きをしない、という原則のみをここでは示す。
 - **ユーザー表示文字列は ARB（`AppLocalizations`）へ**
   → ただし学習コンテンツ（診断の問題文・解説）とキャラ名（固有名詞）は日本語 / 原文維持（既存方針）。
 
@@ -77,11 +77,6 @@ CI が最終ゲートだが、**push 前に必ずローカルで緑を確認す�
 `AppLocalizations.localizationsDelegates` / `supportedLocales` / `locale` を供給すること。
 ウィジェット移行の**着手前に、そのウィジェットのテスト有無を必ず確認**する。
 
-## モデル運用
-- 本番 AI: Claude Haiku（`claude-haiku-4-5-20251001`）固定。
-- 開発時: ARB 移行のような機械的作業は軽量モデル（Sonnet / Haiku）で十分。
-  深い設計判断のみ上位モデルに切り替える（`/model` で変更、`/status` で残枠確認）。
-
 ## コミュニケーション規約
 - 結論ファースト・簡潔・前置き / 謝罪の定型句なし。
 - ファイルは常に**完全な内容**で提示（部分スニペット禁止）。
@@ -106,6 +101,7 @@ PR本文、internal-docs/ 配下のドキュメントも日本語を既定とす
 - 現在状態は `internal-docs/STATE.md` を参照。**セッション開始時に必ず読み、セッション終了時に必ず更新してコミットする**(更新漏れ=次セッションの不具合原因)
 - 設計・仕様の決定は `internal-docs/DECISIONS.md` に1行追記(追記専用・削除禁止。「いつ・何を・なぜ」)
 - Git identity: `shibuyer-jp` / `262262561+shibuyer-jp@users.noreply.github.com`(Vercel連携リポジトリで他のメールを使うとデプロイがブロックされる)
+- 何がどこにあるか分からないときは `internal-docs/INDEX.md` を見る
 
 ## internal-docs に新しいファイルを作るときのルール(2026-08-13)
 
@@ -124,10 +120,29 @@ PR本文、internal-docs/ 配下のドキュメントも日本語を既定とす
 PRODUCTION_ACCESS.md と STATE.md の間でも発生している(5日間の放置)。
 定義の有無ではなく、既存文書との境界が引かれていないことが原因である。
 
+## 数値・定数をドキュメントに書くときのルール(2026-08-17)
+- レート制限・価格・シーン数など、コードに定義がある値は
+  **ドキュメント本文に数値を書かない。** 定義元ファイル名を参照する。
+- 例外: STATE.md「確定定数」節と、外部提出物(ストア掲載文・申請回答・
+  ユーザーへ送るメッセージ)は数値を持ってよい。ただし定義元へのリンクと
+  「変更時はここも更新する」旨を併記する。
+- 背景: 2026-08-06に無料枠を5→10へ変更した際、STATE.md・api/chat.tsの
+  コメント・CLAUDE.mdの3箇所が5のまま取り残された。2026-08-17に
+  アウトリーチ文面の数値をコードと照合するまで誰も気づかなかった。
+
+## 過去ドキュメント内のパス参照について
+`internal-docs/` 配下は 2026-08-04 の PR #38 以前は `docs/` にあった。
+ARCHIVE.md・DECISIONS.md 等の過去記述に残る `docs/STATE.md` のような
+参照は、`internal-docs/STATE.md` と読み替えること。これらは追記専用
+ファイルのため遡って修正しない。
+また `internal-docs/ROADMAP.md` は 2026-08-13 に廃止済み(STATE.mdへ統合)。
+過去記述にこの参照が出てきた場合は STATE.md を見ること。
+
 ## モデル運用(2026-07-07以降)
 - 実装・定型作業: Sonnet / Claude Code(1タスク=1セッション、計画ループ禁止、質問は1つまで)
 - 設計判断・障害切り分けのみ: Opus(温存運用)
 - 本番AI: Claude Haiku(`claude-haiku-4-5-20251001`)固定
+- ARB移行のような機械的作業は軽量モデル(Sonnet/Haiku)で十分。深い設計判断のみ上位モデルに切り替える(`/model`で変更、`/status`で残枠確認)
 
 ## lib/ ディレクトリ構成
 ```
