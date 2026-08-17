@@ -69,7 +69,7 @@
 
 ## 直近の変更(最新1件のみ。過去分はDECISIONS.md参照)
 
-**2026-08-14**: Build 22(versionCode 22)をクローズドテストへ配信(12:15 JST、usage_logsアップセル計測を含む最初のビルド)。**製品版アクセス申請を提出(09:04 JST)、審査中へ移行**。あわせて運用ルールに「申請受付時点ではGoogleからメールが届かない」旨を追記(受信箱の無通知を未申請と誤認した教訓)。前日2026-08-13分(R1〜R4、usage_logs計測PR-A/PR-B、PR #96〜#103)の詳細はDECISIONS.md 2026-08-13系列参照。
+**2026-08-17**: ストア掲載文の唯一の正を`internal-docs/Store-Listing-Copy-v1.5.md`に一本化。v1.4(2026-07-26)と`GROWTH_PLAN.md`「ASO方針(2026-08-13確定)」に別内容で二重管理されていたアプリ名・Google Play短い説明・App Storeサブタイトル・App Storeキーワードの4項目を統合し、v1.4は廃止告知を追記して経緯参照用に残した。`GROWTH_PLAN.md`は文字列本体を削除しv1.5への参照に置き換え(方針・根拠の記述は維持)。文字数はスクリプトで機械実測し期待値と一致を確認済み。**今回はドキュメントの確定のみで、Play Console/App Store Connectへの実反映は行っていない**(審査完了後に実施)。2026-08-14分の詳細はDECISIONS.md 2026-08-14系列参照。
 
 ## 確定定数(変更時はDECISIONSに記録)
 - App: Voikerchat / `jp.shibuyer.voikerchat` / voikerchat.com(Dynadot) / Team ID `S6XJP274T2`
@@ -97,7 +97,7 @@
 下記「運用ルール」によりPlay Consoleのトラック設定を変更できないため、着手は製品版アクセス審査の結果が出るまで待つ。1項目3行以内に圧縮。詳細な経緯はDECISIONS.mdまたは`internal-docs/reports/`配下の個別レポートを参照。
 
 **審査待ち期間中にクリアしたいこと(〜2026-08-21目安、ROADMAP.md区分2より移行)**
-- **ストア掲載情報の見直し(ASO)**: フィリピン人学習者が実際に検索する語(Japanese / Nihongo / Tagalog等)がタイトル・短い説明に入っているか確認。`internal-docs/GROWTH_PLAN.md`参照。担当: 人間。期限: 2026-08-21目安
+- **ストア掲載情報の見直し(ASO)**: 文言確定は完了(2026-08-17、`internal-docs/Store-Listing-Copy-v1.5.md`が唯一の正)。ストアへの反映(Play Console/App Store Connectへの実入力)は製品版アクセス申請の審査完了後に実施(`internal-docs/GROWTH_PLAN.md`「反映タイミング」参照)。担当: 人間。期限: 審査完了後
 - **公開日のレビュー依頼準備**: 配偶者経由の実テスター(16名)へ、公開日にレビュー投稿を依頼できるよう事前に声をかけておく。公開日確定後に実施。`internal-docs/GROWTH_PLAN.md`参照。担当: 人間
 
 **運用・技術(公開前後)**

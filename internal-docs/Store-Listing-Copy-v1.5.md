@@ -1,49 +1,93 @@
-# ストア掲載文 v1.4（提出可能版 / 2026-07-26）
-
-> **【廃止 2026-08-17】本書は v1.5 に統合された。掲載文の唯一の正は
-> `internal-docs/Store-Listing-Copy-v1.5.md`。本書は経緯参照用に残す。**
+# ストア掲載文 v1.5（提出可能版 / 2026-08-17）
 
 v1.1 は方針ドラフトだったため、**そのままコピー&ペーストして提出できる完成版**として作成。
 主要ターゲットはフィリピン人学習者のため、**英語版を主、日本語版を従**とする。
 
-## v1.3 からの変更点
-- 詳細説明（英語版/日本語版）の「無料版とプレミアム」段落から、無料枠の具体的回数（5回/日、広告視聴+5回）の記載を削除。
-  アプリ側は既に `callsRemainingToday` 等で残り回数を動的表示しており、ストア掲載文に固定数値を残すと、
-  サーバー側の日次リセット処理を修正した際などにストア掲載文とアプリの実際の挙動がズレるリスクがあるため
-  （経緯は `internal-docs/DECISIONS.md` 2026-07-26参照）。
-  - 英語版: "The free plan includes 5 conversations per day, and you can watch a short ad to unlock 5 more." →
-    "The free plan lets you practice every day, and you can watch a short ad to unlock additional conversations."
-  - 日本語版: 「無料版は1日5回まで会話できます。広告を視聴するとさらに5回追加されます。」→
-    「無料版でも毎日会話を楽しめます。広告視聴でさらに回数を追加できます。」
-  - `featureUnlimitedDesc`（ARB、「無料の10倍」/"10x"）は本変更の対象外。無料版の基礎値(5)自体は変えていないため、この比率表記はそのまま正しい。
-- 上記変更に伴い、詳細説明の実測文字数を再計測（英語版 2,936→2,949字 / 日本語版 960→957字）。いずれも上限4000字以内。
+## v1.4 からの変更点（二重管理の解消）
 
-## v1.2 からの変更点
-- Premium unlocks（英語版）/ プレミアムの説明（日本語版）から「バッジコレクション」の記述を削除。
-  バッジ機能(`lib/screens/badges_screen.dart`)は無料ユーザーも閲覧可能な機能であり、
-  Premium限定であるかのような表記は誤解を招くため。統計ダッシュボード側は実装上
-  Premium限定（`stats_screen.dart`）のため、そちらの記載はそのまま維持。
-- v1.2 に記載されていた実測値（英語短い説明78字・App Storeプロモ168字・日本語短い説明37字）は
-  いずれも実際のテキストと1〜2文字ずれていた（原因不明、手動計測ミスと推測）。今回全項目を
-  スクリプトで機械的に再計測し、正しい値（79字・166字・35字）に修正した。
+`internal-docs/Store-Listing-Copy-v1.4.md`（2026-07-26）と
+`internal-docs/GROWTH_PLAN.md`「ASO方針(2026-08-13確定)」に、アプリ名・
+短い説明・App Store関連項目が別内容で二重管理されていた。8/13の
+ASO方針確定案が新しく正しい内容のため、本v1.5でその4項目を統合し、
+掲載文の唯一の正をv1.5に一本化する（v1.4は廃止告知を追記のうえ経緯
+参照用に残す。旧`ROADMAP.md`廃止(2026-08-13)と同じ二重管理の失敗
+パターンを繰り返さないための対応）。
 
-## v1.1 からの変更点
-- 詳細説明を冒頭ブロックのみ → **全文（4000字以内）** に拡張
-- 文字数を実測し、各ストアの上限内であることを検証済み
-- 未実装の「オフライン利用」訴求を削除（規約からも削除済み）
-- Build 6 以降の新機能（会話リキャップ / キャラクター音声 / シェアカード）を反映
-- 対象年齢18歳以上の方針に合わせ、子ども向けを想起させる表現を排除
-- 価格表記を地域差に対応（$12.99 断定を回避）
+差し替えたのは以下の4項目のみ。それ以外（英語/日本語の詳細説明、
+App Storeプロモーションテキスト、日本語の短い説明、スクリーンショット
+構成、適用チェックリスト、注意）はv1.4の内容をそのまま維持している。
+
+1. **アプリ名**（Google Play / App Store 共通）: v1.4の
+   `Voikerchat`（v1.1〜v1.4は暫定でブランド名のみ）から、8/13確定案の
+   `Voikerchat - Speak Japanese` へ変更（変更理由は8/13確定案の
+   ロジック（`GROWTH_PLAN.md`「アプリ名に"Speak"を選んだ根拠」参照）
+   をそのまま採用）
+2. **Google Play 短い説明・英語**: v1.4の
+   `Practice Japanese conversation at your own pace, with hints when you get stuck.`
+   から、8/13確定案の
+   `Learn to speak Japanese with AI. Daily conversation practice for JLPT N5-N4.`
+   へ変更
+3. **App Store サブタイトル**: v1.4には項目自体が存在しなかった。新設
+4. **App Store キーワード**: v1.4の
+   `japanese, nihongo, kaiwa, conversation, filipino, tagalog, furigana, kaigo, tokutei ginou`
+   から変更。ただし8/13確定案をそのまま採用したのではなく、下記の
+   理由でさらに調整している
+
+### キーワード欄の調整理由（8/13確定案からの変更点）
+
+8/13確定案のキーワード欄は
+`nihongo,jlpt,n5,n4,hiragana,katakana,kanji,speaking,conversation,tutor,practice,beginner`
+[88字]だったが、本v1.5では以下の理由で調整した:
+
+- **`speaking` `practice` を削除**: サブタイトル「AI Japanese speaking
+  practice」と重複しており、App Storeはアプリ名・サブタイトルも検索
+  インデックス対象のため、100字枠でこの2語を重複させるのは枠の無駄。
+  ※これは一般的なASOの原則に基づく判断であり、Apple公式の明文規定
+  ではない。断定はしない
+- **`japanese` を削除**: アプリ名（`Voikerchat - Speak Japanese`）に
+  含まれるため、キーワード欄で重複させる必要がない
+- **`tagalog` `furigana` `kaigo` を復帰**: v1.4にはあったが8/13確定案
+  では落ちていた。「ストア掲載文をタガログ語で書かない」（ASO方針の
+  タガログ語不使用の原則）という方針と、「英単語`tagalog`を検索語
+  として拾う」ことは別問題であるため、キーワードとしては復帰させる
+- **`kaiwa` `tokutei ginou` は不採用**: `kaiwa`は検索需要が薄いと推測、
+  `tokutei ginou`はスペース込み2語で枠効率が悪いと判断。**いずれも
+  未検証の判断であり、確定した根拠に基づくものではない**
+
+`filipino`（v1.4のキーワードにあった語）は8/13確定案の時点で既に
+落ちており、本v1.5でも復帰させていない（8/13確定案時点の判断を
+踏襲。再検討の要否は将来のASO見直し時の検討事項とする）。
 
 ---
 
 # 英語版（主要市場: フィリピン）
 
-## Google Play — Short description
-**上限80文字 / 実測79文字**
+## アプリ名（Google Play / App Store 共通）
+**上限30文字 / 実測27文字**
 
 ```
-Practice Japanese conversation at your own pace, with hints when you get stuck.
+Voikerchat - Speak Japanese
+```
+
+## Google Play — Short description
+**上限80文字 / 実測76文字**
+
+```
+Learn to speak Japanese with AI. Daily conversation practice for JLPT N5-N4.
+```
+
+## App Store — Subtitle
+**上限30文字 / 実測29文字**
+
+```
+AI Japanese speaking practice
+```
+
+## App Store — Keywords
+**上限100文字 / 実測93文字**
+
+```
+nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo
 ```
 
 ## App Store — Promotional text
@@ -200,7 +244,7 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 # 適用チェックリスト
 
 ## Google Play Console
-- [ ] ストアの掲載情報 → アプリ名を `Voikerchat`（小文字 `voikerchat` から修正）
+- [ ] ストアの掲載情報 → アプリ名を `Voikerchat - Speak Japanese`（小文字 `voikerchat` から修正）
 - [ ] 短い説明・詳細説明を上記英語版に更新（デフォルト言語）
 - [ ] 日本語ロケールを追加し、日本語版を登録
 - [ ] スクリーンショットを英語UI版に差し替え
@@ -208,8 +252,9 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 
 ## App Store Connect
 - [ ] プロモーションテキスト・説明文を更新
+- [ ] サブタイトルを `AI Japanese speaking practice` に設定
 - [ ] 年齢設定を 13+ → 18+ に変更（Build 7 提出時）
-- [ ] キーワード欄: `japanese, nihongo, kaiwa, conversation, filipino, tagalog, furigana, kaigo, tokutei ginou`
+- [ ] キーワード欄: `nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo`
 - [ ] スクリーンショットを英語UI版に差し替え
 
 ## 注意
@@ -217,3 +262,4 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 - 価格を断定表記しない。地域別価格（PH: ₱249 予定）と矛盾するため
 - AI生成コンテンツである旨と報告手段の存在を説明文に明記済み（Google Play の生成AIポリシー対応）
 - バッジは無料機能。Premium限定機能として記載しない（v1.3 で修正済み）
+- **反映タイミングは製品版アクセス申請の審査完了後**（`internal-docs/GROWTH_PLAN.md`「ASO方針」参照）。審査中はストア掲載情報を変更しない

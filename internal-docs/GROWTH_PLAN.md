@@ -100,14 +100,8 @@ B2Cの実データが出てからとする。
   とサブタイトルにキーワードを詰め込む必要がない。Google Playにはこの欄
   が無く短い説明に織り込む必要がある。両ストアで文言戦略を分ける。
 
-- **確定案(chat-Claudeが文字数実測済み)**:
-  - アプリ名(Google Play / App Store 共通、30字): Voikerchat - Speak
-    Japanese [27字]
-  - Google Play 短い説明(80字): Learn to speak Japanese with AI. Daily
-    conversation practice for JLPT N5-N4. [76字]
-  - App Store サブタイトル(30字): AI Japanese speaking practice [29字]
-  - App Store キーワード(100字): nihongo,jlpt,n5,n4,hiragana,katakana,
-    kanji,speaking,conversation,tutor,practice,beginner [88字]
+- **確定文字列は `internal-docs/Store-Listing-Copy-v1.5.md` を参照。
+  本書には方針と根拠のみを置き、文字列本体は持たない（二重管理防止）。**
 
 - **アプリ名に"Speak"を選んだ根拠**(将来の見直し時に必ず参照すること):
   1. `learn japanese`はDuolingo(5億+)・Busuu(1億+)等が占有する最激戦区で、
