@@ -213,13 +213,4 @@
 
 ## 関連ドキュメント一覧
 
-- `internal-docs/DECISIONS.md` — 決定の履歴(追記専用)
-- `internal-docs/ARCHIVE.md` — 完了済み事項の全文アーカイブ(追記専用)
-- `internal-docs/OPERATIONS-NOTES.md` — 再利用可能な運用知見・手順の罠
-- `internal-docs/PRODUCTION_ACCESS.md` / `PRODUCTION_ACCESS_ANSWERS.md` — 製品版アクセス申請のチェックリスト・回答文完成版
-- `internal-docs/TESTER-FEEDBACK.md` — テスターフィードバック記録
-- `internal-docs/GROWTH_PLAN.md` / `Competitor-Insights.md` — 成長戦略・競合調査
-- `internal-docs/reports/` — 個別調査レポート(iOS/Android/RevenueCat/AI生成コンテンツポリシー等)
-- `internal-docs/verification/` — 実機検証手順・記録
-- `internal-docs/migrations/` — Supabase SQLマイグレーション
-- `internal-docs/IOS_RESUBMISSION_20260807.md` / `IOS_REJECTION_PLAYBOOK.md` / `ANDROID_RELEASE.md` — リリース手順書
+「何がどこにあるか」は `internal-docs/INDEX.md`(voikerchat / shibuyer-ops 両リポジトリ横断の索引)を参照。本節は二重管理を避けるため個別列挙をやめた(2026-08-17)。
