@@ -252,10 +252,10 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 - [x] filロケール（フィリピノ語）が存在する。掲載文はen-USと同一の英語テキストを適用する（タガログ語では書かない）
 
 ## App Store Connect
-- [x] プロモーションテキスト・説明文を更新
-- [x] サブタイトルを `AI Japanese speaking practice` に設定
+- [ ] プロモーションテキスト・説明文を更新
+- [ ] サブタイトルを `AI Japanese speaking practice` に設定
 - [ ] 年齢設定を 13+ → 18+ に変更（Build 7 提出時）※要検証。ASC 実画面の確認が未了
-- [x] キーワード欄: `nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo`
+- [ ] キーワード欄: `nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo`
 - [ ] スクリーンショットを英語UI版に差し替え
 
 ## 注意
