@@ -60,9 +60,11 @@
       製品版リリースがPlay Consoleの実画面で「公開中」になったことを
       確認してから押す(App Store側の反映に最大24時間程度かかりうるため、
       半日程度先行させる運用も可)
-    - **注意**: 「製品版アクセス承認」と「公開」は別。承認後に製品版トラックへ
-      リリースを作成し、そのリリース自体の審査が別途走る。初回リリースは
-      数日かかることがあり、公開日は8/21〜25よりさらに後ろにずれうる
+    - **Android側の審査は完了済み**(2026-08-18に製品版リリースが審査通過)。
+      Play Console「最新のリリースとバンドル」で製品版 22(1.0.0) が
+      ステータス「未公開」・国/地域 2 で待機していることを2026-08-20に
+      実画面で確認済み。残る操作は「10件の変更を公開」ボタンのみで、
+      公開ボタンを押してから実際に配信されるまでのラグ以外に審査待ちは無い
     - **撤退期限: 2026-09-05**。この時点でAndroidが公開に至っていない場合は、
       iOSを単独で先行公開する(Androidの再リジェクト等でiOSが長期間
       待機状態に置かれることを防ぐため)
@@ -103,6 +105,9 @@ a9d47ca9-399f-4211-b80e-1a4e4505d9d2)。指摘は`internal-docs/Store-Listing-Co
 - サポート: voikerchat.support@gmail.com(forward→takatoh01@gmail.com)。kizunavi.support は非運用 / APNs `.p8`: Drive `00_Project_Credentials`(`1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)
 - 設計書: repo `internal-docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
 - RevenueCat: App ID(Android) `appf7acdb482b` / Product `voikerchat_premium_monthly:monthly-autorenew` / Entitlement `Premium`(iOS/Android併存) / Offering `default`(2026-08-04設定完了)
+- 配信国(Google Play 製品版): フィリピン・日本の2か国のみ(2/177)
+- 配信国(App Store): 175の国または地域(実質全世界)。Google Play とは
+  意図的に非対称。詳細はDECISIONS.md 2026-08-20系列参照
 
 ## 機能ステータス
 
