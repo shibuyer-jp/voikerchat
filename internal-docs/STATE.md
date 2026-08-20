@@ -105,6 +105,9 @@ a9d47ca9-399f-4211-b80e-1a4e4505d9d2)。指摘は`internal-docs/Store-Listing-Co
 - サポート: voikerchat.support@gmail.com(forward→takatoh01@gmail.com)。kizunavi.support は非運用 / APNs `.p8`: Drive `00_Project_Credentials`(`1mqUWxB3VYrkVcGHCWayXJtIDrXlGBHjM`)
 - 設計書: repo `internal-docs/` の Persona/Tutorial/Onboarding-Design(参照のみ・再生成禁止)
 - RevenueCat: App ID(Android) `appf7acdb482b` / Product `voikerchat_premium_monthly:monthly-autorenew` / Entitlement `Premium`(iOS/Android併存) / Offering `default`(2026-08-04設定完了)
+- 配信国(Google Play 製品版): フィリピン・日本の2か国のみ(2/177)
+- 配信国(App Store): 175の国または地域(実質全世界)。Google Play とは
+  意図的に非対称。詳細はDECISIONS.md 2026-08-20系列参照
 
 ## 機能ステータス
 
