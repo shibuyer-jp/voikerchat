@@ -98,7 +98,12 @@ Never freeze up again. Chat with AI characters, tap the hint button when you're 
 ```
 
 ## 詳細説明（Google Play 詳細説明 / App Store 説明 共通）
-**上限4000文字 / 実測2,949文字**
+
+> **2026-08-19改訂**: App Review Guideline 2.3.10（他プラットフォームへの
+> 言及）により、解約方法の記述から「Google Play」の明記を削除し、
+> 両ストア共通の中立表現に変更した。**この文言を元に戻さないこと**。
+
+**上限4000文字 / 実測2,939文字**
 
 ```
 Speak Japanese without fear.
@@ -148,7 +153,7 @@ Voikerchat Premium unlocks:
 - Character voices, so you can hear how each line should sound
 - The full statistics dashboard
 
-Premium is an auto-renewing monthly subscription. Pricing varies by country — the exact amount for your region is shown on the purchase screen before you confirm. You can cancel anytime from your Google Play or App Store subscription settings. Deleting the app does not cancel your subscription.
+Premium is an auto-renewing monthly subscription. Pricing varies by country — the exact amount for your region is shown on the purchase screen before you confirm. You can cancel anytime from your subscription settings on your device. Deleting the app does not cancel your subscription.
 
 A NOTE ON AI
 
@@ -173,7 +178,7 @@ Support: voikerchat.support@gmail.com
 ```
 
 ## 詳細説明
-**上限4000文字 / 実測957文字**
+**上限4000文字 / 実測940文字**
 
 ```
 「言葉に詰まっても大丈夫」な日本語会話アプリ。
@@ -203,7 +208,7 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 
 プレミアムでは、1日の会話回数の大幅な拡大、アニメ風を含む全シーンの利用、広告の非表示、キャラクター音声、学習統計ダッシュボードがご利用いただけます。
 
-プレミアムは月額の自動更新サブスクリプションです。価格は国・地域により異なります。実際の請求額は購入手続き画面に表示されます。解約はGoogle PlayまたはApp Storeの定期購入設定からいつでも可能です。アプリを削除しても解約にはなりません。
+プレミアムは月額の自動更新サブスクリプションです。価格は国・地域により異なります。実際の請求額は購入手続き画面に表示されます。解約はご利用の端末の定期購入設定からいつでも可能です。アプリを削除しても解約にはなりません。
 
 ■ AIについて
 
