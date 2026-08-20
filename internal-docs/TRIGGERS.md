@@ -20,8 +20,10 @@ STATE.mdとの境界: STATE.mdは「いつやるか」が分かっている項�
 ### 承認の場合
 - [ ] 管理対象の公開はオンのため自動公開されない。iOSの状況を確認し、
       両OSを揃えて公開する
-- [ ] 公開後、`shibuyer-ops/templates/voikerchat_launch_outreach_kit_v1.0.md`
-      に基づき16名へのレビュー依頼を2〜3日に分散して送信する
+- [ ] Android の公開操作: Play Console →「公開の概要」→「変更を公開」
+- [ ] iOS の公開操作: App Store Connect →「このバージョンをリリース」。
+      Android が Play Console 実画面で「公開中」になったことを確認してから押す
+- [ ] 公開完了後の対応は本書「Android と iOS の両方が実際に公開されたとき」節を参照
 
 ### 却下の場合
 - [ ] 却下理由を `internal-docs/DECISIONS.md` へ記録し、修正後に再送信する
@@ -31,9 +33,12 @@ STATE.mdとの境界: STATE.mdは「いつやるか」が分かっている項�
 - [ ] 承認の場合: Pending Developer Release に入る。Release ボタンは
       Android の製品版リリースが Play Console 実画面で「公開中」に
       なったことを確認してから押す(STATE.md 未完了項目13の方針を維持)
-- [ ] 却下の場合: 指摘内容を DECISIONS.md へ記録し、
-      撤退期限 2026-09-05 までの残余日数から Android 単独先行公開の
-      要否を判断する
+- [ ] 却下の場合: 指摘内容を DECISIONS.md へ記録する。過去4回の
+      リジェクト理由(3.1.2 EULAリンク / 5.1.1(iv) マイク権限 /
+      5.1.1(i)・5.1.2(i) AI送信同意 / 2.3.10 Google Play言及)との
+      重複有無を必ず確認する
+- [ ] 却下が続く場合、撤退期限 2026-09-05 までの残余日数を再計算し、
+      Android 単独先行公開に切り替えるかを判断する
 
 ## 一般公開日が確定したとき
 - [ ] STATE.md 運用ルールの4アンカー(公開日/+2週/+1ヶ月/+3ヶ月)を
