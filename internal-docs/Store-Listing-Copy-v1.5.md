@@ -170,6 +170,13 @@ Support: voikerchat.support@gmail.com
 
 # 日本語版（ストア地域: 日本）
 
+## App Store — キーワード（日本語）
+**上限100文字 / 実測52文字**
+
+```
+日本語,会話,AI,音声,学習,発音,スピーキング,タガログ,フィリピン,言語学習,日本語学習,会話練習
+```
+
 ## Google Play — 短い説明
 **上限80文字 / 実測35文字**
 
@@ -260,7 +267,8 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 - [x] プロモーションテキスト・説明文を更新
 - [x] サブタイトルを `AI Japanese speaking practice` に設定
 - [ ] 年齢設定を 13+ → 18+ に変更（Build 7 提出時）※要検証。ASC 実画面の確認が未了
-- [x] キーワード欄: `nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo`
+- [x] キーワード欄（en-US）: `nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo`
+- [x] キーワード欄（ja）: `日本語,会話,AI,音声,学習,発音,スピーキング,タガログ,フィリピン,言語学習,日本語学習,会話練習`
 - [ ] スクリーンショットを英語UI版に差し替え
 
 ## 注意
