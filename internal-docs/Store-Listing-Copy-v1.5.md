@@ -244,17 +244,18 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 # 適用チェックリスト
 
 ## Google Play Console
-- [ ] ストアの掲載情報 → アプリ名を `Voikerchat - Speak Japanese`（小文字 `voikerchat` から修正）
-- [ ] 短い説明・詳細説明を上記英語版に更新（デフォルト言語）
-- [ ] 日本語ロケールを追加し、日本語版を登録
+- [x] ストアの掲載情報 → アプリ名を `Voikerchat - Speak Japanese`（小文字 `voikerchat` から修正）
+- [x] 短い説明・詳細説明を上記英語版に更新（デフォルト言語）
+- [x] 日本語ロケールを更新し、日本語版を登録（ja-JPは既に登録済みだったため）
 - [ ] スクリーンショットを英語UI版に差し替え
-- [ ] Data safety の申告とプライバシーポリシーの整合を再確認（位置情報を追記済み）
+- [x] Data safety の申告とプライバシーポリシーの整合を再確認（位置情報を追記済み）
+- [x] filロケール（フィリピノ語）が存在する。掲載文はen-USと同一の英語テキストを適用する（タガログ語では書かない）
 
 ## App Store Connect
-- [ ] プロモーションテキスト・説明文を更新
-- [ ] サブタイトルを `AI Japanese speaking practice` に設定
-- [ ] 年齢設定を 13+ → 18+ に変更（Build 7 提出時）
-- [ ] キーワード欄: `nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo`
+- [x] プロモーションテキスト・説明文を更新
+- [x] サブタイトルを `AI Japanese speaking practice` に設定
+- [ ] 年齢設定を 13+ → 18+ に変更（Build 7 提出時）※要検証。ASC 実画面の確認が未了
+- [x] キーワード欄: `nihongo,jlpt,n5,n4,hiragana,katakana,kanji,conversation,tutor,beginner,tagalog,furigana,kaigo`
 - [ ] スクリーンショットを英語UI版に差し替え
 
 ## 注意
@@ -263,3 +264,6 @@ Voikerchatは、フィリピン人学習者のための日本語会話練習ア�
 - AI生成コンテンツである旨と報告手段の存在を説明文に明記済み（Google Play の生成AIポリシー対応）
 - バッジは無料機能。Premium限定機能として記載しない（v1.3 で修正済み）
 - **反映タイミングは製品版アクセス申請の審査完了後**（`internal-docs/GROWTH_PLAN.md`「ASO方針」参照）。審査中はストア掲載情報を変更しない
+- **ASC のプライマリ言語は日本語**、Google Play のデフォルトは en-US である。ロケール構成が両ストアで逆になっているため、貼り付け先を必ず確認すること
+- **サブタイトルはロケール別に定義が必要**。本文書は英語版 `AI Japanese speaking practice` のみを定義しているが、ASC 日本語ロケールには「日本語会話をAIと毎日練習」が既に設定されている（2026-08-18 時点で現状維持と判断）
+- **説明文の末尾には必ず利用規約(Terms of Use)へのリンクを含めること**。自動更新サブスクリプションを提供するアプリで説明文に規約リンクが無い場合、Guideline 3.1.2 でリジェクトされる（2026-08-03 の1回目リジェクトの実例）
