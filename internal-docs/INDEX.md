@@ -87,6 +87,7 @@ CLAUDE.md「Claude(チャット)とCC の分担ルール」参照)。棚卸し(�
 | `internal-docs/reports/premium_state_mismatch_20260807.md` | Premium判定の不整合調査 | 固定 |
 | `internal-docs/reports/premium_unlock_investigation_20260805.md` | Premiumシーンロック解除不具合の調査(PR #53着手前) | 固定 |
 | `internal-docs/reports/revenuecat_rtdn_investigation_20260807.md` | RevenueCat RTDN接続の調査 | 固定(2026-08-10追記あり) |
+| `internal-docs/reports/website_copy_audit_20260828.md` | voikerchat.comトップページ訴求文言とストア掲載情報の突き合わせ | 固定 |
 | `internal-docs/verification/daily_limit_reset_verification_20260726.md` | daily_limit日次リセットの実地検証手順・記録 | 固定 |
 | `internal-docs/verification/ios_build20_verification_20260807.md` | iOS 1.0.0+20 実機検証手順 | 固定 |
 | `internal-docs/verification/notification_verification_20260726.md` | 通知機能実機検証キット(後継: release_verification_session) | 固定 |
@@ -99,7 +100,7 @@ CLAUDE.md「Claude(チャット)とCC の分担ルール」参照)。棚卸し(�
 | パス | 説明 | 追記専用か否か |
 |---|---|---|
 | `internal-docs/Database-Schema-v1.0.md` | Voikerchat DBスキーマ定義(Supabase PostgreSQL) | 都度更新 |
-| `internal-docs/migrations/` | Supabase SQLマイグレーション本体(8ファイル、日付プレフィックス) | 追記型(新規ファイルを追加) |
+| `internal-docs/migrations/` | Supabase SQLマイグレーション本体(9ファイル、日付プレフィックス) | 追記型(新規ファイルを追加) |
 | `internal-docs/Token-Cost-Queries.md` | トークンコスト集計SQL(採算判断用) | 都度更新(クエリ追加) |
 | `internal-docs/Kaigotalk-Data-Queries.md` | Kaigotalk向け集計クエリ(介護・医療シーンの需要仮説検証) | 固定 |
 

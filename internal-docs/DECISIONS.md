@@ -1974,3 +1974,62 @@ TRIGGERS.mdの旧「iOS App Review の結果が届いたら」節を削除した
   「Play Console の通知・ストア表示を見て、実際の設定画面を確認する前に
   バックログへ要対応・期限ありとして登録した」ことが原因。再発防止は
   OPERATIONS-NOTES.md「Play Console の通知は一斉配信を含む」に記録。
+
+## 2026-08-28 判定日到来の小タスク3件(バックアップテーブル削除 / git stash / トップページ棚卸し)
+
+### §1 本番Supabase 検証用バックアップテーブルの削除
+
+- 対象は `_rate_limits_daily_limit_backup_20260726`(2026-07-26 の daily_limit
+  是正 UPDATE のロールバック用)と `_rate_limits_verification_backup`(日次
+  リセット検証の原状復帰用)。是正・検証は完了済みで両テーブルは不要。
+- **CC は本番DB(ref rfwbwwhqclabhnbsrygw)へ直接アクセスできない**(psql /
+  supabase CLI 未インストール、認証情報も無い。CLAUDE.md「CC が担当する →
+  SQLファイルの作成(実行はユーザー)」の通り)。HANDOFF は「CC が直接実行して
+  よい」としていたが実行手段が無いため、**実行用SQLを作成して Takatoh の実行を
+  待つ形にした**。
+- 作成: `internal-docs/migrations/2026-08-28_drop_rate_limits_verification_backup_tables.sql`。
+  手順は 存在・行数確認 → 依存(pg_depend / FK)確認 → `DROP TABLE`(CASCADE なし・
+  対象2件のみ) → 削除後に本体 `rate_limits` の行数・スキーマが無傷であることを確認。
+  中断条件もファイル内に明記。実行結果(削除前行数)は実行後に本セクションへ追記する。
+
+### §2 git stash の整理(6件すべて drop)
+
+- バックログは「stash@{0}〜{4}」としていたが実際は **6件(stash@{0}〜{5})** あった。
+  番号ではなく `git stash show -p` の中身で判断し、**6件すべてを drop した**。
+- 各 stash の判定(drop 前の commit SHA を併記。git reflog に約90日残る):
+  - `stash@{0}` 9d11b9e … linux/macos/windows の generated_plugin_registrant のみ
+    (flutter_timezone プラグイン登録)。`flutter pub get` で再生成される生成物。
+  - `stash@{1}` 8d53c4d … `docs/ANDROID_RELEASE.md` の REVENUECAT_ANDROID_KEY 手順・
+    「渡し忘れ厳禁(versionCode 7 再発防止)」警告の wip。**現行 `internal-docs/
+    ANDROID_RELEASE.md` に同等かそれ以上の内容が既に反映済み**(L75 の警告文はほぼ
+    逐語一致、加えて sk_/goog_ 区別・`< >` プレースホルダ注意も追記済み)。
+    2026-08-04 の internal-docs/ 移動時に main 上で独立に再実装されていた。
+  - `stash@{2}` 99f8d8d / `stash@{3}` 71df167 … 「auto-stash before pull」。
+    中身は macos generated swift + `pubspec.lock`(firebase 導入途中の古い
+    スナップショット、現行 lock に包含済み)+ 未コミットの windows/。`{3}` の
+    `android/app/build.gradle.kts`(minSdk 23 → flutter.minSdkVersion)は現行
+    main と同じ結果。手作業の内容は無し。
+  - `stash@{4}` 585031c … `.dart_tool/hooks_runner/shared/objective_c/.lock`
+    (pid とタイムスタンプの1行)のみ。ノイズ。
+  - `stash@{5}` 885c94f … `.gitignore`(`.vercel` / `.env*` 追加 → 現行 L43-44 に
+    反映済み)+ build.gradle.kts(現行と同結果)+ `.dart_tool/*` /
+    `.flutter-plugins-dependencies` / `pubspec.lock` の生成物。
+- 結論: 全 stash が「既に main 反映済み」または「再生成可能なビルド生成物のみ」で、
+  未回収の手作業は1件も無かった。mingit v2.15.1 の `git stash` は問題なく動作、
+  挙動差は観測されず。
+
+### §3 voikerchat.com トップページの訴求文言の棚卸し
+
+- 棚卸し実施。成果物 `internal-docs/reports/website_copy_audit_20260828.md`。
+- 実質的なズレは1件: `docs/index.html` のタグラインが `Japanese Learning App
+  for Filipino Spouses`(**配偶者限定**)。ストア掲載文・シーン構成(介護・特定技能
+  面接等)・GROWTH_PLAN の ASO 方針はいずれも「フィリピン人学習者全般(就労者中心)」
+  が対象で、「配偶者」限定はどこにも無い。旧コンセプトの名残と見られる。
+- ほかにアプリ名表記の軽微なズレ(トップページ `Voikerchat` / `<title>` は
+  `Voikerchat - Japanese Learning App` vs ストア app 名 `Voikerchat - Speak Japanese`)、
+  機能訴求がトップページに無い(矛盾ではなく欠落。最小の法務ページのため)、
+  `<html lang="ja">` と英語本文の不一致。
+- CC 推奨(決定ではない): 項目1(配偶者限定)は次にトップページを触る機会に
+  ストア表現へ揃える。項目2・lang はそのついで。機能訴求の欠落は
+  voikerchat.com ランディング化 / shibuyer.jp リデザインの検討にあわせる。
+  全体の優先度は低。STATE.md 項目を `[判定: 2026-09-27][種別: 判断]` へ更新した。
