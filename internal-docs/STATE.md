@@ -118,8 +118,6 @@
   実機での破壊的操作を伴うため、公開のタイミングでまとめて実施する。
 - api/*.tsのテスト基盤整備 [判定: 2026-11-27][種別: 判断]
   jest/vitest等のユニットテスト基盤(型チェックはR3で別途解消済み、本項目は別軸)。導入するか判定日に判断する。
-- 本番Supabaseの検証用バックアップテーブル削除 [判定: 2026-09-10][種別: 実施]
-  `_rate_limits_daily_limit_backup_20260726` / `_rate_limits_verification_backup`を削除する。実行用SQLは`internal-docs/migrations/2026-08-28_drop_rate_limits_verification_backup_tables.sql`(存在・行数確認→依存確認→DROP(CASCADEなし)→削除後確認、の手順と中断条件をファイル内に記載)。CCは本番DBへ直接アクセスできないため、Takatohが Supabase SQL Editor で実行する。実行後この項目を削除し、削除前の行数と結果をDECISIONS.md 2026-08-28へ追記する。
 - 通知履歴の既存DB行クリーンアップ [判定: 2026-09-27][種別: 実施]
   is_read=true/status='scheduled'の残存3件を削除する(影響軽微)。
 - 通知履歴の表示時ローカライズ改修 [判定: 2026-09-27][種別: 判断]

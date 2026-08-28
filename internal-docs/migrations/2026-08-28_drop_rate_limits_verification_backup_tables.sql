@@ -1,3 +1,6 @@
+-- 実行済み: 2026-08-28、Supabase SQL Editor(Takatoh)。
+--   削除前 各1行 / 依存0件 / 本体 rate_limits 47行で前後不変。結果は DECISIONS.md 2026-08-28 参照。
+--
 -- 2026-08-28: 2026-07-26 の検証作業で作成した一時テーブル2件を本番から削除する。
 --
 --   public._rate_limits_daily_limit_backup_20260726
