@@ -48,6 +48,7 @@ CLAUDE.md「Claude(チャット)とCC の分担ルール」参照)。棚卸し(�
 | パス | 説明 | 追記専用か否か |
 |---|---|---|
 | `internal-docs/ANDROID_RELEASE.md` | Androidリリースビルド手順書(全工程手動、Windows Laptop) | 都度更新 |
+| `internal-docs/runbooks/screenshot_capture_20260901.md` | ストア掲載スクリーンショット英語UI撮り直しの実行手順書(2026-09-01 出先セッション用。単独完走チェックリスト形式) | 固定(セッション後に実施記録を追記) |
 | `internal-docs/PRODUCTION_ACCESS.md` | Google Play製品版アクセス申請の手順書 | 都度更新 |
 | `internal-docs/PRODUCTION_ACCESS_ANSWERS.md` | 製品版アクセス申請の回答文(提出用完成版) | 固定(提出後は経緯参照用) |
 | `internal-docs/IOS_RESUBMISSION_20260807.md` | iOS再提出手順(2026-08-07実施記録) | 固定 |
@@ -206,3 +207,4 @@ CLAUDE.md「Phase A 品質ゲート」節に対応。着手前に`tasks/RUNBOOK.
 - 2026-08-17: 新設時点で`internal-docs/`配下のmdファイル67件を全件分類。未分類5件(うち3件はshibuyer-ops側)
 - `internal-docs/`配下のサブディレクトリ(`reports/` `verification/` `migrations/` `tasks/`)は上表にファイル単位で展開済み
 - 2026-08-17(同日追加分): `internal-docs/TRIGGERS.md`新設に伴い68件目として上表(今の状態を知りたい節)へ追加
+- 2026-08-31: `internal-docs/runbooks/`(新設サブディレクトリ)に `screenshot_capture_20260901.md` を追加。上表「リリース手順を知りたい」節へ掲載
