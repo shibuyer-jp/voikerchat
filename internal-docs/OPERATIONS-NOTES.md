@@ -105,3 +105,33 @@
     **(d) 位置づけ**
     - これは既存の運用ルール(本書項目4・11、STATE.md「外部サービスの配布状況は必ず実画面で確認する」)の延長だが、今回の根本原因はもう一段深く、**「記録(ARCHIVE.md)を確認せずに項目を起こした」こと**にある。
     - 2026-08-28 に、2026-08-27 の launch HANDOFF が積んだ項目の取り消し・訂正が3件連続した(年齢レーティング 3+ = 対応不要 / Android デベロッパー確認 = 完了済み / AdMob 配信制限 = 実在するが原因の見立てが誤り)。共通原因は「外から見えるもの(通知・ストア表示)を根拠に、実画面や既存記録を確認する前にバックログへ登録した」こと。詳細は DECISIONS.md 2026-08-28、手順は CLAUDE.md「バックログに新規項目を追加する前の確認」。
+
+## Windows laptop(Android 撮影機・ローカル検証機)関連(2026-09-01 追加)
+
+16. **この開発機には git 単体が無く、adb も PATH に無い。実体をフルパスで叩く**
+
+    2026-09-01 のスクリーンショット撮影セッション(Android 分)で確定した、この
+    Windows laptop 固有の環境。次に Android エミュレータ作業や Windows 上での
+    gradle / adb 作業をするときの前提。
+
+    - **git**: 単体インストールは無い(`C:\Program Files\Git` は空)。Flutter 同梱の
+      mingit(`%USERPROFILE%\Downloads\flutter\bin\mingit\cmd\git.exe`、**version 2.15.1**)を使う。
+      PowerShell で `$env:PATH += ";$env:USERPROFILE\Downloads\flutter\bin\mingit\cmd"` で一時的に通す。
+      - 2.15.1 は古く、`git branch --show-current`(→ `git rev-parse --abbrev-ref HEAD`)・
+        `git restore`・credential helper・**lefthook 連携**(pre-push フックは
+        「Git version is too old. Minimum supported version is 2.31.0」で失敗する)が使えない。
+      - **push / fetch は素の `git push origin main` では「could not read Username」で失敗する。**
+        `gh`(`C:\Program Files\GitHub CLI\gh.exe`、認証済み)経由か、認証URL
+        (`https://x-access-token:<gh auth token>@github.com/shibuyer-jp/voikerchat.git`)で行う。
+        push しても `origin/*` のローカル追跡 ref は更新されないため、確認は `gh api` か
+        同方式の `git fetch` で行う。
+    - **adb**: PATH に無い。実体は `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`。フルパスで呼ぶ。
+    - **Android エミュレータ `pixel`**: 解像度は **1080×1920(9:16)** で、Play Console の
+      アスペクト比要求(最大辺 ≤ 最小辺×2)をそのまま満たす。手順書
+      `screenshot_capture_20260901.md` §A-2 が「未確認・要検証」としていた 1080×2400
+      (2.22:1)問題は**このエミュレータでは発生しなかった**。7インチタブレット枠にも
+      この 1080×1920 をそのまま流用できる。
+    - **エミュレータは Google Play 版イメージ**のため `adb root` は使えない
+      (`adbd cannot run as root in production builds`)。端末言語の変更は
+      `adb shell am start -a android.settings.LOCALE_SETTINGS` で設定画面を直接開くのが確実。
+    - **エミュレータのスクリーンショット保存先の既定**は `%USERPROFILE%\OneDrive\Desktop`。
