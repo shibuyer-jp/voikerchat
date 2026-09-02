@@ -197,7 +197,7 @@
 - 小タスク: G6ダイアログを権限取得済み時はスキップする改善 [判定: 2026-11-27][種別: 判断]
   任意の改善。着手するか判定日に判断する。
 - Vercelプロジェクト2重(voikerchat / voikerchat-x621)の整理 [判定: 2026-09-10][種別: 実施]
-- RevenueCat の設定整理 [判定: 2026-09-27][種別: 実施]
+- RevenueCat の設定整理 [判定: 2026-09-27][種別: 実施][優先: 低]
   2026-09-02 の年額プラン設定時に未整理項目が増えたため、旧「未使用Entitlement`Voikerchat Pro`・Offering `$rc_lifetime`の整理」を本項目へ統合(DECISIONS.md 2026-09-02 §13)。いずれも課金動作には影響しないが、放置すると設定ミスの温床になる。**`$rc_annual` は年額プランで使用中のため整理対象から除外**(旧記述は誤り)。
   - App Store Connect の認証情報(In-App Purchase Key)を RevenueCat に登録する。未登録のため App Store 版 Product の Store Status が「Could not check」のまま。
   - 未使用と思われる Entitlement `Voikerchat Pro` の要否を確認し、不要なら削除する。誤ってこちらにアタッチすると購入しても解錠されない事故につながる。
