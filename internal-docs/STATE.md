@@ -87,6 +87,7 @@
 |------|------|------|
 | 認証・チャット・usage_logs・analytics/rate-limit認証統一・Supabaseエラーログ化・i18n(通知/premium文言)・通知機能一式・ストリーク(端末間整合性・リセット実装)・アプリ内UI言語切替・チャット画面AppBar省略修正・アカウント削除・badges・音声会話(PTT+TTS)・lefthook pre-push | ✅ 完了・main反映・安定稼働 | 実装経緯・PR番号はARCHIVE.md「STATE.md全文バックアップ」の旧「機能ステータス」表を参照 |
 | プレミアム(RevenueCat) | ✅ 配線済み | webhook→`rate_limits.is_premium`。CANCELLATIONは降格せず、EXPIRATION・返金(cancel_reason=CUSTOMER_SUPPORT)のみ降格(PR #89、2026-08-12マージ)。監査ログ追加はPR #97(2026-08-13マージ済み) |
+| 年額プラン(RevenueCat $rc_annual) | 🚧 ストア商品・RevenueCat 設定済み / アプリ側の Paywall 2プラン対応が未実装 | 基準 $99.99/年。1.1.0 で提出予定。詳細は下記バックログ「1.1.0(次期ビルド)の内容」、DECISIONS.md 2026-09-02 §5・§10・§12 |
 | daily_limit日次リセット漏れ修正・ストア掲載文数値非依存化・プレミアム案内文数値除去・Paywall文言監査/価格表示/フッター化/購読ボタン制御・Androidクローズドテスト配布(Build 16/18/21)・Google Play価格引き下げ・AI生成コンテンツポリシー遵守 | ✅ 完了・main反映 | 詳細はARCHIVE.md参照 |
 | プッシュ通知 | 🚧 Phase2へ先送り(「道2」決定) | 受信側コードは維持、自動送信基盤の新規構築・APNs追加対応は今回リリースでは行わない。PR #14(iOS APNsエンティトルメント)は実装済み・マージ保留 |
 | AdMobリワード広告 | ✅ コード完了・実ID設定済み・配信中(2026-08-31 確認) | AdMob管理画面でiOS・Androidとも承認状況「準備完了」。実機(配偶者の端末・Takatohの iPhone)で広告視聴 → クレジット付与 → 高機能AIアクセスまで動作確認済み。解消までに行った対応: (a) AdMob側のストア紐付け、(b) `docs/app-ads.txt` 設置。経緯はDECISIONS.md 2026-07-26 / 2026-08-28 / 2026-08-31 |
@@ -124,6 +125,16 @@
   年額が過半を占めるなら不要。
   **前提**: 課金者が20件程度に達するまでこの比率は判断に使えない。未達の場合は
   「データ不足のため判断を先送り」を明示的に選ぶこと。
+  **前払い障壁への対処は四半期プラン以外にも選択肢がある**(2026-09-02 追記)。
+  App Store には「12か月契約の月額制」、Google Play には基本プランの「分割払い」という、
+  年間契約だが支払いは月々という形式が存在する。RevenueCat 側も
+  「Monthly with 12 months commitment」として対応している。
+  - App Store 版は OS 26.4以降・SDK 26.5以降でビルドされたアプリでのみ利用可能。
+  - Google Play 版は「一部の国や地域でのみ利用可能」とされ、フィリピン・日本で
+    使えるかは未確認【未検証】。
+  - いずれも採用すると Paywall が3択になり、Guideline 3.1.2 の期間表示要件も
+    3つ分満たす必要がある。
+  判定日には四半期プランとこの方式を並べて検討すること。
 
 **運用・技術(公開前後)**
 - スクリーンショットの英語UI版への差し替え(残: iOS 1.1.0 の審査提出) [判定: 2026-09-10][種別: 実施]
@@ -186,7 +197,11 @@
 - 小タスク: G6ダイアログを権限取得済み時はスキップする改善 [判定: 2026-11-27][種別: 判断]
   任意の改善。着手するか判定日に判断する。
 - Vercelプロジェクト2重(voikerchat / voikerchat-x621)の整理 [判定: 2026-09-10][種別: 実施]
-- RevenueCatダッシュボード未使用Entitlement`Voikerchat Pro`・Offering `$rc_annual`/`$rc_lifetime`の整理 [判定: 2026-09-27][種別: 実施]
+- RevenueCat の設定整理 [判定: 2026-09-27][種別: 実施]
+  2026-09-02 の年額プラン設定時に未整理項目が増えたため、旧「未使用Entitlement`Voikerchat Pro`・Offering `$rc_lifetime`の整理」を本項目へ統合(DECISIONS.md 2026-09-02 §13)。いずれも課金動作には影響しないが、放置すると設定ミスの温床になる。**`$rc_annual` は年額プランで使用中のため整理対象から除外**(旧記述は誤り)。
+  - App Store Connect の認証情報(In-App Purchase Key)を RevenueCat に登録する。未登録のため App Store 版 Product の Store Status が「Could not check」のまま。
+  - 未使用と思われる Entitlement `Voikerchat Pro` の要否を確認し、不要なら削除する。誤ってこちらにアタッチすると購入しても解錠されない事故につながる。
+  - Test Store のサンプル商品(`monthly`/`yearly`/`lifetime`)と、買い切りを扱わない以上不要な `$rc_lifetime` パッケージの整理。
 - voikerchat.comトップページの訴求文言をストア掲載情報に揃えるか判断 [判定: 2026-09-27][種別: 判断]
   2026-08-28 に棚卸し実施(`internal-docs/reports/website_copy_audit_20260828.md`)。実質的なズレ1件: トップページ タグラインが `for Filipino Spouses`(配偶者限定)で、ストア掲載情報・シーン構成の「フィリピン人学習者全般(就労者中心)」と食い違う。旧コンセプトの名残と見られる。ほかにアプリ名表記の軽微なズレ、機能訴求の欠落(矛盾ではない)。配信停止等のリスクなし・流入少と見られるため優先度は低。レポートの推奨を基に、次にトップページを触る機会に直すか/独立タスクにするかを判定日に判断する。
 - 旧Vercelデプロイ(`*.vercel.app`個別URL)の`internal-docs/`分離前スナップショット露出懸念 [判定: 2026-09-10][種別: 棚卸し]
@@ -207,10 +222,16 @@ App Store Connect 側は 1.1.0 として作成済み(スクリーンショット
 
 含める内容:
 - **年額プランの追加**[優先: 高] 基準価格 $99.99/年(DECISIONS.md 2026-09-02 §5)。
-  App Store Connect / Play Console の双方で商品を作成し、**既存の月額と同じ
-  サブスクリプショングループ内**に置く。RevenueCat の `$rc_annual` へ紐付け、
-  Offering `default` に追加。Paywall を2プラン対応に改修する。
-  Introductory Offer(初年度割引)の設定要否は別途判断する。
+  **2026-09-02 にストア商品の作成と RevenueCat 設定まで完了した**
+  (DECISIONS.md 2026-09-02 §10・§12)。残るはアプリ側の実装のみ。
+  - App Store: `voikerchat_premium_annual`(グループ 22225230、月額と同一レベル1)
+  - Google Play: `voikerchat_premium_monthly:annual-autorenew`(既存定期購入の基本プラン)
+  - RevenueCat: 両方を Entitlement `Premium` にアタッチ済み、Offering `default` の
+    `$rc_annual` に追加済み
+  - **残作業**: Paywall を2プラン対応に改修する(Guideline 3.1.2 の期間表示要件を
+    両プランで満たすこと)。改修後、App Store Connect の年額商品に審査用
+    スクリーンショットを登録する(現在未入力。年額が表示された Paywall 画面が必要)。
+  - Introductory Offer(初年度割引)の設定要否は別途判断する。
 - `lib/services/revenuecat_service.dart:244` の "Play Store" 表記修正
   (Guideline 2.3.10 の潜在リスク)
 - シーン一覧の鍵アイコン二重表示の修正。修正する場合、ストア掲載スクリーンショット
@@ -228,7 +249,7 @@ App Store Connect 側は 1.1.0 として作成済み(スクリーンショット
 
 **製品機能(公開後)**
 - 年額プラン追加[優先: 高、公開後の収益改善の筆頭] [判定: 2026-08-27][種別: 実施]
-  RevenueCatに`$rc_annual`追加、両ストア登録、Paywall2プラン対応。競合が年額主力(月換算2,316〜2,367円、LingoDeerは月額₱999に対し年額₱5,990=月換算₱499)なのに対しVoikerchatは月額単体提示のみで、月額単体提示ではコンバージョン率が著しく低いと推測される[未検証]。RevenueCat側に未使用の`$rc_annual`/`$rc_lifetime`が既に存在するため受け皿はある(下記「RevenueCatダッシュボード未使用Entitlement整理」と関連)。実施にはPlay Console/App Store Connect双方の商品追加とPaywall UI改修(新ビルド)が必要なため公開前には着手しない(2026-08-13追記)。
+  RevenueCatに`$rc_annual`追加、両ストア登録、Paywall2プラン対応。競合が年額主力(月換算2,316〜2,367円、LingoDeerは月額₱999に対し年額₱5,990=月換算₱499)なのに対しVoikerchatは月額単体提示のみで、月額単体提示ではコンバージョン率が著しく低いと推測される[未検証]。RevenueCat側に`$rc_annual`/`$rc_lifetime`パッケージが既に存在するため受け皿はある(下記「RevenueCat の設定整理」と関連。なお `$rc_annual` は 2026-09-02 に年額プランで使用開始)。実施にはPlay Console/App Store Connect双方の商品追加とPaywall UI改修(新ビルド)が必要なため公開前には着手しない(2026-08-13追記)。
   **2026-09-02 に着手確定・基準価格 $99.99/年に決定**(DECISIONS.md 2026-09-02 §5)。
   1.1.0 に含める(本バックログ「1.1.0(次期ビルド)の内容」参照)。
 - 学習スコアの可視化[優先: 高] [判定: 2026-08-27][種別: 実施]
@@ -297,7 +318,7 @@ App Store Connect 側は 1.1.0 として作成済み(スクリーンショット
 - FREE_DAILY_DEFINE_HINT_LIMIT = 30がdefine.ts/hint.tsで重複定義。担当: 未定
 - recap_service.dart/vocab_summary_service.dartに429分岐がなく上限到達が「一時的な失敗」表示になる。担当: 未定
 - `npm install`時に`@supabase/supabase-js`等がNode 22以上を要求する`EBADENGINE`警告(2026-08-13、R3で発見)。ビルド自体は失敗せず実害なし。Node 18サポートが切れる/依存更新のタイミングで対応。担当: 未定
-- Vercelプロジェクト2重・RevenueCat未使用Entitlement整理は上記バックログ参照
+- Vercelプロジェクト2重・RevenueCat の設定整理は上記バックログ参照
 - GitHub PAT平文埋め込み(2026-08-01発見)は**判断のうえ据え置き**(2026-08-13): 削除・全リポジトリ走査は完了、PAT差し替え・revokeは実施しないとTakatohが判断(平文の露出範囲が本人PC/OneDrive限定・漏洩形跡ゼロのため)。**再検討トリガー: 将来PATを第三者と共有する場面が生じた時点**。詳細はDECISIONS.md 2026-08-13参照
 - linux/macos/windowsの自動生成ファイルがcheckoutのたびに差分として出る。担当: 未定
 - `lib/services/revenuecat_service.dart:5`がdart:ioのPlatformをkIsWebガードなしで参照(web実行時の潜在バグ、2026-07-31発見)。担当: 未定
