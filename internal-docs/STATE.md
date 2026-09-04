@@ -87,7 +87,7 @@
 |------|------|------|
 | 認証・チャット・usage_logs・analytics/rate-limit認証統一・Supabaseエラーログ化・i18n(通知/premium文言)・通知機能一式・ストリーク(端末間整合性・リセット実装)・アプリ内UI言語切替・チャット画面AppBar省略修正・アカウント削除・badges・音声会話(PTT+TTS)・lefthook pre-push | ✅ 完了・main反映・安定稼働 | 実装経緯・PR番号はARCHIVE.md「STATE.md全文バックアップ」の旧「機能ステータス」表を参照 |
 | プレミアム(RevenueCat) | ✅ 配線済み | webhook→`rate_limits.is_premium`。CANCELLATIONは降格せず、EXPIRATION・返金(cancel_reason=CUSTOMER_SUPPORT)のみ降格(PR #89、2026-08-12マージ)。監査ログ追加はPR #97(2026-08-13マージ済み) |
-| 年額プラン(RevenueCat $rc_annual) | 🚧 ストア商品・RevenueCat 設定済み / アプリ側の Paywall 2プラン対応が未実装 | 基準 $99.99/年。1.1.0 で提出予定。詳細は下記バックログ「1.1.0(次期ビルド)の内容」、DECISIONS.md 2026-09-02 §5・§10・§12 |
+| 年額プラン(RevenueCat $rc_annual) | 🚧 ストア商品・RevenueCat 設定済み / アプリ側の Paywall 2プラン対応も実装済み(PR #116、2026-09-04 main マージ) / ビルド 1.1.0+23 は 2026-09-04 に App Store Connect へアップロード済み・処理完了。残るのは審査提出のみ | 基準 $99.99/年。詳細は下記バックログ「1.1.0(次期ビルド)の内容」、DECISIONS.md 2026-09-02 §5・§10・§12 / 2026-09-04 |
 | daily_limit日次リセット漏れ修正・ストア掲載文数値非依存化・プレミアム案内文数値除去・Paywall文言監査/価格表示/フッター化/購読ボタン制御・Androidクローズドテスト配布(Build 16/18/21)・Google Play価格引き下げ・AI生成コンテンツポリシー遵守 | ✅ 完了・main反映 | 詳細はARCHIVE.md参照 |
 | プッシュ通知 | 🚧 Phase2へ先送り(「道2」決定) | 受信側コードは維持、自動送信基盤の新規構築・APNs追加対応は今回リリースでは行わない。PR #14(iOS APNsエンティトルメント)は実装済み・マージ保留 |
 | AdMobリワード広告 | ✅ コード完了・実ID設定済み・配信中(2026-08-31 確認) | AdMob管理画面でiOS・Androidとも承認状況「準備完了」。実機(配偶者の端末・Takatohの iPhone)で広告視聴 → クレジット付与 → 高機能AIアクセスまで動作確認済み。解消までに行った対応: (a) AdMob側のストア紐付け、(b) `docs/app-ads.txt` 設置。経緯はDECISIONS.md 2026-07-26 / 2026-08-28 / 2026-08-31 |
@@ -362,6 +362,14 @@ App Store Connect 側は 1.1.0 として作成済み(スクリーンショット
   DECISIONS.md 2026-09-04)。実行中プラットフォームのストア名(the App Store /
   the Play Store)のみを返す `_storeName` を追加。`dart:io` の `Platform` は
   web で例外を投げるため `kIsWeb` を先に見る。
+- `ios/Runner/Info.plist` に `ITSAppUsesNonExemptEncryption = false` を設定する。
+  現在この設定が無いため、ビルドごとに App Store Connect 上で輸出コンプライアンスの
+  質問に手動回答する必要がある。本アプリは HTTPS 通信のみで独自の暗号化を実装して
+  いないため、この宣言が実態と一致する。設定にはビルドの作り直しが必要なため、
+  1.1.0 提出後に対応する。担当: 未定
+- Paywall の未選択プランカードの価格色を見直す。未選択の月額カードの価格が選択中の
+  年額と同じブランド色で表示され、選択状態のコントラストが弱い。審査上の問題では
+  なく表示改善。担当: 未定
 
 ## 市場・競合メモ
 
