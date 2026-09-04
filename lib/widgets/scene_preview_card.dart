@@ -100,19 +100,11 @@ class _ScenePreviewCardState extends State<ScenePreviewCard> {
 
     if (!widget.isLocked) return thumbnail;
 
-    // ロック中: 画像を半透明化しロックアイコンを重ねる(見せて欲しがらせる)
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Opacity(opacity: 0.4, child: thumbnail),
-        const Icon(
-          Icons.lock,
-          color: Colors.white,
-          size: 28,
-          shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-        ),
-      ],
-    );
+    // ロック中: 画像を半透明化してロック状態を示す。
+    // 鍵アイコンはカード右側(build 内)に1つだけ表示する。以前はサムネイル上にも
+    // 白い鍵を重ねていたが、キャラクターの顔を隠すため削除した
+    // (DECISIONS.md 2026-09-04)。半透明化はロックの視覚表現として残す。
+    return Opacity(opacity: 0.4, child: thumbnail);
   }
 
   @override

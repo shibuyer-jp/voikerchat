@@ -10,6 +10,7 @@
 (本文の既存行は従来どおり削除禁止)。
 
 - 初期の1行エントリ群(2026-06〜2026-07-26、日付見出し無し。本文冒頭を参照)
+- [2026-09-04 年額プラン対応(Paywall 2プラン改修 + 付随修正)](#2026-09-04-年額プラン対応paywall-2プラン改修--付随修正)
 - [2026-09-02 レビュー依頼完了・Premium 解錠の調査結果・iOS 1.0.1 の方針確定](#2026-09-02-レビュー依頼完了premium-解錠の調査結果ios-101-の方針確定)
 - [2026-09-01 ストア掲載スクリーンショットの英語UI撮り直しを実施・完了](#2026-09-01-ストア掲載スクリーンショットの英語ui撮り直しを実施完了)
 - [2026-08-31 通知履歴の既存DB行クリーンアップ(scheduled 滞留行の発見を含む)](#2026-08-31-通知履歴の既存db行クリーンアップscheduled-滞留行の発見を含む)
@@ -2581,3 +2582,93 @@ TRIGGERS.mdの旧「iOS App Review の結果が届いたら」節を削除した
 - クローズドテストや Sandbox / ライセンステスターでの検証課金が集計されたものと
   見られる【未検証】。**継続課金しているユーザーは1人もいない。**
 - 今後、実課金データを読む際にこのノイズが混ざっている点に注意すること。
+
+## 2026-09-04 年額プラン対応(Paywall 2プラン改修 + 付随修正)
+
+1.1.0 の実装。年額プラン $99.99/年 を追加する。ストア商品・RevenueCat 設定は
+2026-09-02 に完了済み(§10・§12)で、本日はアプリ側の実装と設計判断の確定。
+
+### Paywall は選択式プランカード2枚 + CTA1つの構成とした
+
+- 機能リスト → プランカード2枚(月額・年額、タップで選択切替)→ CTA ボタン1つ、
+  という構成にした。選択中カードは枠線・背景(`AppColors.brand`)で区別する。
+- **ボタン2枚並列は採らなかった。** 理由:
+  - Guideline 3.1.2 の期間表示(実際に課金される金額を主、月あたり換算を従)を
+    2プラン分カード内に収めやすい。
+  - CTA1つなら既存の `upsell_clicked` / `upsell_converted` の配線をそのまま流用でき、
+    計測の分岐が増えない。
+
+### 年額を初期選択とした
+
+- 競合が年額主力(§5)で不自然さがない。
+- 損益分岐に対する実データがゼロの現状では、まず収益側に振るほうが安全
+  (値下げは自由だが値上げは既存購読者の同意が必要、という 2026-07-29 の原則とも整合)。
+- **副作用**: 年額の選択比率が初期選択によって上振れする。これを補正するため
+  `usage_logs.metadata` に `plan`('monthly'|'annual')と `plan_changed`
+  (初期選択から能動的に変更したか)を追加し、「能動的に年額を選んだ人」を
+  切り出せるようにした。`upsell_shown` には `default_plan`('annual' 固定だが
+  将来変更しても追跡できるよう記録)を追加。イベント種別は追加していない
+  (usage_logs の CHECK 制約に触れずマイグレーション不要)。
+
+### 割引率・月あたり換算は実行時計算とし、ハードコードしない
+
+- 割引率 = (1 - 年額price / (月額price × 12)) × 100 を実行時に計算して整数に丸める。
+  月あたり換算 = 年額price / 12。いずれも `storeProduct.price`(数値)を使い、
+  `priceString`(整形済み文字列)からは数値を取り出さない。
+- 通貨整形は `storeProduct.currencyCode` + `intl` の `NumberFormat.simpleCurrency`
+  で通貨ごとの小数桁に従う(円0桁・ドル/ペソ2桁)。
+- 理由: ストアフロントごとに月額・年額の価格比が異なり(日本は Android が約9%安い、
+  §11)、固定値だと日本・フィリピンのユーザーに事実と異なる割引率が出る。
+- **フォールバック**: 月額・年額のいずれかの価格が取れなければ割引率バッジと
+  月あたり換算を表示しない(価格のみ)。両方取れなければ既存の
+  `premiumPriceFallback` による単一プラン表示に戻し、購入ボタンは既存の
+  `_purchasingAvailable` 判定に従う。
+
+### Introductory Offer は 1.1.0 では設定しない。表示ロジックのみ先行実装した
+
+- 理由:
+  - 素の年額の選択率というベースラインが取れなくなる。
+  - Guideline 3.1.2 の表示要件が増え、審査リスクが上がる。
+  - Small Business Program(§7)の承認待ちで割引の原資が未確定。
+- ただし `storeProduct.introductoryPrice` が存在する場合に
+  「初回◯◯(期間)、以降 通常価格、自動更新」の4点を同一画面に出す表示ロジックは
+  実装済み。次回はストア設定だけで有効化できる。
+- purchases_flutter 10.4.3 では `StoreProduct.introductoryPrice`
+  (`IntroductoryPrice`: price / priceString / period / cycles / periodUnit /
+  periodNumberOfUnits)。
+
+### パッケージ探索を文字列一致から PackageType 判定に変えた
+
+- `revenuecat_service.dart` の `purchasePremium()` は
+  `pkg.identifier.contains('monthly')` で月額を名指ししており年額を買えなかった。
+  `PremiumPlan`(monthly/annual)引数を追加し、`pkg.packageType` による判定に変更。
+- 理由: Offering `default` に未整理の `$rc_lifetime`(PackageType.lifetime)が
+  残っており(§13c)、文字列一致では想定外のパッケージを拾う危険がある。
+  月額・年額として明示的に判定できたパッケージのみを扱う。
+- `getPremiumInfo()` を月額・年額の両方を返す形に変更(各プランに price 数値・
+  priceString・currencyCode・導入価格情報を含む)。既存呼び出し元は
+  `paywall_screen.dart` のみ(grep 確認済み)。
+- `package_not_found` のエラー文言を 'Monthly subscription package not found.' →
+  'Subscription package not found.'(プラン種別非依存)に変更。
+
+### 課金エラー文言の "App Store/Play Store" 併記を実行中プラットフォーム名のみに
+
+- `revenuecat_service.dart:244` の 'Invalid payment method...App Store/Play Store.'
+  が iOS 上で "Play Store" を表示しうる(Guideline 2.3.10 の潜在リスク)。
+- 実行中プラットフォームのストア名(the App Store / the Play Store)のみを出す
+  `_storeName` を追加。`dart:io` の `Platform` は web で例外を投げるため
+  `kIsWeb` を先に見る(同ファイル 5 行目付近に kIsWeb ガード無しの既知箇所が
+  あるため、新たに同じ問題を作らないよう明示的にガードした)。
+
+### 鍵アイコンはサムネイル上の白い鍵を削除、カード右側のグレーは維持
+
+- `scene_preview_card.dart` でロック中のシーンカードに鍵アイコンが2箇所
+  (サムネイル画像中央の白い鍵 + カード右側のグレーの鍵)出ていた。
+- サムネイル上の白い鍵のみ削除。`Opacity(0.4)` による半透明化は残す
+  (ロック状態の視覚表現として機能しており、消すとロックが伝わらない)。
+- 理由: 白い鍵がキャラクターの顔を隠しており、ストア掲載スクリーンショット #6 にも
+  その状態で写っている。
+
+### バージョン
+
+- `pubspec.yaml` を `1.0.0+22` → `1.1.0+23`。

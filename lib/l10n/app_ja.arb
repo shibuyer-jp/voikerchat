@@ -308,5 +308,15 @@
   "micRationaleContinue": "続ける",
   "micDeniedTitle": "マイクが使用できません",
   "micDeniedMessage": "音声入力が無効になっています。端末の「設定」でVoikerchatのマイクと音声認識を有効にしてください。",
-  "openSettings": "設定を開く"
+  "openSettings": "設定を開く",
+  "paywallPlanMonthlyLabel": "月額",
+  "paywallPlanAnnualLabel": "年額",
+  "paywallPricePerYear": "{price}／年",
+  "paywallPerMonthEquivalent": "月あたり {price}",
+  "paywallDiscountBadge": "{percent}% お得",
+  "paywallIntroOffer": "初回 {introDuration} は {introPrice}、以降 {regularPrice}（自動更新）",
+  "paywallDurationDays": "{count}日",
+  "paywallDurationWeeks": "{count}週間",
+  "paywallDurationMonths": "{count}か月",
+  "paywallDurationYears": "{count}年"
 }
