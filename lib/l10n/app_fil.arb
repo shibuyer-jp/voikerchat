@@ -308,5 +308,15 @@
   "micRationaleContinue": "Magpatuloy",
   "micDeniedTitle": "Hindi magamit ang mikropono",
   "micDeniedMessage": "Naka-disable ang voice input. Paki-enable ang Mikropono at Speech Recognition para sa Voikerchat sa Settings ng iyong device.",
-  "openSettings": "Buksan ang Settings"
+  "openSettings": "Buksan ang Settings",
+  "paywallPlanMonthlyLabel": "Buwanan",
+  "paywallPlanAnnualLabel": "Taunan",
+  "paywallPricePerYear": "{price}/taon",
+  "paywallPerMonthEquivalent": "≈ {price} / buwan",
+  "paywallDiscountBadge": "Makatipid ng {percent}%",
+  "paywallIntroOffer": "{introPrice} sa loob ng {introDuration}, pagkatapos ay {regularPrice} (awtomatikong nagre-renew)",
+  "paywallDurationDays": "{count} araw",
+  "paywallDurationWeeks": "{count} linggo",
+  "paywallDurationMonths": "{count} buwan",
+  "paywallDurationYears": "{count} taon"
 }

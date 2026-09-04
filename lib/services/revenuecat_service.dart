@@ -1,9 +1,23 @@
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:logging/logging.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
+
+/// Paywall が購入対象として指定できる購読プラン種別。
+///
+/// 文字列一致(`identifier.contains('monthly')`)ではなく purchases_flutter の
+/// [PackageType] で判定する。Offering `default` には未整理の `$rc_lifetime`
+/// パッケージが残っており、文字列一致だと想定外のパッケージを拾う危険があるため
+/// (STATE.md バックログ「RevenueCat の設定整理」参照)。
+enum PremiumPlan {
+  monthly,
+  annual;
+
+  PackageType get packageType =>
+      this == PremiumPlan.annual ? PackageType.annual : PackageType.monthly;
+}
 
 /// RevenueCat呼び出し(configure/getCustomerInfo)に設けるタイムアウト。
 /// オフライン時にこれらが無期限に待ち続け、起動シーケンス全体が白画面の
@@ -131,15 +145,43 @@ class RevenueCatService {
     }
   }
 
+  /// 実行中プラットフォームのストア名(課金エラー文言用)。
+  ///
+  /// iOS 上に "Play Store" が表示されうる問題(Guideline 2.3.10 の潜在リスク)を
+  /// 避けるため、実行中プラットフォームのストア名のみを返す。dart:io の
+  /// [Platform] は web で例外を投げるため [kIsWeb] を先に見る。
+  String get _storeName {
+    if (kIsWeb) return 'the app store';
+    if (Platform.isIOS) return 'the App Store';
+    if (Platform.isAndroid) return 'the Play Store';
+    return 'the app store';
+  }
+
+  /// Offering から指定プランのパッケージを [PackageType] で探す。
+  ///
+  /// `identifier` の文字列一致ではなく PackageType で判定するため、
+  /// 未整理の `$rc_lifetime`(PackageType.lifetime)や custom パッケージは
+  /// 自動的に無視される。月額・年額として明示的に判定できたものだけを返す。
+  Package? _findPackage(Offering offering, PremiumPlan plan) {
+    for (final pkg in offering.availablePackages) {
+      if (pkg.packageType == plan.packageType) return pkg;
+    }
+    return null;
+  }
+
   /// Premium 購入フロー
   /// エラー分類: cancelled, network, payment, unknown
-  Future<Map<String, dynamic>> purchasePremium() async {
+  ///
+  /// [plan] で月額・年額を指定する(既定は月額。既存呼び出し元との互換のため)。
+  Future<Map<String, dynamic>> purchasePremium({
+    PremiumPlan plan = PremiumPlan.monthly,
+  }) async {
     if (!_configured) {
       return {'success': false, 'error': 'RevenueCat not configured'};
     }
     try {
       final offerings = await Purchases.getOfferings();
-      
+
       if (offerings.current == null) {
         return {
           'success': false,
@@ -149,28 +191,21 @@ class RevenueCatService {
       }
 
       final offering = offerings.current!;
-      
-      // Monthly package を探す
-      Package? monthlyPackage;
-      for (var pkg in offering.availablePackages) {
-        if (pkg.identifier.contains('monthly')) {
-          monthlyPackage = pkg;
-          break;
-        }
-      }
 
-      if (monthlyPackage == null) {
+      final package = _findPackage(offering, plan);
+
+      if (package == null) {
         return {
           'success': false,
           'error': 'package_not_found',
-          'message': 'Monthly subscription package not found.',
+          'message': 'Subscription package not found.',
         };
       }
 
       // 購入処理
       try {
         final purchaseResult = await Purchases.purchase(
-          PurchaseParams.package(monthlyPackage),
+          PurchaseParams.package(package),
         );
 
         // 購入成功 → Premium ステータス更新
@@ -241,7 +276,8 @@ class RevenueCatService {
           return {
             'success': false,
             'error': 'invalid_credentials',
-            'message': 'Invalid payment method. Please update your payment info in App Store/Play Store.',
+            'message':
+                'Invalid payment method. Please update your payment info in $_storeName.',
             'retryable': false,
           };
         } else if (errorString.contains('not available') || errorString.contains('region')) {
@@ -290,34 +326,62 @@ class RevenueCatService {
     }
   }
 
-  /// Premium サブスクリプション情報取得
+  /// Premium サブスクリプション情報取得(月額・年額の両方)。
+  ///
+  /// 戻り値は `{'monthly': {...}, 'annual': {...}}` の形式で、取得できたプラン
+  /// のキーのみを含む。両方取得できなかった場合は null。
+  /// 各プランの内訳:
+  /// - `price`(double): 現地通貨の数値。割引率・月あたり換算の実行時計算に使う
+  /// - `priceString`(String): 整形済み価格文字列
+  /// - `currencyCode`(String): 通貨コード(通貨ごとの小数桁の判定に使う)
+  /// - `title` / `description`(String)
+  /// - `introductoryPrice`(Map?): 導入価格が設定されている場合のみ。
+  ///   `price` / `priceString` / `period` / `cycles` / `periodUnit` /
+  ///   `periodNumberOfUnits` を含む
   Future<Map<String, dynamic>?> getPremiumInfo() async {
     if (!_configured) return null;
     try {
       final offerings = await Purchases.getOfferings();
-      
-      if (offerings.current == null) {
-        return null;
-      }
 
-      final offering = offerings.current!;
-      
-      for (var pkg in offering.availablePackages) {
-        if (pkg.identifier.contains('monthly')) {
-          return {
-            'price': pkg.storeProduct.priceString,
-            'identifier': pkg.identifier,
-            'title': pkg.storeProduct.title,
-            'description': pkg.storeProduct.description,
-          };
-        }
-      }
-      
-      return null;
+      final offering = offerings.current;
+      if (offering == null) return null;
+
+      final monthly = _planInfo(_findPackage(offering, PremiumPlan.monthly));
+      final annual = _planInfo(_findPackage(offering, PremiumPlan.annual));
+
+      if (monthly == null && annual == null) return null;
+
+      return {
+        'monthly': ?monthly,
+        'annual': ?annual,
+      };
     } catch (e) {
       logger.info('[RevenueCat] Error getting premium info: $e');
       return null;
     }
+  }
+
+  Map<String, dynamic>? _planInfo(Package? pkg) {
+    if (pkg == null) return null;
+    final product = pkg.storeProduct;
+    final intro = product.introductoryPrice;
+    return {
+      'identifier': pkg.identifier,
+      'price': product.price,
+      'priceString': product.priceString,
+      'currencyCode': product.currencyCode,
+      'title': product.title,
+      'description': product.description,
+      if (intro != null)
+        'introductoryPrice': {
+          'price': intro.price,
+          'priceString': intro.priceString,
+          'period': intro.period,
+          'cycles': intro.cycles,
+          'periodUnit': intro.periodUnit.name,
+          'periodNumberOfUnits': intro.periodNumberOfUnits,
+        },
+    };
   }
 
   /// Premium 復元（別のデバイスから購入した場合）

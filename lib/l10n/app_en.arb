@@ -1341,5 +1341,91 @@
   "openSettings": "Open Settings",
   "@openSettings": {
     "description": "Button that opens the OS app settings screen"
+  },
+  "paywallPlanMonthlyLabel": "Monthly",
+  "@paywallPlanMonthlyLabel": {
+    "description": "Paywall plan card heading for the monthly subscription"
+  },
+  "paywallPlanAnnualLabel": "Yearly",
+  "@paywallPlanAnnualLabel": {
+    "description": "Paywall plan card heading for the annual subscription"
+  },
+  "paywallPricePerYear": "{price}/year",
+  "@paywallPricePerYear": {
+    "description": "Paywall annual plan primary price line: the actually-billed price plus the yearly period (Guideline 3.1.2). Mirrors premiumPriceWithPeriod which is the monthly equivalent.",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallPerMonthEquivalent": "≈ {price} / month",
+  "@paywallPerMonthEquivalent": {
+    "description": "Paywall annual plan secondary line: per-month equivalent (annual price / 12), computed at runtime from storeProduct.price. Shown small/grey, never as the primary price.",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallDiscountBadge": "Save {percent}%",
+  "@paywallDiscountBadge": {
+    "description": "Paywall annual plan badge: discount vs paying monthly for a year. percent is computed at runtime ((1 - annual/(monthly*12))*100, rounded) and is never hardcoded, since the monthly/annual price ratio differs by storefront.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallIntroOffer": "{introPrice} for {introDuration}, then {regularPrice} (auto-renews)",
+  "@paywallIntroOffer": {
+    "description": "Paywall introductory-offer line. Shows the four points Guideline 3.1.2 requires on one screen: intro price, intro duration, subsequent regular price (with period), and that it auto-renews. Only rendered when storeProduct.introductoryPrice is present (never in 1.1.0; the display logic ships ahead of any store-side offer).",
+    "placeholders": {
+      "introPrice": {
+        "type": "String"
+      },
+      "introDuration": {
+        "type": "String"
+      },
+      "regularPrice": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallDurationDays": "{count} days",
+  "@paywallDurationDays": {
+    "description": "Duration phrase (days), used for the introductory-offer period",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallDurationWeeks": "{count} weeks",
+  "@paywallDurationWeeks": {
+    "description": "Duration phrase (weeks), used for the introductory-offer period",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallDurationMonths": "{count} months",
+  "@paywallDurationMonths": {
+    "description": "Duration phrase (months), used for the introductory-offer period",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallDurationYears": "{count} years",
+  "@paywallDurationYears": {
+    "description": "Duration phrase (years), used for the introductory-offer period",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -70,7 +70,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Shows lock overlay on the thumbnail when locked',
+    testWidgets('Dims the thumbnail and shows a single lock icon when locked',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         _wrap(
@@ -88,8 +88,9 @@ void main() {
       );
       await tester.pump();
 
-      // ヘッダーの静的ロックアイコン + サムネイル上のロックオーバーレイの2箇所
-      expect(find.byIcon(Icons.lock), findsNWidgets(2));
+      // カード右側のグレーの鍵アイコン1つのみ。サムネイル上の白い鍵は
+      // 削除済み(DECISIONS.md 2026-09-04)。半透明化はロック表現として残る。
+      expect(find.byIcon(Icons.lock), findsOneWidget);
       expect(find.byType(Opacity), findsWidgets);
       expect(tester.takeException(), isNull);
     });
